@@ -94,7 +94,7 @@ version:
 		exit 0
 	fi
 
-	just _info "Setting plugin version to $_ver2."
+	fyi success "Setting plugin version to $_ver2."
 
 	# Set the release version!
 	just _version "{{ justfile_directory() }}/htminl/Cargo.toml" "$_ver2" >/dev/null 2>&1
@@ -144,13 +144,3 @@ _version TOML VER:
 	cp /share/hyperbuild.patch /tmp/hyperbuild/the.patch
 	cd /tmp/hyperbuild && patch -p1 -i the.patch
 	rm /tmp/hyperbuild/the.patch
-
-
-
-##             ##
-# NOTIFICATIONS #
-##             ##
-
-# Echo an informational comment.
-@_info COMMENT:
-	echo "\e[95;1m[Info] \e[0;1m{{ COMMENT }}\e[0m"

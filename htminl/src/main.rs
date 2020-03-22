@@ -17,32 +17,22 @@ extern crate hyperbuild;
 extern crate rayon;
 extern crate walkdir;
 
-use clap::Shell;
+mod menu;
+
+use clap::ArgMatches;
 use hyperbuild::hyperbuild;
 use rayon::prelude::*;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::stdout;
 use std::path::{Path, PathBuf};
-use std::process::exit;
 use walkdir::WalkDir;
 
 
 
 fn main() -> Result<(), String> {
 	// Command line arguments.
-	let opts: clap::ArgMatches = menu()
+	let opts: ArgMatches = menu::menu()
 		.get_matches();
-
-	// Generate completions and exit.
-	if opts.is_present("completions") {
-		menu().gen_completions_to(
-			"htminl",
-			Shell::Bash,
-			&mut stdout()
-		);
-		exit(0);
-	}
 
 	// What path are we dealing with?
 	let path: PathBuf = PathBuf::from(opts.value_of("path").expect("A path is required."));
@@ -68,27 +58,6 @@ fn main() -> Result<(), String> {
 	}
 
 	Ok(())
-}
-
-/// CLI Menu.
-fn menu() -> clap::App<'static, 'static> {
-	clap::App::new("HTMinL")
-		.version(env!("CARGO_PKG_VERSION"))
-		.author("Blobfolio, LLC. <hello@blobfolio.com>")
-		.about(env!("CARGO_PKG_DESCRIPTION"))
-		.arg(clap::Arg::with_name("completions")
-			.long("completions")
-			.hidden(true)
-			.takes_value(false)
-		)
-		.arg(clap::Arg::with_name("path")
-			.index(1)
-			.help("File or directory to compress.")
-			.multiple(false)
-			.required_unless_one(&["completions"])
-			.value_name("PATH")
-			.use_delimiter(false)
-		)
 }
 
 /// Path Helpers

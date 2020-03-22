@@ -40,7 +40,7 @@ build_ver     := "1"
 	strip "{{ debian_dir }}/usr/bin/htminl"
 
 	# Generate completions.
-	"{{ debian_dir }}/usr/bin/htminl" --completions > "{{ debian_dir }}/etc/bash_completion.d/htminl.bash"
+	cp -a "{{ cargo_dir }}/htminl.bash" "{{ debian_dir }}/etc/bash_completion.d"
 	chmod 644 "{{ debian_dir }}/etc/bash_completion.d/htminl.bash"
 
 	# Set up the control file.

@@ -69,17 +69,11 @@ bench: _bench_init
 	[ -f "{{ cargo_dir }}/release/htminl" ] || just build
 	clear
 
-	fyi print -p "Raw Size" -c4 "$( du -scb "{{ data_dir }}/raw" | tail -n 1 | cut -f1 ) bytes"
-	echo ""
-
 	fyi print -p Method "(Find + Parallel + html-minifier)"
 
 	[ ! -d "{{ data_dir }}/test" ] || rm -rf "{{ data_dir }}/test"
 	cp -aR "{{ data_dir }}/raw" "{{ data_dir }}/test"
-
 	time just _bench-html-minifier >/dev/null 2>&1
-
-	fyi print -p "Minified Size" -c 6 "$( du -scb "{{ data_dir }}/test" | tail -n 1 | cut -f1 ) bytes"
 	rm -rf "{{ data_dir }}/test"
 
 	echo ""
@@ -87,10 +81,7 @@ bench: _bench_init
 
 	[ ! -d "{{ data_dir }}/test" ] || rm -rf "{{ data_dir }}/test"
 	cp -aR "{{ data_dir }}/raw" "{{ data_dir }}/test"
-
 	time "{{ cargo_dir }}/release/htminl" "{{ data_dir }}/test"
-
-	fyi print -p "Minified Size" -c 6 "$( du -scb "{{ data_dir }}/test" | tail -n 1 | cut -f1 ) bytes"
 	rm -rf "{{ data_dir }}/test"
 
 

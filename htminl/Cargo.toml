@@ -10,11 +10,9 @@ build = "build.rs"
 clap = "2.33.*"
 
 [dependencies]
-fyi_core = { git = "https://github.com/Blobfolio/fyi.git" }
+fyi_core = { git = "https://github.com/Blobfolio/fyi.git", features=[ "progress", "witcher" ] }
 hyperbuild = { path = "/tmp/hyperbuild" }
-num-format = "0.4.0"
 rayon = "1.3.*"
-walkdir = "2.3.*"
 
 [dependencies.clap]
 version = "2.33.*"

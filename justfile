@@ -63,7 +63,7 @@ build_ver     := "1"
 
 
 # Benchmarks.
-bench: _bench_init
+bench: _bench-init
 	#!/usr/bin/env bash
 
 	[ -f "{{ cargo_dir }}/release/htminl" ] || just build
@@ -100,7 +100,7 @@ bench: _bench_init
 
 
 # Benchmark data.
-_bench_init:
+_bench-init:
 	#!/usr/bin/env bash
 
 	[ -d "{{ data_dir }}" ] || mkdir "{{ data_dir }}"

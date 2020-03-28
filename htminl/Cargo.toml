@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
 description = "In-place minification of HTML file(s)."
@@ -10,11 +10,15 @@ build = "build.rs"
 clap = "2.33.*"
 
 [dependencies]
-fyi_core = { git = "https://github.com/Blobfolio/fyi.git", features=[ "progress", "witcher" ] }
 hyperbuild = { path = "/tmp/hyperbuild" }
 rayon = "1.3.*"
+
+[dependencies.fyi_core]
+git = "https://github.com/Blobfolio/fyi.git"
+default-features = false
+features = [ "progress", "witcher" ]
 
 [dependencies.clap]
 version = "2.33.*"
 default-features = false
-features = [ "color" ]
+features = [ "color", "suggestions", "vec_map", "wrap_help" ]

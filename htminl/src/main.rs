@@ -68,13 +68,13 @@ fn main() -> Result<(), String> {
 		let before: u64 = paths.fyi_file_sizes();
 		let time = Instant::now();
 
-		paths.clone().into_par_iter().for_each(|x| {
+		for x in paths.as_parallel_slice() {
 			let _ = x.encode().is_ok();
 
 			progress_arc::set_path(bar.clone(), x.to_path_buf());
 			progress_arc::increment(bar.clone(), 1);
 			progress_arc::tick(bar.clone());
-		});
+		};
 
 		progress_arc::finish(bar.clone());
 

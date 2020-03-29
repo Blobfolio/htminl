@@ -5,6 +5,7 @@ authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
 description = "In-place minification of HTML file(s)."
 build = "build.rs"
+publish = false
 
 [build-dependencies]
 clap = "2.33.*"

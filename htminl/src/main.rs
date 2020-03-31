@@ -45,14 +45,11 @@ fn main() -> Result<(), String> {
 
 	// What path are we dealing with?
 	let paths: Vec<PathBuf> = match opts.is_present("list") {
-		false => {
-			let tmp: Vec<PathBuf> = opts.values_of("path").unwrap()
-				.into_iter()
-				.filter_map(|x| Some(PathBuf::from(x)))
-				.collect();
-
-			tmp.fyi_walk_filtered(&pattern)
-		},
+		false => opts.values_of("path").unwrap()
+			.into_iter()
+			.filter_map(|x| Some(PathBuf::from(x)))
+			.collect::<Vec<PathBuf>>()
+			.fyi_walk_filtered(&pattern),
 		true => PathBuf::from(opts.value_of("list").unwrap_or(""))
 			.fyi_walk_file_lines(Some(pattern)),
 	};
@@ -63,20 +60,21 @@ fn main() -> Result<(), String> {
 
 	// With progress.
 	if opts.is_present("progress") {
-		let found: u64 = paths.len() as u64;
-		let bar = Progress::new("", found, PROGRESS_NO_ELAPSED);
-		let before: u64 = paths.fyi_file_sizes();
 		let time = Instant::now();
+		let before: u64 = paths.fyi_file_sizes();
+		let found: u64 = paths.len() as u64;
 
-		paths.clone().into_par_iter().for_each(|ref x| {
-			let _ = x.encode().is_ok();
+		{
+			let bar = Progress::new("", found, PROGRESS_NO_ELAPSED);
+			paths.par_iter().for_each(|ref x| {
+				let _ = x.encode().is_ok();
 
-			progress_arc::set_path(bar.clone(), &x);
-			progress_arc::increment(bar.clone(), 1);
-			progress_arc::tick(bar.clone());
-		});
-
-		progress_arc::finish(bar.clone());
+				progress_arc::set_path(bar.clone(), &x);
+				progress_arc::increment(bar.clone(), 1);
+				progress_arc::tick(bar.clone());
+			});
+			progress_arc::finish(bar.clone());
+		}
 
 		let after: u64 = paths.fyi_file_sizes();
 		Msg::msg_crunched_in(found, time, Some((before, after)))
@@ -84,7 +82,7 @@ fn main() -> Result<(), String> {
 	}
 	// Without progress.
 	else {
-		paths.into_par_iter().for_each(|ref x| {
+		paths.par_iter().for_each(|ref x| {
 			let _ = x.encode().is_ok();
 		});
 	}

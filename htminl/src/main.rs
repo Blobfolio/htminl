@@ -68,14 +68,15 @@ fn main() -> Result<(), String> {
 
 		{
 			let bar = Progress::new("", found, PROGRESS_NO_ELAPSED);
+			let looper = progress_arc::looper(&bar, 100);
 			paths.par_iter().for_each(|ref x| {
 				let _ = x.encode().is_ok();
 
-				progress_arc::set_path(bar.clone(), &x);
-				progress_arc::increment(bar.clone(), 1);
-				progress_arc::tick(bar.clone());
+				progress_arc::set_path(&bar, &x);
+				progress_arc::increment(&bar, 1);
 			});
-			progress_arc::finish(bar.clone());
+			progress_arc::finish(&bar);
+			looper.join().unwrap();
 		}
 
 		let after: u64 = paths.fyi_file_sizes();

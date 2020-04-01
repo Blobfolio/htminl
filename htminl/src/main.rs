@@ -24,11 +24,13 @@ use fyi_core::{
 	Msg,
 	Progress,
 	progress_arc,
-	witcher,
 	PROGRESS_NO_ELAPSED
 };
-use fyi_core::witcher::mass::FYIMassOps;
-use fyi_core::witcher::ops::FYIOps;
+use fyi_core::witcher::{
+	self,
+	mass::FYIMassOps,
+	ops::FYIOps,
+};
 use hyperbuild::hyperbuild;
 use rayon::prelude::*;
 use std::path::PathBuf;

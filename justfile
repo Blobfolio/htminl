@@ -95,7 +95,6 @@ bench-self: _bench-init build
 	fyi notice "Pausing 5s before running."
 	sleep 5s
 
-	fyi print -p Method "HTMinL w/ Progress"
 	"{{ cargo_dir }}/release/htminl" -p "{{ data_dir }}/test"
 
 
@@ -232,3 +231,6 @@ _version TOML VER:
 	cp /share/hyperbuild.patch /tmp/hyperbuild/the.patch
 	cd /tmp/hyperbuild && patch -p1 -i the.patch
 	rm /tmp/hyperbuild/the.patch
+
+	[ ! -f "{{ justfile_directory() }}/Cargo.lock" ] || rm "{{ justfile_directory() }}/Cargo.lock"
+	cargo update

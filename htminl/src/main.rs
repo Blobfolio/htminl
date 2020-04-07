@@ -21,22 +21,17 @@ mod menu;
 
 use clap::ArgMatches;
 use fyi_core::{
+	arc::progress as parc,
 	Msg,
 	Prefix,
 	Progress,
-	progress_arc,
 	PROGRESS_CLEAR_ON_FINISH,
-	witcher::{
-		self,
-		mass::FYIMassOps,
-		ops::FYIOps,
-		walk::FYIWalk,
-	},
+	traits::path::FYIPathIO,
+	Witch,
 };
 use hyperbuild::hyperbuild;
 use rayon::prelude::*;
 use std::{
-	collections::HashSet,
 	path::PathBuf,
 	time::Instant,
 };
@@ -48,28 +43,37 @@ fn main() -> Result<(), String> {
 	let opts: ArgMatches = menu::menu()
 		.get_matches();
 
-	let pattern = witcher::pattern_to_regex(r"(?i).+\.html?$");
-
 	// What path are we dealing with?
-	let paths: HashSet<PathBuf> = match opts.is_present("list") {
-		false => opts.values_of("path").unwrap()
-			.into_iter()
-			.filter_map(|x| Some(PathBuf::from(x)))
-			.collect::<HashSet<PathBuf>>()
-			.fyi_walk_filtered(&pattern),
-		true => PathBuf::from(opts.value_of("list").unwrap_or(""))
-			.fyi_walk_file_lines_hs(Some(pattern)),
+	let walk: Witch = match opts.is_present("list") {
+		false => {
+			let paths: Vec<PathBuf> = opts.values_of("path").unwrap()
+				.into_iter()
+				.filter_map(|x| Some(PathBuf::from(x)))
+				.collect();
+
+			Witch::new(
+				&paths,
+				Some(r"(?i).+\.html?$".to_string())
+			)
+		},
+		true => {
+			let path = PathBuf::from(opts.value_of("list").unwrap_or(""));
+			Witch::from_file(
+				&path,
+				Some(r"(?i).+\.html?$".to_string())
+			)
+		},
 	};
 
-	if paths.is_empty() {
-		return Err("No HTML files were found.".to_string());
+	if walk.is_empty() {
+		return Err("No encodable files were found.".to_string());
 	}
 
 	// With progress.
 	if opts.is_present("progress") {
 		let time = Instant::now();
-		let before: u64 = paths.fyi_file_sizes();
-		let found: u64 = paths.len() as u64;
+		let before: u64 = walk.du();
+		let found: u64 = walk.len() as u64;
 
 		{
 			let bar = Progress::new(
@@ -79,23 +83,23 @@ fn main() -> Result<(), String> {
 				found,
 				PROGRESS_CLEAR_ON_FINISH
 			);
-			let looper = progress_arc::looper(&bar, 60);
-			paths.par_iter().for_each(|ref x| {
-				progress_arc::add_working(&bar, &x);
+			let looper = parc::looper(&bar, 60);
+			walk.files().as_ref().par_iter().for_each(|x| {
+				parc::add_working(&bar, &x);
 				let _ = x.encode().is_ok();
-				progress_arc::update(&bar, 1, None, Some(x.to_path_buf()));
+				parc::update(&bar, 1, None, Some(x.to_path_buf()));
 			});
-			progress_arc::finish(&bar);
+			parc::finish(&bar);
 			looper.join().unwrap();
 		}
 
-		let after: u64 = paths.fyi_file_sizes();
+		let after: u64 = walk.du();
 		Msg::msg_crunched_in(found, time, Some((before, after)))
 			.print();
 	}
 	// Without progress.
 	else {
-		paths.par_iter().for_each(|ref x| {
+		walk.files().as_ref().par_iter().for_each(|ref x| {
 			let _ = x.encode().is_ok();
 		});
 	}

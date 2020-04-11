@@ -15,26 +15,16 @@ In-place minification of HTML file(s).
 extern crate clap;
 extern crate fyi_core;
 extern crate hyperbuild;
-extern crate rayon;
 
 mod menu;
 
 use clap::ArgMatches;
 use fyi_core::{
-	arc::progress as parc,
-	Msg,
-	Prefix,
-	Progress,
-	PROGRESS_CLEAR_ON_FINISH,
 	traits::path::FYIPathIO,
 	Witch,
 };
 use hyperbuild::hyperbuild;
-use rayon::prelude::*;
-use std::{
-	path::PathBuf,
-	time::Instant,
-};
+use std::path::PathBuf;
 
 
 
@@ -48,7 +38,7 @@ fn main() -> Result<(), String> {
 		false => {
 			let paths: Vec<PathBuf> = opts.values_of("path").unwrap()
 				.into_iter()
-				.filter_map(|x| Some(PathBuf::from(x)))
+				.map(|x| PathBuf::from(x))
 				.collect();
 
 			Witch::new(
@@ -71,35 +61,13 @@ fn main() -> Result<(), String> {
 
 	// With progress.
 	if opts.is_present("progress") {
-		let time = Instant::now();
-		let before: u64 = walk.du();
-		let found: u64 = walk.len() as u64;
-
-		{
-			let bar = Progress::new(
-				Msg::new("Reticulating splines…")
-					.with_prefix(Prefix::Custom("HTMinL", 199))
-					.to_string(),
-				found,
-				PROGRESS_CLEAR_ON_FINISH
-			);
-			let looper = parc::looper(&bar, 60);
-			walk.files().as_ref().par_iter().for_each(|x| {
-				parc::add_working(&bar, &x);
-				let _ = x.encode().is_ok();
-				parc::update(&bar, 1, None, Some(x.to_path_buf()));
-			});
-			parc::finish(&bar);
-			looper.join().unwrap();
-		}
-
-		let after: u64 = walk.du();
-		Msg::msg_crunched_in(found, time, Some((before, after)))
-			.print();
+		walk.progress_crunch("HTMinL", |x| {
+			let _ = x.encode().is_ok();
+		});
 	}
 	// Without progress.
 	else {
-		walk.files().as_ref().par_iter().for_each(|ref x| {
+		walk.process(|ref x| {
 			let _ = x.encode().is_ok();
 		});
 	}

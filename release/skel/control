@@ -1,9 +1,0 @@
-Package: htminl
-Version: VERSION
-Section: base
-Priority: optional
-Architecture: amd64
-Maintainer: Blobfolio LLC <hello@blobfolio.com>
-Homepage: https://github.com/Blobfolio/htminl
-Installed-Size: SIZE
-Description: In-place minification of HTML file(s).

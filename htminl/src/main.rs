@@ -20,6 +20,8 @@ mod menu;
 
 use clap::ArgMatches;
 use fyi_core::{
+	Error,
+	Result,
 	traits::path::FYIPathIO,
 	Witch,
 };
@@ -28,7 +30,7 @@ use std::path::PathBuf;
 
 
 
-fn main() -> Result<(), String> {
+fn main() -> Result<()> {
 	// Command line arguments.
 	let opts: ArgMatches = menu::menu()
 		.get_matches();
@@ -56,7 +58,7 @@ fn main() -> Result<(), String> {
 	};
 
 	if walk.is_empty() {
-		return Err("No encodable files were found.".to_string());
+		return Err(Error::Other("No encodable files were found.".to_string()));
 	}
 
 	// With progress.
@@ -78,12 +80,12 @@ fn main() -> Result<(), String> {
 /// Encoding!
 pub trait HTMinLEncode {
 	/// Encode.
-	fn encode(&self) -> Result<(), String>;
+	fn encode(&self) -> Result<()>;
 }
 
 impl HTMinLEncode for PathBuf {
 	/// Encode.
-	fn encode(&self) -> Result<(), String> {
+	fn encode(&self) -> Result<()> {
 		// Load it.
 		let mut data = self.fyi_read()?;
 
@@ -96,6 +98,6 @@ impl HTMinLEncode for PathBuf {
 			return Ok(());
 		}
 
-		Err("Unable to minify file.".into())
+		Err(Error::Other("Unable to minify file.".to_string()))
 	}
 }

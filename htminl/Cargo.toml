@@ -1,25 +1,39 @@
 [package]
 name = "htminl"
-version = "0.1.1"
+version = "0.1.2"
+license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
 description = "In-place minification of HTML file(s)."
 build = "build.rs"
 publish = false
 
+[package.metadata.deb]
+maintainer = "Josh Stoik <hello@blobfolio.com>"
+copyright = "2020, Blobfolio, LLC <hello@blobfolio.com>"
+license-file = ["../LICENSE", "0"]
+revision = "1"
+depends = "$auto"
+section = "utility"
+assets = [
+    ["target/release/htminl", "usr/bin/", "755"],
+    ["../release/completions/htminl.bash", "etc/bash_completion.d/", "644"],
+    ["../release/man/htminl.1.gz", "usr/share/man/man1/", "644"],
+]
+
 [build-dependencies]
-clap = "2.33.*"
+clap = { version = "2.33.*", default-features = false }
 
 [dependencies]
 hyperbuild = { path = "/tmp/hyperbuild" }
+
+[dependencies.clap]
+version = "2.33.*"
+default-features = false
+features = [ "color", "suggestions", "vec_map", "wrap_help" ]
 
 [dependencies.fyi_core]
 git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
 default-features = false
 features = [ "progress", "witcher" ]
-
-[dependencies.clap]
-version = "2.33.*"
-default-features = false
-features = [ "color", "suggestions", "vec_map", "wrap_help" ]

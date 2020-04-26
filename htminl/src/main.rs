@@ -22,7 +22,9 @@ use clap::ArgMatches;
 use fyi_core::{
 	Error,
 	Result,
-	traits::path::FYIPathIO,
+};
+use fyi_witch::{
+	traits::WitchIO,
 	Witch,
 };
 use hyperbuild::hyperbuild;
@@ -37,28 +39,20 @@ fn main() -> Result<()> {
 
 	// What path are we dealing with?
 	let walk: Witch = match opts.is_present("list") {
-		false => {
-			let paths: Vec<PathBuf> = opts.values_of("path").unwrap()
-				.into_iter()
-				.map(|x| PathBuf::from(x))
-				.collect();
-
-			Witch::new(
-				&paths,
-				Some(r"(?i).+\.html?$".to_string())
-			)
-		},
-		true => {
-			let path = PathBuf::from(opts.value_of("list").unwrap_or(""));
-			Witch::from_file(
-				&path,
-				Some(r"(?i).+\.html?$".to_string())
-			)
-		},
+		false => Witch::new(
+			&opts.values_of("path")
+				.unwrap()
+				.collect::<Vec<&str>>(),
+			Some(r"(?i).+\.html?$".to_string())
+		),
+		true => Witch::from_file(
+			opts.value_of("list").unwrap_or(""),
+			Some(r"(?i).+\.html?$".to_string())
+		),
 	};
 
 	if walk.is_empty() {
-		return Err(Error::NoPaths("HTML".into()));
+		return Err(Error::new("No encodable files found."));
 	}
 
 	// With progress.
@@ -87,17 +81,17 @@ impl HTMinLEncode for PathBuf {
 	/// Encode.
 	fn encode(&self) -> Result<()> {
 		// Load it.
-		let mut data = self.fyi_read()?;
+		let mut data = self.witch_read()?;
 
 		if let Ok(len) = hyperbuild(&mut data) {
 			// Save it?
 			if 0 < len {
-				self.fyi_write(&data[..len])?;
+				self.witch_write(&data[..len])?;
 			}
 
 			return Ok(());
 		}
 
-		Err(Error::Other("Unable to minify file.".to_string()))
+		Err(Error::new(format!("Unable to minify {:?}.", self.to_path_buf())))
 	}
 }

@@ -1,5 +1,5 @@
 /*!
-# HTMinL
+# `HTMinL`
 
 In-place minification of HTML file(s).
 */
@@ -11,6 +11,23 @@ In-place minification of HTML file(s).
 
 #![deny(missing_copy_implementations)]
 #![deny(missing_debug_implementations)]
+
+#![allow(clippy::unknown_clippy_lints)]
+
+#![warn(clippy::filetype_is_file)]
+#![warn(clippy::integer_division)]
+#![warn(clippy::needless_borrow)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::suboptimal_flops)]
+#![warn(clippy::unneeded_field_pattern)]
+
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_errors_doc)]
+
+
 
 extern crate clap;
 extern crate fyi_core;
@@ -38,17 +55,19 @@ fn main() -> Result<()> {
 		.get_matches();
 
 	// What path are we dealing with?
-	let walk: Witch = match opts.is_present("list") {
-		false => Witch::new(
+	let walk: Witch = if opts.is_present("list") {
+		Witch::from_file(
+			opts.value_of("list").unwrap_or(""),
+			Some(r"(?i).+\.html?$".to_string())
+		)
+	}
+	else {
+		Witch::new(
 			&opts.values_of("path")
 				.unwrap()
 				.collect::<Vec<&str>>(),
 			Some(r"(?i).+\.html?$".to_string())
-		),
-		true => Witch::from_file(
-			opts.value_of("list").unwrap_or(""),
-			Some(r"(?i).+\.html?$".to_string())
-		),
+		)
 	};
 
 	if walk.is_empty() {
@@ -63,7 +82,7 @@ fn main() -> Result<()> {
 	}
 	// Without progress.
 	else {
-		walk.process(|ref x| {
+		walk.process(|x| {
 			let _ = x.encode().is_ok();
 		});
 	}

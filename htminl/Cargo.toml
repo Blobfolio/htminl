@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.1.4"
+version = "0.1.5"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -16,7 +16,7 @@ revision = "1"
 depends = "$auto"
 section = "utility"
 assets = [
-    ["target/release/htminl", "usr/bin/", "755"],
+    ["../target/x86_64-unknown-linux-gnu/release/htminl", "usr/bin/", "755"],
     ["../release/completions/htminl.bash", "etc/bash_completion.d/", "644"],
     ["../release/man/htminl.1.gz", "usr/share/man/man1/", "644"],
 ]
@@ -25,7 +25,7 @@ assets = [
 clap = { version = "2.33.*", default-features = false }
 
 [dependencies]
-hyperbuild = { path = "/tmp/hyperbuild" }
+hyperbuild = "*"
 
 [dependencies.clap]
 version = "2.33.*"

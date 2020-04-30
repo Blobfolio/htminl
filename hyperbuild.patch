@@ -1,3 +1,33 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 0ebdb71..cf21dab 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,3 +1,10 @@
++#![allow(clippy::all)]
++#![allow(dead_code)]
++#![allow(unreachable_patterns)]
++#![allow(unused_assignments)]
++
++
++
+ pub use crate::err::ErrorType as ErrorType;
+ use crate::proc::Processor;
+ use crate::unit::content::process_content;
+diff --git a/src/main.rs b/src/main.rs
+index c10aeb5..15548ed 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,3 +1,10 @@
++#![allow(clippy::all)]
++#![allow(dead_code)]
++#![allow(unreachable_patterns)]
++#![allow(unused_assignments)]
++
++
++
+ use std::fs::File;
+ use std::io::{Read, stdin, stdout, Write};
+ 
 diff --git a/src/spec/tag/omission.rs b/src/spec/tag/omission.rs
 index 3b08625..23c6279 100644
 --- a/src/spec/tag/omission.rs

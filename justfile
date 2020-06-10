@@ -34,7 +34,7 @@ bench CLEAN="":
 
 	clear
 	hyperfine --warmup 3 \
-		--prepare 'just _bench-reset; sleep 3' \
+		--prepare 'just _bench-reset;' \
 		'just _bench-html-minifier' \
 		'{{ cargo_bin }} {{ data_dir }}'
 

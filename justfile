@@ -242,7 +242,7 @@ _bench-html-minifier:
 
 	# And hyperbuild provides no configs, so we need to intervene.
 	git clone \
-		-b v0.0.44 \
+		-b v0.0.45 \
 		--single-branch \
 		https://github.com/wilsonzlin/hyperbuild.git \
 		/tmp/hyperbuild

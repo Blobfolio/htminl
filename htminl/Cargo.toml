@@ -32,12 +32,8 @@ version = "2.33.*"
 default-features = false
 features = [ "color", "suggestions", "vec_map", "wrap_help" ]
 
-[dependencies.fyi_core]
+[dependencies.fyi_witcher]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+branch = "feature/next"
 default-features = false
-features = [ "progress" ]
-
-[dependencies.fyi_witch]
-git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+features = [ "witch_io" ]

@@ -17,7 +17,9 @@ In-place minification of HTML file(s).
 #![warn(clippy::filetype_is_file)]
 #![warn(clippy::integer_division)]
 #![warn(clippy::needless_borrow)]
+#![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
+#![warn(clippy::perf)]
 #![warn(clippy::suboptimal_flops)]
 #![warn(clippy::unneeded_field_pattern)]
 
@@ -29,23 +31,19 @@ In-place minification of HTML file(s).
 
 
 
-extern crate clap;
-extern crate fyi_core;
-extern crate hyperbuild;
-
 mod menu;
 
 use clap::ArgMatches;
-use fyi_core::{
-	Error,
+use fyi_witcher::{
 	Result,
-};
-use fyi_witch::{
 	traits::WitchIO,
-	Witch,
+	Witcher,
 };
 use hyperbuild::hyperbuild;
-use std::path::PathBuf;
+use std::{
+	fs,
+	path::PathBuf,
+};
 
 
 
@@ -55,62 +53,50 @@ fn main() -> Result<()> {
 		.get_matches();
 
 	// What path are we dealing with?
-	let walk: Witch = if opts.is_present("list") {
-		Witch::from_file(
+	let walk = if opts.is_present("list") {
+		Witcher::from_file(
 			opts.value_of("list").unwrap_or(""),
-			Some(r"(?i).+\.html?$".to_string())
+			r"(?i).+\.html?$"
 		)
 	}
 	else {
-		Witch::new(
+		Witcher::new(
 			&opts.values_of("path")
 				.unwrap()
 				.collect::<Vec<&str>>(),
-			Some(r"(?i).+\.html?$".to_string())
+			r"(?i).+\.html?$"
 		)
 	};
 
 	if walk.is_empty() {
-		return Err(Error::new("No encodable files found."));
+		return Err("No HTML files were found.".to_string());
 	}
 
 	// With progress.
 	if opts.is_present("progress") {
-		walk.progress_crunch("HTMinL", |x| {
-			let _ = x.encode().is_ok();
-		});
+		walk.progress("HTMinL", encode_path);
 	}
 	// Without progress.
 	else {
-		walk.process(|x| {
-			let _ = x.encode().is_ok();
-		});
+		walk.process(encode_path);
 	}
 
 	Ok(())
 }
 
-/// Encoding!
-pub trait HTMinLEncode {
-	/// Encode.
-	fn encode(&self) -> Result<()>;
-}
 
-impl HTMinLEncode for PathBuf {
-	/// Encode.
-	fn encode(&self) -> Result<()> {
-		// Load it.
-		let mut data = self.witch_read()?;
 
-		if let Ok(len) = hyperbuild(&mut data) {
-			// Save it?
-			if 0 < len {
-				self.witch_write(&data[..len])?;
+#[allow(unused_must_use)]
+// Do the dirty work!
+fn encode_path(path: &PathBuf) {
+	if let Ok(mut data) = fs::read(path) {
+		if ! data.is_empty() {
+			if let Ok(len) = hyperbuild(&mut data) {
+				// Save it?
+				if 0 < len {
+					path.witch_write(&data[..len]);
+				}
 			}
-
-			return Ok(());
 		}
-
-		Err(Error::new(format!("Unable to minify {:?}.", self.to_path_buf())))
 	}
 }

@@ -14,10 +14,9 @@ pkg_dir1    := justfile_directory() + "/htminl"
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
 cargo_bin   := cargo_dir + "/x86_64-unknown-linux-gnu/release/" + pkg_id
 data_dir    := "/tmp/bench-data"
-pgo_dir     := "/tmp/pgo-data"
 release_dir := justfile_directory() + "/release"
 
-rustflags   := "-Clinker-plugin-lto -Clinker=clang-9 -Clink-args=-fuse-ld=lld-9 -C link-arg=-s"
+rustflags   := "-C link-arg=-s"
 
 
 
@@ -27,14 +26,14 @@ bench CLEAN="":
 
 	# Force a rebuild.
 	if [ ! -z "{{ CLEAN }}" ]; then
-		just build-pgo
+		just build
 	elif [ ! -f "{{ cargo_bin }}" ]; then
-		just build-pgo
+		just build
 	fi
 
 	clear
 	hyperfine --warmup 3 \
-		--prepare 'just _bench-reset; sleep 3' \
+		--prepare 'just _bench-reset;' \
 		'just _bench-html-minifier' \
 		'{{ cargo_bin }} {{ data_dir }}'
 
@@ -53,7 +52,7 @@ bench CLEAN="":
 
 
 # Build Release!
-@build:
+@build: clean
 	# First let's build the Rust bit.
 	RUSTFLAGS="{{ rustflags }}" cargo build \
 		--bin "{{ pkg_id }}" \
@@ -79,7 +78,7 @@ bench CLEAN="":
 
 
 # Build Man.
-@build-man: build-pgo
+@build-man: build
 	# Pre-clean.
 	find "{{ release_dir }}/man" -type f -delete
 
@@ -97,53 +96,6 @@ bench CLEAN="":
 	just _fix-chown "{{ release_dir }}/man"
 
 
-# Build PGO.
-@build-pgo: clean
-	# First let's build the Rust bit.
-	RUSTFLAGS="{{ rustflags }} -Cprofile-generate={{ pgo_dir }}" \
-		cargo build \
-			--bin "{{ pkg_id }}" \
-			--release \
-			--target x86_64-unknown-linux-gnu \
-			--target-dir "{{ cargo_dir }}"
-
-	clear
-
-	# Instrument a few tests.
-	just _bench-reset
-	"{{ cargo_bin }}" "{{ data_dir }}"
-
-	# Do them again with the UI.
-	just _bench-reset
-	"{{ cargo_bin }}" -p "{{ data_dir }}"
-
-	# Do a file.
-	just _bench-reset
-	echo "{{ data_dir }}/blobfolio.com.html" > "/tmp/pgo-list.txt"
-	"{{ cargo_bin }}" -p -l "/tmp/pgo-list.txt"
-	rm "/tmp/pgo-list.txt"
-
-	# A bunk path.
-	"{{ cargo_bin }}" "/nowhere/blankety" || true
-
-	# And some CLI screens.
-	"{{ cargo_bin }}" -V
-	"{{ cargo_bin }}" -h
-
-	clear
-
-	# Merge the data back in.
-	llvm-profdata-9 \
-		merge -o "{{ pgo_dir }}/merged.profdata" "{{ pgo_dir }}"
-
-	RUSTFLAGS="{{ rustflags }} -Cprofile-use={{ pgo_dir }}/merged.profdata" \
-		cargo build \
-			--bin "{{ pkg_id }}" \
-			--release \
-			--target x86_64-unknown-linux-gnu \
-			--target-dir "{{ cargo_dir }}"
-
-
 # Check Release!
 @check:
 	# First let's build the Rust bit.
@@ -157,7 +109,6 @@ bench CLEAN="":
 @clean:
 	# Most things go here.
 	[ ! -d "{{ cargo_dir }}" ] || rm -rf "{{ cargo_dir }}"
-	[ ! -d "{{ pgo_dir }}" ] || rm -rf "{{ pgo_dir }}"
 
 	# But some Cargo apps place shit in subdirectories even if
 	# they place *other* shit in the designated target dir. Haha.
@@ -242,7 +193,7 @@ _bench-html-minifier:
 
 	# And hyperbuild provides no configs, so we need to intervene.
 	git clone \
-		-b v0.0.44 \
+		-b v0.0.45 \
 		--single-branch \
 		https://github.com/wilsonzlin/hyperbuild.git \
 		/tmp/hyperbuild

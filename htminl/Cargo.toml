@@ -20,6 +20,12 @@ assets = [
     ["./misc/htminl.1.gz", "usr/share/man/man1/", "644"],
 ]
 
+[dependencies]
+htmlescape = "0.3.*"
+lazy_static = "1.4.*"
+marked = "0.2.*"
+regex = "1.3.*"
+
 [dependencies.fyi_menu]
 git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
@@ -29,7 +35,3 @@ git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
 default-features = false
 features = [ "witch_io" ]
-
-[dependencies.hyperbuild]
-version = "0.1.*"
-git = "https://github.com/joshstoik1/hyperbuild.git"

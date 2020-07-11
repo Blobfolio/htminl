@@ -37,7 +37,6 @@ use fyi_witcher::{
 	traits::WitchIO,
 	Witcher,
 };
-use hyperbuild::hyperbuild;
 use std::{
 	fs,
 	io::{
@@ -85,11 +84,11 @@ fn main() -> Result<()> {
 
 	// Without progress.
 	if 0 == flags & FLAG_PROGRESS {
-		walk.process(minify_html);
+		walk.process(minify_file);
 	}
 	// With progress.
 	else {
-		walk.progress("HTMinL", minify_html);
+		walk.progress("HTMinL", minify_file);
 	}
 
 	Ok(())
@@ -97,15 +96,12 @@ fn main() -> Result<()> {
 
 #[allow(unused_must_use)]
 /// Do the dirty work!
-fn minify_html(path: &PathBuf) {
+fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
-		let old_len: usize = data.len();
-		if 0 != old_len {
-			if let Ok(len) = hyperbuild(&mut data) {
-				if 0 < len && len < old_len {
-					path.witch_write(&data[..len]);
-				}
-			}
+		if htminl::minify_html(&mut data).is_ok() {
+			//println!("Saved {} bytes!\n\n", size);
+			//println!("{}", unsafe { std::str::from_utf8_unchecked(&data) });
+			path.witch_write(&data);
 		}
 	}
 }

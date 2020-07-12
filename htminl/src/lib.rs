@@ -1,9 +1,5 @@
 /*!
-# `HTMinL`
-
-In-place minification of HTML file(s).
-
-This approach based on `html5minify`.
+# HTML Library
 */
 
 #![warn(missing_docs)]
@@ -35,14 +31,8 @@ This approach based on `html5minify`.
 pub mod spec;
 
 use marked::{
-	chain_filters,
 	Element,
-	filter::{
-		Action,
-		detach_comments,
-		detach_pis,
-		xmp_to_pre,
-	},
+	filter::Action,
 	html::{
 		parse_utf8,
 		t,
@@ -52,7 +42,6 @@ use marked::{
 };
 use regex::{
 	bytes::Regex as RegexB,
-	Captures,
 	Regex,
 };
 use spec::{
@@ -61,9 +50,11 @@ use spec::{
 	MinifyNode,
 };
 use std::{
-	borrow::Cow,
+	cell::RefCell,
 	io,
+	ops::Range,
 };
+use tendril::StrTendril;
 
 
 
@@ -77,23 +68,23 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	// Note our starting length.
 	let old_len: usize = data.len();
 
-	// Get a document.
+	// Parse the document.
 	let mut doc = parse_utf8(data);
 
-	// Filter it a bit.
-	doc.filter_breadth(chain_filters!(
-		detach_comments, // Strip comments.
-		detach_pis,      // Strip XML instructions.
-		xmp_to_pre,      // Convert weird shit to <pre>.
-	));
+	// First Pass: clean up elements, strip pointless nodes.
+	doc.filter_breadth(filter_minify_one);
 
-	// Apply minifications!
-	doc.filter(filter_minify);
+	// Second Pass: merge adjacent text nodes.
+	doc.filter(filter_minify_two);
 
-	// Serialize it back to our source.
+	// Third Pass: clean up and minify text nodes.
+	doc.filter_breadth(filter_minify_three);
+
+	// Save it!
 	data.truncate(0);
 	doc.serialize(data)?;
 
+	// Final Pass: tidy up after the serializer.
 	post_minify(&mut data);
 
 	// Return the amount saved.
@@ -104,9 +95,12 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	else { Ok(old_len - new_len) }
 }
 
-#[allow(clippy::suspicious_else_formatting)] // Sorry not sorry.
-/// Minify Nodes!
-pub fn filter_minify(node: NodeRef<'_>, data: &mut NodeData) -> Action {
+/// Minify #1
+///
+/// This strips comments and XML processing instructions, removes default type
+/// attributes for scripts and styles, and removes truthy attribute values for
+/// boolean properties like "defer" and "disabled".
+pub fn filter_minify_one(_: NodeRef<'_>, data: &mut NodeData) -> Action {
 	match data {
 		NodeData::Elem(Element { name, attrs, .. }) => {
 			let mut len: usize = attrs.len();
@@ -136,11 +130,66 @@ pub fn filter_minify(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 
 			Action::Continue
 		},
+		// Remove comments and XML processing instructions.
+		NodeData::Comment(_) | NodeData::Pi(_) => Action::Detach,
+		// Whatever else there is can pass through unchanged.
+		_ => Action::Continue,
+	}
+}
+
+/// Minify #2
+///
+/// This pass merges adjacent text nodes. The code is identical to what
+/// `marked` exports under `text_normalize`, except it does not mess about with
+/// whitespace. (We do that later, with greater intention.)
+pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
+    thread_local! {
+        static MERGE_Q: RefCell<StrTendril> = RefCell::new(StrTendril::new())
+    };
+
+    if let Some(t) = data.as_text_mut() {
+        // If the immediately following sibling is also text, then push this
+        // tendril to the merge queue and detach.
+        let node_r = pos.next_sibling();
+        if node_r.map_or(false, |n| n.as_text().is_some()) {
+            MERGE_Q.with(|q| {
+                q.borrow_mut().push_tendril(t)
+            });
+            return Action::Detach;
+        }
+
+        // Otherwise add this tendril to anything in the queue, consuming it.
+        MERGE_Q.with(|q| {
+            let mut qt = q.borrow_mut();
+            if qt.len() > 0 {
+                qt.push_tendril(t);
+                drop(qt);
+                *t = q.replace(StrTendril::new());
+            }
+        });
+
+        if t.is_empty() {
+            return Action::Detach;
+        }
+    }
+    Action::Continue
+}
+
+#[allow(clippy::suspicious_else_formatting)] // Sorry not sorry.
+/// Minify #3
+///
+/// This pass cleans up text nodes, collapsing whitespace (when it is safe to
+/// do so), and trimming a bit (also only when safe).
+///
+/// See `collapse_whitespace` for more details.
+pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
+	match data {
 		NodeData::Text(ref mut txt) => {
 			// What we do with the text depends on its parent element.
 			if let Some(ref parent) = node.parent() {
 				if let Some(el) = (*parent).as_element() {
-					// The <head> is no place for text nodes!
+					// The outer <html> and <head> elements are no place for
+					// text nodes!
 					if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
 						return Action::Detach;
 					}
@@ -148,60 +197,61 @@ pub fn filter_minify(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 					// We can trim JS, but should leave everything else as-is
 					// as the state of Rust minification is iffy.
 					else if el.is_elem(t::SCRIPT) {
-						let alter = txt.trim();
-						if alter != txt.to_string() {
-							if alter.is_empty() {
-								return Action::Detach;
-							}
-							*txt = alter.into();
+						txt.trim();
+						if txt.is_empty() {
+							return Action::Detach;
 						}
 					}
 
 					// Styles can be trimmed and collapsed reasonably safely.
 					else if el.is_elem(t::STYLE) {
-						let alter = naive_collapse_whitespace(txt);
-						if alter != txt.to_string() {
-							if alter.is_empty() {
-								return Action::Detach;
-							}
-							*txt = alter.into();
+						txt.trim();
+						txt.collapse_whitespace();
+						if txt.is_empty() {
+							return Action::Detach;
 						}
 					}
 
-					// We can drop whitespace nodes between <pre> and <code>,
-					// even though we'd be preserving their whitespace in all
-					// other circumstances.
-					else if
-						el.is_elem(t::PRE) &&
-						(
-							node.next_sibling_is_elem(t::CODE) ||
-							node.prev_sibling_is_elem(t::CODE)
-						) &&
-						txt.trim().is_empty()
-					{
-						return Action::Detach;
+					// We don't need empty/whitespace text nodes between <pre>
+					// and <code> tags.
+					else if el.is_elem(t::PRE) {
+						if
+							(**txt).trim().is_empty() &&
+							(
+								node.next_sibling_is_elem(t::CODE) ||
+								node.prev_sibling_is_elem(t::CODE)
+							)
+						{
+							return Action::Detach;
+						}
+					}
+
+					// Vue `transition` tags can be full-on trimmed.
+					else if &*el.name.local == "transition" {
+						txt.trim();
+						if txt.is_empty() {
+							return Action::Detach;
+						}
 					}
 
 					// Otherwise most everything else can be collapsed.
 					else if el.is_minifiable() {
-						let mut alter = collapse_whitespace(&decode_entities(txt));
+						txt.collapse_whitespace();
 
-						// If this is the first or last part of the body, we
-						// can trim the sides too.
+						// First and last body text can be trimmed.
 						if el.is_elem(t::BODY) {
+							// Drop the start.
 							if node.prev_sibling().is_none() {
-								alter = alter.trim_start().into();
+								txt.trim_start();
 							}
+							// Drop the end.
 							if node.next_sibling().is_none() {
-								alter = alter.trim_end().into();
+								txt.trim_end();
 							}
 						}
 
-						if alter != txt.to_string() {
-							if alter.is_empty() {
-								return Action::Detach;
-							}
-							*txt = alter.into();
+						if txt.is_empty() {
+							return Action::Detach;
 						}
 					}
 				}
@@ -209,81 +259,117 @@ pub fn filter_minify(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 
 			Action::Continue
 		},
-		// Nothing else matters.
+		// Whatever else there is can pass through unchanged.
 		_ => Action::Continue,
 	}
 }
 
 /// Post Compile Minify
 ///
-/// The serializer leaves a couple other tasks for us to pick up at the end.
+/// The final minification pass runs in-place after serialization to clean up a
+/// few odds and ends.
+///
+/// It would be more efficient to handle this within the serializer, but that
+/// is outside the immediate scope of work. Maybe later…
 pub fn post_minify(data: &mut Vec<u8>) {
 	lazy_static::lazy_static! {
-		// Drop ="" on boolean attributes.
-		static ref RE_BOOL: RegexB = RegexB::new("(allowfullscreen|async|autofocus|autoplay|checked|compact|controls|declare|default|defaultchecked|defaultmuted|defaultselected|defer|disabled|draggable|enabled|formnovalidate|hidden|indeterminate|inert|ismap|itemscope|loop|multiple|muted|nohref|noresize|noshade|novalidate|nowrap|open|pauseonexit|readonly|required|reversed|scoped|seamless|selected|sortable|truespeed|typemustmatch|visible)=\"\"").unwrap();
+		// We want to drop empty boolean attribute values, and turn SVG <path>
+		// back into a self-closing tag.
+		static ref RE: RegexB = RegexB::new("(></path>|(allowfullscreen|async|autofocus|autoplay|checked|compact|controls|declare|default|defaultchecked|defaultmuted|defaultselected|defer|disabled|draggable|enabled|formnovalidate|hidden|indeterminate|inert|ismap|itemscope|loop|multiple|muted|nohref|noresize|noshade|novalidate|nowrap|open|pauseonexit|readonly|required|reversed|scoped|seamless|selected|sortable|truespeed|typemustmatch|visible)=\"\")").unwrap();
 	}
 
-	// Find the locations so we can trim manually.
-	let found: Vec<usize> = RE_BOOL.find_iter(data).map(|x| x.end()).collect();
-	for i in found.into_iter().rev() {
-		data.drain(i-3..i);
-	}
+	// This glorious chain calculates matching ranges, then drains them from
+	// the source in reverse order.
+	RE.find_iter(data)
+		.flat_map(|x| {
+			// By trimming "><" and "path", we're left with "/>", i.e. the
+			// self-closing tag we want.
+			if x.as_bytes() == b"></path>" {
+				vec![x.start()..x.start()+2, x.start()+3..x.end()-1]
+			}
+			// Here we just need to get rid of the trailing ="".
+			else {
+				vec![x.end()-3..x.end()]
+			}
+		})
+		.collect::<Vec<Range<usize>>>()
+		.into_iter()
+		.rev()
+		.for_each(|x| { data.drain(x); });
 }
 
 #[must_use]
 /// Collapse Whitespace
 ///
-/// HTML doesn't distinguish between whitespace, and only considers the first
-/// of a sequence, so we can safely collapse sequences down to a single
-/// horizontal space.
+/// HTML rendering largely ignores whitespace, and at any rate treats all types
+/// (other than the no-break space `\xA0`) the same.
 ///
-/// Many minification programs take things further and fully trim whitespace
-/// from the ends of text nodes, but we can't be sure such operations won't
-/// alter the layout, so we *don't* do that.
-pub fn collapse_whitespace(txt: &str) -> String {
-	lazy_static::lazy_static! {
-		// Whitespace collapsing requires two parts in order to preserve non-
-		// breaking spaces.
-		static ref RE_OUTER: Regex = Regex::new(r"[\s\n\r\t\f\v]+").unwrap();
-		static ref RE_INNER: Regex = Regex::new(r"(^|\xA0+)([^\xA0]+)").unwrap();
-	}
-
-	RE_OUTER.replace_all(txt, |caps: &Captures| {
-		RE_INNER.replace_all(&caps[0], |caps2: &Captures| {
-			if caps2[1].is_empty() { Cow::Borrowed(" ") }
-			else if caps2[2].is_empty() {
-				Cow::Owned(caps2[1].into())
-			}
-			else {
-				Cow::Owned([&caps2[1], " "].concat())
-			}
-		}).to_string()
-	}).into()
-}
-
-#[must_use]
-/// Naive Whitespace Minification
+/// There is some nuance, but for most elements, we can safely convert all
+/// contiguous sequences of whitespace to a single horizontal space character.
 ///
-/// This will trim the edges and convert all remaining contiguous sequences to
-/// a single space.
-pub fn naive_collapse_whitespace(txt: &str) -> String {
+/// Complete trimming gets dangerous, particularly given that CSS can override
+/// the display state of any element arbitrarily, so we are *not* doing that
+/// here.
+pub fn collapse_whitespace(txt: &str) -> StrTendril {
 	lazy_static::lazy_static! {
 		static ref RE_SPACE: Regex = Regex::new(r"[\s\n\r\t\f\v]+").unwrap();
 	}
 
-	RE_SPACE.replace_all(txt.trim(), " ").into()
+	// We don't want to strip no-break spaces, so we temporarily convert them
+	// into entities before running Regex, then change them back after (as the
+	// serializer expects unencoded UTF-8).
+	RE_SPACE.replace_all(&txt.replace("\u{a0}", "&nbsp;"), " ")
+		.replace("&nbsp;", "\u{a0}").into()
 }
 
-#[must_use]
-/// Decode Entities
-///
-/// Since we're working in UTF-8 anyway, we don't really need encoded entities
-/// in Text blocks other than < and >.
-///
-/// If decoding fails, the original value is returned.
-pub fn decode_entities(txt: &str) -> Cow<str> {
-	match htmlescape::decode_html(txt) {
-		Ok(s) => Cow::Owned(s),
-		_ => Cow::Borrowed(txt),
+/// Extra String Methods for Tendril.
+trait StrTendrilExt {
+	/// Collapse Whitespace
+	fn collapse_whitespace(&mut self);
+
+	/// Trim.
+	fn trim(&mut self);
+
+	/// Trim Start.
+	fn trim_start(&mut self);
+
+	/// Trim End.
+	fn trim_end(&mut self);
+}
+
+impl StrTendrilExt for StrTendril {
+	/// Collapse Whitespace
+	fn collapse_whitespace(&mut self) {
+		let alter = collapse_whitespace(self);
+		if (*self).ne(&alter) {
+			*self = alter;
+		}
+	}
+
+	/// Trim.
+	fn trim(&mut self) {
+		let mut alter = Self::with_capacity(self.len() as u32);
+		alter.push_slice((**self).trim());
+		if (*self).ne(&alter) {
+			*self = alter;
+		}
+	}
+
+	/// Trim Start.
+	fn trim_start(&mut self) {
+		let mut alter = Self::with_capacity(self.len() as u32);
+		alter.push_slice((**self).trim_start());
+		if (*self).ne(&alter) {
+			*self = alter;
+		}
+	}
+
+	/// Trim End.
+	fn trim_end(&mut self) {
+		let mut alter = Self::with_capacity(self.len() as u32);
+		alter.push_slice((**self).trim_end());
+		if (*self).ne(&alter) {
+			*self = alter;
+		}
 	}
 }

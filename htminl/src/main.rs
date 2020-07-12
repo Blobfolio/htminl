@@ -1,7 +1,57 @@
 /*!
 # `HTMinL`
 
-In-place minification of HTML file(s).
+`HTMinL` is a fast, in-place HTML minifier written in Rust. It prioritizes
+safety and code sanity over _ULTIMATE COMPRESSION_, so may not save quite as
+much as libraries like Node's [html-minifier](https://github.com/kangax/html-minifier),
+but it is less likely to break shit, and is roughly 100x faster, so not too
+shabby.
+
+`HTMinL` is *not* a stream processor; it parses the document in its entirety
+into a DOM tree powered by Mozilla's Servo engine before meddling with the
+contents. This adds some overhead not found in naive, Regex-based processors,
+but ultimately allows for much more robust error correction, similar to what
+browser software is capable of.
+
+In the event syntax is sufficiently broken as to prevent tree parsing, or in
+the unlikely event the resulting "minified" document is bigger than the
+original, no changes are written.
+
+## Minification
+
+Minification is primarily achieved through whitespace collapsing — converting
+all contiguous whitespace sequences (except `&nbsp;`) to a single horizontal
+space. This is HTML is rendered anyway, so the extra spaces are only so much
+document bloat.
+
+Care is taken to avoid modifying whitespace inside elements like `<textarea>`
+and `<pre>` — where it might matter! — as well as unknown elements, such as
+custom web components.
+
+Trimming — chopping _all_ leading and/or trailing whitespace — is applied in a
+_few_ special cases where it is completely safe to do so, but unlike most HTML
+minifiers, no assumptions are made about "inline" versus "block" elements as
+CSS allows anything to be anything! As a result, individual (i.e. collapsed)
+spaces will often be left in and around tags, but the resulting document
+layout should render as intended when viewed in a browser.
+
+Additional savings are achieved by stripping:
+* Comments;
+* XML processing instructions;
+* Text nodes residing in `<html>` and `<head>` elements;
+* Default `type` attributes on `<script>` and `<style>` elements;
+* Values from boolean attributes like `hidden` and `disabled`;
+* Space between `<pre>` and `<code>` tags;
+* Leading and trailing space directly in the `<body>`;
+
+**TODO:** Add optional --js and --css flags to minify inline script and style
+content respectively.
+
+While care has been taken to balance savings and safety, there are a few design
+choices that could potentially break documents, worth noting before you use it:
+* All documents are parsed as `UTF-8`; if you code for Windows or something weird, you might wind up with malformed text;
+* Documents are processed as *HTML*, not XML or XHTML. While `SVG` elements should come through OK, other types of markup may not;
+* As mentioned above, `HTMinL` does not allow free-range text inside the `<head>`, or as a direct child of `<html>`. That's what `<body>` is for!
 */
 
 #![warn(missing_docs)]
@@ -99,8 +149,6 @@ fn main() -> Result<()> {
 fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
 		if htminl::minify_html(&mut data).is_ok() {
-			//println!("Saved {} bytes!\n\n", size);
-			//println!("{}", unsafe { std::str::from_utf8_unchecked(&data) });
 			path.witch_write(&data);
 		}
 	}

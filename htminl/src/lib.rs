@@ -348,8 +348,7 @@ impl StrTendrilExt for StrTendril {
 
 	/// Trim.
 	fn trim(&mut self) {
-		let mut alter = Self::with_capacity(self.len() as u32);
-		alter.push_slice((**self).trim());
+		let alter = Self::from((**self).trim());
 		if (*self).ne(&alter) {
 			*self = alter;
 		}
@@ -357,8 +356,7 @@ impl StrTendrilExt for StrTendril {
 
 	/// Trim Start.
 	fn trim_start(&mut self) {
-		let mut alter = Self::with_capacity(self.len() as u32);
-		alter.push_slice((**self).trim_start());
+		let alter = Self::from((**self).trim_start());
 		if (*self).ne(&alter) {
 			*self = alter;
 		}
@@ -366,8 +364,7 @@ impl StrTendrilExt for StrTendril {
 
 	/// Trim End.
 	fn trim_end(&mut self) {
-		let mut alter = Self::with_capacity(self.len() as u32);
-		alter.push_slice((**self).trim_end());
+		let alter = Self::from((**self).trim_end());
 		if (*self).ne(&alter) {
 			*self = alter;
 		}

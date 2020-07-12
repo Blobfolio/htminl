@@ -20,8 +20,34 @@ rustflags   := "-C link-arg=-s"
 
 
 
+# Benchmark Rust functions.
+bench BENCH="" FILTER="":
+	#!/usr/bin/env bash
+
+	clear
+
+	if [ -z "{{ BENCH }}" ]; then
+		cargo bench \
+			-q \
+			--workspace \
+			--all-features \
+			--target x86_64-unknown-linux-gnu \
+			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+	else
+		cargo bench \
+			-q \
+			--bench "{{ BENCH }}" \
+			--workspace \
+			--all-features \
+			--target x86_64-unknown-linux-gnu \
+			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+	fi
+
+	exit 0
+
+
 # Benchmarks.
-bench CLEAN="":
+bench-bin CLEAN="":
 	#!/usr/bin/env bash
 
 	# Force a rebuild.

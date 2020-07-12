@@ -40,10 +40,7 @@ use marked::{
 	NodeData,
 	NodeRef,
 };
-use regex::{
-	bytes::Regex as RegexB,
-	Regex,
-};
+use regex::Regex;
 use spec::{
 	MinifyAttribute,
 	MinifyElement,
@@ -52,7 +49,6 @@ use spec::{
 use std::{
 	cell::RefCell,
 	io,
-	ops::Range,
 };
 use tendril::StrTendril;
 
@@ -119,9 +115,10 @@ pub fn filter_minify_one(_: NodeRef<'_>, data: &mut NodeData) -> Action {
 						attrs.remove(idx);
 						len -= 1;
 					}
-					// Truthy values can be empty.
+					// Truthy values can be empty. The placeholder "*hNUL" is
+					// something we'll clear out in post.
 					else {
-						attrs[idx].value = "".into();
+						attrs[idx].value = "*hNUL".into();
 						idx += 1;
 					}
 				}
@@ -272,30 +269,53 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 /// It would be more efficient to handle this within the serializer, but that
 /// is outside the immediate scope of work. Maybe later…
 pub fn post_minify(data: &mut Vec<u8>) {
-	lazy_static::lazy_static! {
-		// We want to drop empty boolean attribute values, and turn SVG <path>
-		// back into a self-closing tag.
-		static ref RE: RegexB = RegexB::new("(></path>|(allowfullscreen|async|autofocus|autoplay|checked|compact|controls|declare|default|defaultchecked|defaultmuted|defaultselected|defer|disabled|draggable|enabled|formnovalidate|hidden|indeterminate|inert|ismap|itemscope|loop|multiple|muted|nohref|noresize|noshade|novalidate|nowrap|open|pauseonexit|readonly|required|reversed|scoped|seamless|selected|sortable|truespeed|typemustmatch|visible)=\"\")").unwrap();
+	let len: usize = data.len();
+	let ptr = data.as_mut_ptr();
+	let mut idx: usize = 0;
+	let mut del: usize = 0;
+
+	unsafe {
+		while idx < len {
+			// Still enough room for slices.
+			if idx + 8 < len {
+				// It's a path closure!
+				if &data[idx..idx+8] == b"></path>" {
+					// Two swaps will get us starting with />.
+					ptr.add(idx).swap(ptr.add(idx + 2));
+					ptr.add(idx + 1).swap(ptr.add(idx + 2));
+
+					// If we've deleted stuff, we need to shift.
+					if del > 0 {
+						ptr.add(idx).swap(ptr.add(idx - del));
+						ptr.add(idx + 1).swap(ptr.add(idx + 1 - del));
+					}
+
+					// Increase the del and idx markers accordingly.
+					del += 6;
+					idx += 8;
+					continue;
+				}
+
+				// It's a null attribute value!
+				else if &data[idx..idx+8] == b"=\"*hNUL\"" {
+					del += 8;
+					idx += 8;
+					continue;
+				}
+			}
+
+			if del > 0 {
+				ptr.add(idx).swap(ptr.add(idx - del));
+			}
+
+			idx += 1;
+		}
 	}
 
-	// This glorious chain calculates matching ranges, then drains them from
-	// the source in reverse order.
-	RE.find_iter(data)
-		.flat_map(|x| {
-			// By trimming "><" and "path", we're left with "/>", i.e. the
-			// self-closing tag we want.
-			if x.as_bytes() == b"></path>" {
-				vec![x.start()..x.start()+2, x.start()+3..x.end()-1]
-			}
-			// Here we just need to get rid of the trailing ="".
-			else {
-				vec![x.end()-3..x.end()]
-			}
-		})
-		.collect::<Vec<Range<usize>>>()
-		.into_iter()
-		.rev()
-		.for_each(|x| { data.drain(x); });
+	// If we "removed" anything, truncate to drop the extra bits from memory.
+	if del > 0 {
+		data.truncate(len - del);
+	}
 }
 
 #[must_use]

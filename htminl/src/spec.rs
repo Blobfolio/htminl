@@ -58,8 +58,6 @@ impl MinifyAttribute for Attribute {
 	/// As Boolean
 	///
 	/// Attributes like "hidden", "draggable", etc., that either are or aren't.
-	///
-	/// TODO: See if a static `HashSet` is faster.
 	fn is_boolean_value(&self) -> bool {
 		match &*self.name.local {
 			"allowfullscreen"

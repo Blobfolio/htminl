@@ -25,6 +25,22 @@ fn collapse_whitespace(c: &mut Criterion) {
 	group.finish();
 }
 
+fn minify_html(c: &mut Criterion) {
+	let mut group = c.benchmark_group("htminl::minify_html");
+
+	let path = PathBuf::from("../test-assets/blobfolio.com.html");
+	assert!(path.is_file());
+
+	group.bench_function("blobfolio.com.html", move |b| {
+		b.iter_with_setup(||
+			std::fs::read(&path).unwrap(),
+			|mut t| htminl::minify_html(&mut t)
+		)
+	});
+
+	group.finish();
+}
+
 fn post_minify(c: &mut Criterion) {
 	let mut group = c.benchmark_group("htminl::post_minify");
 
@@ -45,6 +61,7 @@ fn post_minify(c: &mut Criterion) {
 
 criterion_group!(
 	benches,
+	minify_html,
 	collapse_whitespace,
 	post_minify,
 );

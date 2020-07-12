@@ -68,13 +68,11 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	let mut doc = parse_utf8(data);
 
 	// First Pass: clean up elements, strip pointless nodes.
-	doc.filter_breadth(filter_minify_one);
-
 	// Second Pass: merge adjacent text nodes.
-	doc.filter(filter_minify_two);
-
 	// Third Pass: clean up and minify text nodes.
-	doc.filter_breadth(filter_minify_three);
+	doc.filter(filter_minify_one);
+	doc.filter(filter_minify_two);
+	doc.filter(filter_minify_three);
 
 	// Save it!
 	data.truncate(0);
@@ -96,7 +94,7 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 /// This strips comments and XML processing instructions, removes default type
 /// attributes for scripts and styles, and removes truthy attribute values for
 /// boolean properties like "defer" and "disabled".
-pub fn filter_minify_one(_: NodeRef<'_>, data: &mut NodeData) -> Action {
+pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	match data {
 		NodeData::Elem(Element { name, attrs, .. }) => {
 			let mut len: usize = attrs.len();
@@ -123,6 +121,18 @@ pub fn filter_minify_one(_: NodeRef<'_>, data: &mut NodeData) -> Action {
 					}
 				}
 				else { idx += 1 }
+			}
+
+			Action::Continue
+		},
+		NodeData::Text(_) => {
+			// We never need text nodes in the `<head>` or `<html>`.
+			if let Some(ref parent) = node.parent() {
+				if let Some(el) = (*parent).as_element() {
+					if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
+						return Action::Detach;
+					}
+				}
 			}
 
 			Action::Continue
@@ -169,6 +179,7 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
             return Action::Detach;
         }
     }
+
     Action::Continue
 }
 
@@ -185,15 +196,9 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			// What we do with the text depends on its parent element.
 			if let Some(ref parent) = node.parent() {
 				if let Some(el) = (*parent).as_element() {
-					// The outer <html> and <head> elements are no place for
-					// text nodes!
-					if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
-						return Action::Detach;
-					}
-
 					// We can trim JS, but should leave everything else as-is
 					// as the state of Rust minification is iffy.
-					else if el.is_elem(t::SCRIPT) {
+					if el.is_elem(t::SCRIPT) {
 						txt.trim();
 						if txt.is_empty() {
 							return Action::Detach;

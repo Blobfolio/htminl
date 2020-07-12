@@ -1,3 +1,4 @@
-/target/
 /Cargo.lock
+/htminl/target/
 /release/man/htminl.1.gz
+/target/

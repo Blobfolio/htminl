@@ -214,13 +214,7 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			// We don't need empty/whitespace text nodes between <pre>
 			// and <code> tags.
 			else if el.is_elem(t::PRE) {
-				if
-					txt.is_whitespace() &&
-					(
-						node.next_sibling_is_elem(t::CODE) ||
-						node.prev_sibling_is_elem(t::CODE)
-					)
-				{
+				if txt.is_whitespace() && node.sibling_is_elem(t::CODE) {
 					return Action::Detach;
 				}
 			}
@@ -237,16 +231,17 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 				// First and last body text can be trimmed.
 				if el.is_elem(t::BODY) {
 					// Drop the start.
-					if node.prev_sibling().is_none() {
+					if node.is_first_child() {
 						txt.trim_start();
 					}
 					// Drop the end.
-					if node.next_sibling().is_none() {
+					if node.is_last_child() {
 						txt.trim_end();
 					}
 				}
 			}
 
+			// If this was always empty or is empty now, remove it.
 			if txt.is_empty() {
 				return Action::Detach;
 			}

@@ -45,10 +45,10 @@ fn minify_html(c: &mut Criterion) {
 fn post_minify(c: &mut Criterion) {
 	let mut group = c.benchmark_group("htminl::post_minify");
 
-	let path = PathBuf::from("../test-assets/peanut.min.html");
+	let path = PathBuf::from("../test-assets/half-min.html");
 	assert!(path.is_file());
 
-	group.bench_function("peanut.min.html", move |b| {
+	group.bench_function("half-min.html", move |b| {
 		b.iter_with_setup(||
 			std::fs::read(&path).unwrap(),
 			|mut t| htminl::post_minify(&mut t)

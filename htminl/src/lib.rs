@@ -215,7 +215,7 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			// and <code> tags.
 			else if el.is_elem(t::PRE) {
 				if
-					(**txt).trim().is_empty() &&
+					txt.is_whitespace() &&
 					(
 						node.next_sibling_is_elem(t::CODE) ||
 						node.prev_sibling_is_elem(t::CODE)

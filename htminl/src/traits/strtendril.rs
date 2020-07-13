@@ -11,8 +11,11 @@ use tendril::StrTendril;
 
 /// Extra String Methods for Tendril.
 pub trait MinifyStrTendril {
-	/// Collapse Whitespace
+	/// Collapse Whitespace.
 	fn collapse_whitespace(&mut self);
+
+	/// Is Whitespace?
+	fn is_whitespace(&self) -> bool;
 
 	/// Trim.
 	fn trim(&mut self);
@@ -25,7 +28,7 @@ pub trait MinifyStrTendril {
 }
 
 impl MinifyStrTendril for StrTendril {
-	/// Collapse Whitespace
+	/// Collapse Whitespace.
 	///
 	/// HTML rendering largely ignores whitespace, and at any rate treats all
 	/// types (other than the no-break space `\xA0`) the same.
@@ -62,6 +65,18 @@ impl MinifyStrTendril for StrTendril {
 		if (*self).ne(&alter) {
 			*self = alter;
 		}
+	}
+
+	/// Is (Only) Whitespace?
+	///
+	/// Returns `true` if the node is empty or contains only whitespace.
+	fn is_whitespace(&self) -> bool {
+		self.is_empty() || self.as_bytes()
+			.iter()
+			.any(|c| match *c {
+				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => false,
+				_ => true,
+			})
 	}
 
 	/// Trim.

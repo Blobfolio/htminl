@@ -28,7 +28,10 @@
 #![allow(clippy::missing_errors_doc)]
 
 
-pub mod spec;
+
+pub mod traits;
+
+
 
 use marked::{
 	Element,
@@ -40,17 +43,17 @@ use marked::{
 	NodeData,
 	NodeRef,
 };
-use regex::Regex;
-use spec::{
-	MinifyAttribute,
-	MinifyElement,
-	MinifyNode,
-};
 use std::{
 	cell::RefCell,
 	io,
 };
 use tendril::StrTendril;
+use traits::{
+	MinifyAttribute,
+	MinifyElement,
+	MinifyNodeRef,
+	MinifyStrTendril,
+};
 
 
 
@@ -120,6 +123,11 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 						idx += 1;
 					}
 				}
+				// We'll strip these in post so they don't print as ="".
+				else if attrs[idx].value.is_empty() {
+					attrs[idx].value = "*hNUL".into();
+					idx += 1;
+				}
 				else { idx += 1 }
 			}
 
@@ -127,11 +135,9 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 		},
 		NodeData::Text(_) => {
 			// We never need text nodes in the `<head>` or `<html>`.
-			if let Some(ref parent) = node.parent() {
-				if let Some(el) = (*parent).as_element() {
-					if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
-						return Action::Detach;
-					}
+			if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
+				if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
+					return Action::Detach;
 				}
 			}
 
@@ -191,79 +197,63 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
 ///
 /// See `collapse_whitespace` for more details.
 pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
-	match data {
-		NodeData::Text(ref mut txt) => {
-			// What we do with the text depends on its parent element.
-			if let Some(ref parent) = node.parent() {
-				if let Some(el) = (*parent).as_element() {
-					// We can trim JS, but should leave everything else as-is
-					// as the state of Rust minification is iffy.
-					if el.is_elem(t::SCRIPT) {
-						txt.trim();
-						if txt.is_empty() {
-							return Action::Detach;
-						}
+	if let Some(txt) = data.as_text_mut() {
+		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
+			// We can trim JS, but should leave everything else as-is
+			// as the state of Rust minification is iffy.
+			if el.is_elem(t::SCRIPT) {
+				txt.trim();
+			}
+
+			// Styles can be trimmed and collapsed reasonably safely.
+			else if el.is_elem(t::STYLE) {
+				txt.trim();
+				txt.collapse_whitespace();
+			}
+
+			// We don't need empty/whitespace text nodes between <pre>
+			// and <code> tags.
+			else if el.is_elem(t::PRE) {
+				if
+					(**txt).trim().is_empty() &&
+					(
+						node.next_sibling_is_elem(t::CODE) ||
+						node.prev_sibling_is_elem(t::CODE)
+					)
+				{
+					return Action::Detach;
+				}
+			}
+
+			// Vue `transition` tags can be full-on trimmed.
+			else if &*el.name.local == "transition" {
+				txt.trim();
+			}
+
+			// Otherwise most everything else can be collapsed.
+			else if el.is_minifiable() {
+				txt.collapse_whitespace();
+
+				// First and last body text can be trimmed.
+				if el.is_elem(t::BODY) {
+					// Drop the start.
+					if node.prev_sibling().is_none() {
+						txt.trim_start();
 					}
-
-					// Styles can be trimmed and collapsed reasonably safely.
-					else if el.is_elem(t::STYLE) {
-						txt.trim();
-						txt.collapse_whitespace();
-						if txt.is_empty() {
-							return Action::Detach;
-						}
-					}
-
-					// We don't need empty/whitespace text nodes between <pre>
-					// and <code> tags.
-					else if el.is_elem(t::PRE) {
-						if
-							(**txt).trim().is_empty() &&
-							(
-								node.next_sibling_is_elem(t::CODE) ||
-								node.prev_sibling_is_elem(t::CODE)
-							)
-						{
-							return Action::Detach;
-						}
-					}
-
-					// Vue `transition` tags can be full-on trimmed.
-					else if &*el.name.local == "transition" {
-						txt.trim();
-						if txt.is_empty() {
-							return Action::Detach;
-						}
-					}
-
-					// Otherwise most everything else can be collapsed.
-					else if el.is_minifiable() {
-						txt.collapse_whitespace();
-
-						// First and last body text can be trimmed.
-						if el.is_elem(t::BODY) {
-							// Drop the start.
-							if node.prev_sibling().is_none() {
-								txt.trim_start();
-							}
-							// Drop the end.
-							if node.next_sibling().is_none() {
-								txt.trim_end();
-							}
-						}
-
-						if txt.is_empty() {
-							return Action::Detach;
-						}
+					// Drop the end.
+					if node.next_sibling().is_none() {
+						txt.trim_end();
 					}
 				}
 			}
 
-			Action::Continue
-		},
-		// Whatever else there is can pass through unchanged.
-		_ => Action::Continue,
+			if txt.is_empty() {
+				return Action::Detach;
+			}
+		}
 	}
+
+	Action::Continue
 }
 
 /// Post Compile Minify
@@ -276,20 +266,23 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 pub fn post_minify(data: &mut Vec<u8>) {
 	let len: usize = data.len();
 	let ptr = data.as_mut_ptr();
-	let mut idx: usize = 0;
 	let mut del: usize = 0;
 
 	unsafe {
+		let mut idx: usize = 0;
 		while idx < len {
-			// Still enough room for slices.
+			// We've made life easy on ourselves by using needles of the same
+			// length (8).
 			if idx + 8 < len {
 				// It's a path closure!
 				if &data[idx..idx+8] == b"></path>" {
-					// Two swaps will get us starting with />.
+					// A quick shuffle places "/>" at the beginning of the
+					// slice (so we can just drop the rest).
 					ptr.add(idx).swap(ptr.add(idx + 2));
 					ptr.add(idx + 1).swap(ptr.add(idx + 2));
 
-					// If we've deleted stuff, we need to shift.
+					// If we've deleted stuff, we need to shift them both into
+					// place.
 					if del > 0 {
 						ptr.add(idx).swap(ptr.add(idx - del));
 						ptr.add(idx + 1).swap(ptr.add(idx + 1 - del));
@@ -320,78 +313,5 @@ pub fn post_minify(data: &mut Vec<u8>) {
 	// If we "removed" anything, truncate to drop the extra bits from memory.
 	if del > 0 {
 		data.truncate(len - del);
-	}
-}
-
-#[must_use]
-/// Collapse Whitespace
-///
-/// HTML rendering largely ignores whitespace, and at any rate treats all types
-/// (other than the no-break space `\xA0`) the same.
-///
-/// There is some nuance, but for most elements, we can safely convert all
-/// contiguous sequences of whitespace to a single horizontal space character.
-///
-/// Complete trimming gets dangerous, particularly given that CSS can override
-/// the display state of any element arbitrarily, so we are *not* doing that
-/// here.
-pub fn collapse_whitespace(txt: &str) -> StrTendril {
-	lazy_static::lazy_static! {
-		static ref RE_SPACE: Regex = Regex::new(r"[\s\n\r\t\f\v]+").unwrap();
-	}
-
-	// We don't want to strip no-break spaces, so we temporarily convert them
-	// into entities before running Regex, then change them back after (as the
-	// serializer expects unencoded UTF-8).
-	RE_SPACE.replace_all(&txt.replace("\u{a0}", "&nbsp;"), " ")
-		.replace("&nbsp;", "\u{a0}").into()
-}
-
-/// Extra String Methods for Tendril.
-trait StrTendrilExt {
-	/// Collapse Whitespace
-	fn collapse_whitespace(&mut self);
-
-	/// Trim.
-	fn trim(&mut self);
-
-	/// Trim Start.
-	fn trim_start(&mut self);
-
-	/// Trim End.
-	fn trim_end(&mut self);
-}
-
-impl StrTendrilExt for StrTendril {
-	/// Collapse Whitespace
-	fn collapse_whitespace(&mut self) {
-		let alter = collapse_whitespace(self);
-		if (*self).ne(&alter) {
-			*self = alter;
-		}
-	}
-
-	/// Trim.
-	fn trim(&mut self) {
-		let alter = Self::from((**self).trim());
-		if (*self).ne(&alter) {
-			*self = alter;
-		}
-	}
-
-	/// Trim Start.
-	fn trim_start(&mut self) {
-		let alter = Self::from((**self).trim_start());
-		if (*self).ne(&alter) {
-			*self = alter;
-		}
-	}
-
-	/// Trim End.
-	fn trim_end(&mut self) {
-		let alter = Self::from((**self).trim_end());
-		if (*self).ne(&alter) {
-			*self = alter;
-		}
 	}
 }

@@ -1,18 +1,13 @@
 /*!
-# HTML Library: Spec
+# HTML Traits: `Attribute`
 
-This file contains several helpers related to attributes, elements, nodes, etc.
+This trait exposes a few methods to the `Attribute` struct.
 */
 
 use marked::{
 	Attribute,
-	Element,
-	html::{
-		t,
-		TAG_META,
-	},
+	html::t,
 	LocalName,
-	NodeRef,
 };
 
 
@@ -107,78 +102,5 @@ impl MinifyAttribute for Attribute {
 			}
 			_ => false,
 		}
-	}
-}
-
-/// Minification-related Element Methods.
-pub trait MinifyElement {
-	/// Is Minifiable
-	///
-	/// Can inner whitespace be collapsed? Most of the time the answer is yes,
-	/// but there are a few cases where it is safer to leave things be.
-	fn is_minifiable(&self) -> bool;
-}
-
-impl MinifyElement for Element {
-	#[must_use]
-	/// Is Minifiable
-	///
-	/// Can inner whitespace be collapsed? Most of the time the answer is yes,
-	/// but there are a few cases where it is safer to leave things be.
-	fn is_minifiable(&self) -> bool {
-		match self.name.local {
-			t::CODE
-			| t::PRE
-			| t::SCRIPT
-			| t::STYLE
-			| t::SVG
-			| t::TEXTAREA => false,
-			ref x => TAG_META.contains_key(x),
-		}
-	}
-}
-
-/// Minification-related Node(Ref) Methods.
-pub trait MinifyNode {
-	/// Next Element Is
-	///
-	/// Quick method to see if the next sibling exists and is a certain kind of
-	/// element.
-	fn next_sibling_is_elem(&self, kind: LocalName) -> bool;
-
-	/// Previous Element Is
-	///
-	/// Quick method to see if the previous sibling exists and is a certain
-	/// kind of element.
-	fn prev_sibling_is_elem(&self, kind: LocalName) -> bool;
-}
-
-impl MinifyNode for NodeRef<'_> {
-	/// Next Element Is
-	///
-	/// Quick method to see if the next sibling exists and is a certain kind of
-	/// element.
-	fn next_sibling_is_elem(&self, kind: LocalName) -> bool {
-		if let Some(ref x) = self.next_sibling() {
-			if let Some(y) = (*x).as_element() {
-				return y.is_elem(kind);
-			}
-		}
-
-		false
-	}
-
-	/// Previous Element Is
-	///
-	/// Quick method to see if the previous sibling exists and is a certain
-	/// kind of element.
-	fn prev_sibling_is_elem(&self, kind: LocalName) -> bool {
-		if let Some(ref x) = self.prev_sibling() {
-			if let Some(y) = (*x).as_element() {
-				return y.is_elem(kind);
-			}
-		}
-
-		false
 	}
 }

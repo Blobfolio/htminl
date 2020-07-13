@@ -4,8 +4,8 @@
 `HTMinL` is a fast, in-place HTML minifier written in Rust. It prioritizes
 safety and code sanity over _ULTIMATE COMPRESSION_, so may not save quite as
 much as libraries like Node's [html-minifier](https://github.com/kangax/html-minifier),
-but it is less likely to break shit, and is roughly 100x faster, so not too
-shabby.
+but on the other hand, it is much less likely to break shit, and is about 100x
+faster.
 
 `HTMinL` is *not* a stream processor; it parses the document in its entirety
 into a DOM tree powered by Mozilla's Servo engine before meddling with the
@@ -40,18 +40,24 @@ Additional savings are achieved by stripping:
 * XML processing instructions;
 * Text nodes residing in `<html>` and `<head>` elements;
 * Default `type` attributes on `<script>` and `<style>` elements;
+* Empty attribute values;
 * Values from boolean attributes like `hidden` and `disabled`;
 * Space between `<pre>` and `<code>` tags;
 * Leading and trailing space directly in the `<body>`;
-
-**TODO:** Add optional --js and --css flags to minify inline script and style
-content respectively.
+* Closing `</path>` tags in inline SVG blocks.
 
 While care has been taken to balance savings and safety, there are a few design
 choices that could potentially break documents, worth noting before you use it:
 * All documents are parsed as `UTF-8`; if you code for Windows or something weird, you might wind up with malformed text;
 * Documents are processed as *HTML*, not XML or XHTML. While `SVG` elements should come through OK, other types of markup may not;
 * As mentioned above, `HTMinL` does not allow free-range text inside the `<head>`, or as a direct child of `<html>`. That's what `<body>` is for!
+* Whitespace inside `<style>` tags is collapsed and normalized, which could alter (unlikely) code like `[name="spa   ced"]`;
+
+## TODO:
+* Optional CSS minification;
+* Optional JS minification;
+* Optional JSON minification;
+* Investigate other simple savings?
 */
 
 #![warn(missing_docs)]
@@ -149,6 +155,8 @@ fn main() -> Result<()> {
 fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
 		if htminl::minify_html(&mut data).is_ok() {
+			//println!("Saved {:?}\n\n", size);
+			//println!("{}", unsafe{ std::str::from_utf8_unchecked(&data) });
 			path.witch_write(&data);
 		}
 	}

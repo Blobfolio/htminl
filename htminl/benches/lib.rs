@@ -7,20 +7,21 @@ use criterion::{
 	criterion_group,
 	criterion_main,
 };
+use htminl::traits::MinifyStrTendril;
 use std::path::PathBuf;
+use tendril::StrTendril;
 
 
 
 fn collapse_whitespace(c: &mut Criterion) {
 	let mut group = c.benchmark_group("htminl::collapse_whitespace");
 
-	for txt in [
-		"My name is Jeffrey.\n\nI like flowers!     ",
-	].iter() {
-		group.bench_function(format!("{:?}", txt), move |b| {
-			b.iter(|| htminl::collapse_whitespace(txt))
-		});
-	}
+	group.bench_function(format!("{:?}", "My name is 	Jeffrey.\n\nI like flowers!     "), move |b| {
+		b.iter_with_setup(||
+			StrTendril::from("My name is 	Jeffrey.\n\nI like flowers!     "),
+			|mut st| st.collapse_whitespace()
+		)
+	});
 
 	group.finish();
 }

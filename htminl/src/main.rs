@@ -90,7 +90,6 @@ choices that could potentially break documents, worth noting before you use it:
 use fyi_menu::ArgList;
 use fyi_witcher::{
 	Result,
-	traits::WitchIO,
 	Witcher,
 };
 use std::{
@@ -157,7 +156,9 @@ fn minify_file(path: &PathBuf) {
 		if htminl::minify_html(&mut data).is_ok() {
 			//println!("Saved {:?}\n\n", size);
 			//println!("{}", unsafe{ std::str::from_utf8_unchecked(&data) });
-			path.witch_write(&data);
+			let mut out = tempfile_fast::Sponge::new_for(path).unwrap();
+			out.write_all(&data).unwrap();
+			out.commit().unwrap();
 		}
 	}
 }

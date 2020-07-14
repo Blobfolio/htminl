@@ -23,6 +23,7 @@ assets = [
 [dependencies]
 lazy_static = "1.4.*"
 marked = "0.2.*"
+tempfile-fast = "0.3.*"
 tendril = "0.4.*"
 
 [dependencies.fyi_menu]
@@ -32,8 +33,6 @@ branch = "master"
 [dependencies.fyi_witcher]
 git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
-default-features = false
-features = [ "witch_io" ]
 
 [dev-dependencies]
 criterion = "*"

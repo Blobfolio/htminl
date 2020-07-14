@@ -63,13 +63,13 @@ broken page!
 While care has been taken to balance savings and safety, there are a few design
 choices that could potentially break documents, worth noting before you use it:
 * Documents are expected to be encoded in UTF-8. Other encodings might be OK, but some text could get garbled.
-* Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but other XMLish data will likely be corrupted.
+* Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but other XML-ish data will likely be corrupted.
 * Child text nodes of `<html>` and `<head>` elements are removed. Text doesn't belong there anyway, but HTML is awfully forgiving; who knows what kinds of markup will be found in the wild!
 * CSS whitespace is trimmed and collapsed, which could break (very unlikely!) selectors like `input[value="Spa  ced"]`.
 
 
 
-## RoadMap:
+## Roadmap:
 
 * Bloated inline scripts, styles, and other sorts of data — JSON, SVG, etc. —
 can really add to a document's size. `HTMinL` currently applies a few (very

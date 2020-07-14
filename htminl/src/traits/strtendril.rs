@@ -71,7 +71,7 @@ impl MinifyStrTendril for StrTendril {
 	///
 	/// Returns `true` if the node is empty or contains only whitespace.
 	fn is_whitespace(&self) -> bool {
-		self.is_empty() || self.as_bytes()
+		! self.as_bytes()
 			.iter()
 			.any(|c| match *c {
 				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => false,

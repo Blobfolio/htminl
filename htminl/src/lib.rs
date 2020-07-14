@@ -107,7 +107,7 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 
 			while idx < len {
 				// Almost always trim...
-				if attrs[idx].name.local == a::VALUE {
+				if attrs[idx].name.local != a::VALUE {
 					attrs[idx].value.trim();
 				}
 

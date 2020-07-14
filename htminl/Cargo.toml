@@ -21,6 +21,7 @@ assets = [
 ]
 
 [dependencies]
+html5ever = "*"
 lazy_static = "1.4.*"
 marked = "0.2.*"
 tempfile-fast = "0.3.*"

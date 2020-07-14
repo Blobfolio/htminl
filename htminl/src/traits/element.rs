@@ -94,10 +94,10 @@ impl MinifyElement for Element {
 	/// trimmed.
 	///
 	/// At the moment, this only applies to `<script>`, `<noscript>`,
-	/// `<style>`, and `<transition>` tags.
+	/// `<style>`, `<title>`, and `<transition>` tags.
 	fn can_trim_whitespace(&self) -> bool {
 		match self.name.local {
-			t::NOSCRIPT | t::SCRIPT | t::STYLE => true,
+			t::NOSCRIPT | t::SCRIPT | t::STYLE | t::TITLE => true,
 			_ => &*self.name.local == "transition",
 		}
 	}

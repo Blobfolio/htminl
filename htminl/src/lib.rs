@@ -44,6 +44,7 @@ use marked::{
 	NodeRef,
 };
 use std::{
+	borrow::Borrow,
 	cell::RefCell,
 	io,
 };
@@ -104,31 +105,19 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			let mut idx: usize = 0;
 
 			while idx < len {
-				// We can drop default type attributes altogether.
-				if attrs[idx].is_default_type(&name.local) {
+				// Drop the whole thing.
+				if attrs[idx].can_drop(&name.local) {
 					attrs.remove(idx);
 					len -= 1;
+					continue;
 				}
-				// Boolean values can be simplified or removed.
-				else if attrs[idx].is_boolean_value() {
-					// False is implied; we can just remove it.
-					if attrs[idx].value.to_ascii_lowercase() == "false" {
-						attrs.remove(idx);
-						len -= 1;
-					}
-					// Truthy values can be empty. The placeholder "*hNUL" is
-					// something we'll clear out in post.
-					else {
-						attrs[idx].value = "*hNUL".into();
-						idx += 1;
-					}
-				}
-				// We'll strip these in post so they don't print as ="".
-				else if attrs[idx].value.is_empty() {
+
+				// Drop the value. Actual dropping is applied in post.
+				if attrs[idx].can_drop_value() {
 					attrs[idx].value = "*hNUL".into();
-					idx += 1;
 				}
-				else { idx += 1 }
+
+				idx += 1;
 			}
 
 			Action::Continue
@@ -136,7 +125,7 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 		NodeData::Text(_) => {
 			// We never need text nodes in the `<head>` or `<html>`.
 			if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
-				if el.is_elem(t::HEAD) || el.is_elem(t::HTML) {
+				if el.can_drop_text_nodes() {
 					return Action::Detach;
 				}
 			}
@@ -199,36 +188,22 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
 pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	if let Some(txt) = data.as_text_mut() {
 		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
-			// We can trim JS, but should leave everything else as-is
-			// as the state of Rust minification is iffy.
-			if el.is_elem(t::SCRIPT) {
+			// Special cases.
+			if txt.is_whitespace() && can_drop_if_whitespace(node.borrow()) {
+				return Action::Detach;
+			}
+
+			// Can we trim the text?
+			if el.can_trim_whitespace() {
 				txt.trim();
 			}
 
-			// Styles can be trimmed and collapsed reasonably safely.
-			else if el.is_elem(t::STYLE) {
-				txt.trim();
-				txt.collapse_whitespace();
-			}
-
-			// We don't need empty/whitespace text nodes between <pre>
-			// and <code> tags.
-			else if el.is_elem(t::PRE) {
-				if txt.is_whitespace() && node.sibling_is_elem(t::CODE) {
-					return Action::Detach;
-				}
-			}
-
-			// Vue `transition` tags can be full-on trimmed.
-			else if &*el.name.local == "transition" {
-				txt.trim();
-			}
-
-			// Otherwise most everything else can be collapsed.
-			else if el.is_minifiable() {
+			// How about collapse it?
+			if el.can_collapse_whitespace() {
 				txt.collapse_whitespace();
 
-				// First and last body text can be trimmed.
+				// If the body starts or ends with a text node, we can trim it
+				// from the left or the right respectively.
 				if el.is_elem(t::BODY) {
 					// Drop the start.
 					if node.is_first_child() {
@@ -241,7 +216,7 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 				}
 			}
 
-			// If this was always empty or is empty now, remove it.
+			// Drop empty nodes entirely.
 			if txt.is_empty() {
 				return Action::Detach;
 			}
@@ -309,4 +284,43 @@ pub fn post_minify(data: &mut Vec<u8>) {
 	if del > 0 {
 		data.truncate(len - del);
 	}
+}
+
+/// Unnecessary Whitespace-Only Text Node Sandwiches
+///
+/// There are a lot of common situations where formatting whitespace would
+/// never play any role in the document layout. This matches those.
+///
+/// The text node itself is not verified by this method; those checks should be
+/// done first.
+fn can_drop_if_whitespace(node: &NodeRef<'_>) -> bool {
+	// If the parent is a <pre> tag, we can trim between space between the
+	// inner code tags, otherwise all whitespace needs to stay where it is.
+	if node.parent_is_elem(t::PRE) {
+		return node.prev_sibling_is_elem(t::CODE) || node.next_sibling_is_elem(t::CODE);
+	}
+
+	// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
+	// we can drop it.
+	let mut droppable = false;
+
+	if let Some(el) = node.prev_sibling().as_ref().and_then(|n| n.as_element()) {
+		if el.can_drop_whitespace_sandwhich() {
+			droppable = true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	if let Some(el) = node.next_sibling().as_ref().and_then(|n| n.as_element()) {
+		if el.can_drop_whitespace_sandwhich() {
+			droppable = true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	droppable
 }

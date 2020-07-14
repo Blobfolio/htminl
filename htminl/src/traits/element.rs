@@ -16,28 +16,89 @@ use marked::{
 
 /// Minification-related Element Methods.
 pub trait MinifyElement {
-	/// Is Minifiable
+	/// Can Collapse Whitespace?
 	///
-	/// Can inner whitespace be collapsed? Most of the time the answer is yes,
-	/// but there are a few cases where it is safer to leave things be.
-	fn is_minifiable(&self) -> bool;
+	/// Text nodes in these elements can safely have their whitespace
+	/// collapsed.
+	fn can_collapse_whitespace(&self) -> bool;
+
+	/// Can Drop Text Nodes?
+	///
+	/// Text nodes in these elements are never needed.
+	fn can_drop_text_nodes(&self) -> bool;
+
+	/// Can Drop Whitespace Between?
+	///
+	/// Whitespace-only text nodes sitting between two elements of this kind
+	/// (or at the beginning and end of the parent) can be safely dropped.
+	fn can_drop_whitespace_sandwhich(&self) -> bool;
+
+	/// Can Trim Whitespace?
+	///
+	/// Text nodes in these elements can safely have their whitespace
+	/// trimmed.
+	fn can_trim_whitespace(&self) -> bool;
 }
 
 impl MinifyElement for Element {
 	#[must_use]
-	/// Is Minifiable
+	/// Can Collapse Whitespace?
 	///
-	/// Can inner whitespace be collapsed? Most of the time the answer is yes,
-	/// but there are a few cases where it is safer to leave things be.
-	fn is_minifiable(&self) -> bool {
+	/// Text nodes in these elements can safely have their whitespace
+	/// collapsed.
+	///
+	/// At the moment, this applies to all "known" tags other than `<code>`,
+	/// `<pre>`, `<script>`, `<svg>`, and `<textarea>`.
+	fn can_collapse_whitespace(&self) -> bool {
 		match self.name.local {
 			t::CODE
 			| t::PRE
 			| t::SCRIPT
-			| t::STYLE
 			| t::SVG
 			| t::TEXTAREA => false,
 			ref x => TAG_META.contains_key(x),
+		}
+	}
+
+	/// Can Drop Text Nodes?
+	///
+	/// Text nodes in these elements are never needed.
+	fn can_drop_text_nodes(&self) -> bool {
+		match self.name.local {
+			t::AUDIO
+			| t::HEAD
+			| t::HTML
+			| t::OPTION
+			| t::PICTURE
+			| t::VIDEO => true,
+			_ => false,
+		}
+	}
+
+	/// Can Drop Whitespace Between?
+	///
+	/// Whitespace-only text nodes sitting between two elements of this kind
+	/// (or at the beginning and end of the parent) can be safely dropped.
+	fn can_drop_whitespace_sandwhich(&self) -> bool {
+		match self.name.local {
+			t::NOSCRIPT
+			| t::SCRIPT
+			| t::STYLE => true,
+			_ => false,
+		}
+	}
+
+	/// Can Trim Whitespace?
+	///
+	/// Text nodes in these elements can safely have their whitespace
+	/// trimmed.
+	///
+	/// At the moment, this only applies to `<script>`, `<noscript>`,
+	/// `<style>`, and `<transition>` tags.
+	fn can_trim_whitespace(&self) -> bool {
+		match self.name.local {
+			t::NOSCRIPT | t::SCRIPT | t::STYLE => true,
+			_ => &*self.name.local == "transition",
 		}
 	}
 }

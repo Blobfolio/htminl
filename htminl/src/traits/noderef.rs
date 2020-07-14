@@ -23,6 +23,11 @@ pub trait MinifyNodeRef {
 	/// Get the `LocalName` of the previous sibling.
 	fn prev_sibling_elem_kind(&self) -> Option<LocalName>;
 
+	/// Parent Element Kind.
+	///
+	/// Get the `LocalName` of the parent element.
+	fn parent_elem_kind(&self) -> Option<LocalName>;
+
 	/// Is First Child.
 	fn is_first_child(&self) -> bool;
 
@@ -31,7 +36,7 @@ pub trait MinifyNodeRef {
 
 	#[must_use]
 	/// Sibling Element Kind
-	fn sibling_elem_kind(node: &NodeRef) -> Option<LocalName> {
+	fn elem_kind(node: &NodeRef) -> Option<LocalName> {
 		node.as_element().map(|e| e.name.local.to_owned())
 	}
 
@@ -66,6 +71,17 @@ pub trait MinifyNodeRef {
 		}
 		self.next_sibling_is_elem(kind)
 	}
+
+	/// Parent Element Is.
+	///
+	/// Quick method to see if the parent exists and is a certain kind of
+	/// element.
+	fn parent_is_elem(&self, kind: LocalName) -> bool {
+		match self.parent_elem_kind() {
+			Some(s) => s == kind,
+			_ => false,
+		}
+	}
 }
 
 impl MinifyNodeRef for NodeRef<'_> {
@@ -73,14 +89,21 @@ impl MinifyNodeRef for NodeRef<'_> {
 	///
 	/// Get the `LocalName` of the next sibling.
 	fn next_sibling_elem_kind(&self) -> Option<LocalName> {
-		self.next_sibling().as_ref().and_then(Self::sibling_elem_kind)
+		self.next_sibling().as_ref().and_then(Self::elem_kind)
 	}
 
 	/// Previous Element Kind.
 	///
 	/// Get the `LocalName` of the previous sibling.
 	fn prev_sibling_elem_kind(&self) -> Option<LocalName> {
-		self.prev_sibling().as_ref().and_then(Self::sibling_elem_kind)
+		self.prev_sibling().as_ref().and_then(Self::elem_kind)
+	}
+
+	/// Parent Element Kind.
+	///
+	/// Get the `LocalName` of the parent element.
+	fn parent_elem_kind(&self) -> Option<LocalName> {
+		self.parent().as_ref().and_then(Self::elem_kind)
 	}
 
 	/// Is First Child.

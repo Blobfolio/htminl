@@ -105,6 +105,11 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			let mut idx: usize = 0;
 
 			while idx < len {
+				// Almost always trim...
+				if &*attrs[idx].name.local != "value" {
+					attrs[idx].value.trim();
+				}
+
 				// Drop the whole thing.
 				if attrs[idx].can_drop(&name.local) {
 					attrs.remove(idx);
@@ -115,6 +120,10 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 				// Drop the value. Actual dropping is applied in post.
 				if attrs[idx].can_drop_value() {
 					attrs[idx].value = "*hNUL".into();
+				}
+				// Compact the value.
+				else if attrs[idx].can_compact_value() {
+					attrs[idx].value.collapse_whitespace();
 				}
 
 				idx += 1;

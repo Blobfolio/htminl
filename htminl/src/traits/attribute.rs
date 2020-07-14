@@ -14,6 +14,15 @@ use marked::{
 
 /// Minification-related Attribute Methods.
 pub trait MinifyAttribute {
+	/// Can Compact?
+	///
+	/// Without going overboard, there is some opportunity to safely save
+	/// a few bytes by trimming and compacting the whitespace in certain
+	/// types of attributes like classes and styles (which can get long
+	/// enough while writing that devs might choose to split them into
+	/// separate lines, etc.).
+	fn can_compact_value(&self) -> bool;
+
 	/// Can Drop Attribute?
 	///
 	/// Certain attributes, such as `type="text/javascript"` on a `<script>`
@@ -38,6 +47,20 @@ pub trait MinifyAttribute {
 }
 
 impl MinifyAttribute for Attribute {
+	/// Can Compact?
+	///
+	/// Without going overboard, there is some opportunity to safely save
+	/// a few bytes by trimming and compacting the whitespace in certain
+	/// types of attributes like classes and styles (which can get long
+	/// enough while writing that devs might choose to split them into
+	/// separate lines, etc.).
+	fn can_compact_value(&self) -> bool {
+		match &*self.name.local {
+			"class" | "style" => true,
+			_ => false,
+		}
+	}
+
 	/// Can Drop Attribute?
 	///
 	/// Certain attributes, such as `type="text/javascript"` on a `<script>`
@@ -59,10 +82,25 @@ impl MinifyAttribute for Attribute {
 					_ => false,
 				},
 				t::STYLE => self.value.eq_ignore_ascii_case("text/css"),
-				_ => false,
+				_ => self.value.is_empty(),
 			},
-			// These tags serve no purpose if they have no values!
-			"alt" | "href" | "src" | "srcset" | "target" | "title" => self.value.is_empty(),
+			// These tags serve no purpose if they have no values! There are
+			// lots of others, but these are the most common, and also the most
+			// asinine to leave blank.
+			"abbr"
+			| "alt"
+			| "class"
+			| "for"
+			| "href"
+			| "id"
+			| "name"
+			| "placeholder"
+			| "rel"
+			| "src"
+			| "srcset"
+			| "style"
+			| "target"
+			| "title" => self.value.is_empty(),
 			// If this is a falsey boolean attribute, we can get rid of it.
 			_ => self.is_boolean() && self.value.eq_ignore_ascii_case("false"),
 		}
@@ -87,6 +125,7 @@ impl MinifyAttribute for Attribute {
 	fn is_boolean(&self) -> bool {
 		match &*self.name.local {
 			"allowfullscreen"
+			| "allowpaymentrequest"
 			| "async"
 			| "autofocus"
 			| "autoplay"
@@ -111,12 +150,14 @@ impl MinifyAttribute for Attribute {
 			| "multiple"
 			| "muted"
 			| "nohref"
+			| "nomodule"
 			| "noresize"
 			| "noshade"
 			| "novalidate"
 			| "nowrap"
 			| "open"
 			| "pauseonexit"
+			| "playsinline"
 			| "readonly"
 			| "required"
 			| "reversed"
@@ -127,12 +168,6 @@ impl MinifyAttribute for Attribute {
 			| "truespeed"
 			| "typemustmatch"
 			| "visible" => true,
-			// Draggable has other possible properties, so we'll only count it
-			// as a boolean if it is true/false/draggable.
-			"draggable" => match self.value.to_ascii_lowercase().as_str() {
-				"true" | "false" | "draggable" => true,
-				_ => false,
-			}
 			_ => false,
 		}
 	}

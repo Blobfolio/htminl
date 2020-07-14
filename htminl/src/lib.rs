@@ -29,17 +29,24 @@
 
 
 
+pub mod meta;
 pub mod traits;
 
 
 
+use crate::{
+	meta::{a, t},
+	traits::{
+		MinifyAttribute,
+		MinifyElement,
+		MinifyNodeRef,
+		MinifyStrTendril,
+	},
+};
 use marked::{
 	Element,
 	filter::Action,
-	html::{
-		parse_utf8,
-		t,
-	},
+	html::parse_utf8,
 	NodeData,
 	NodeRef,
 };
@@ -49,12 +56,6 @@ use std::{
 	io,
 };
 use tendril::StrTendril;
-use traits::{
-	MinifyAttribute,
-	MinifyElement,
-	MinifyNodeRef,
-	MinifyStrTendril,
-};
 
 
 
@@ -106,7 +107,7 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 
 			while idx < len {
 				// Almost always trim...
-				if &*attrs[idx].name.local != "value" {
+				if attrs[idx].name.local == a::VALUE {
 					attrs[idx].value.trim();
 				}
 

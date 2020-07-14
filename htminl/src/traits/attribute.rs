@@ -6,9 +6,9 @@ This trait exposes a few methods to the `Attribute` struct.
 
 use marked::{
 	Attribute,
-	html::t,
 	LocalName,
 };
+use crate::meta::{a, t};
 
 
 
@@ -55,8 +55,8 @@ impl MinifyAttribute for Attribute {
 	/// enough while writing that devs might choose to split them into
 	/// separate lines, etc.).
 	fn can_compact_value(&self) -> bool {
-		match &*self.name.local {
-			"class" | "style" => true,
+		match self.name.local {
+			a::CLASS | a::STYLE => true,
 			_ => false,
 		}
 	}
@@ -67,11 +67,11 @@ impl MinifyAttribute for Attribute {
 	/// element are unnecessary (and actively discouraged), so can be safely
 	/// removed from the document.
 	fn can_drop(&self, tag: &LocalName) -> bool {
-		match &*self.name.local {
+		match self.name.local {
 			// Default "type" tags. Technically `<input type="text"/>` is
 			// also a default, but because it is frequently matched in CSS
 			// rules, we'll leave those be.
-			"type" => match *tag {
+			a::TYPE => match *tag {
 				t::SCRIPT => match self.value.to_ascii_lowercase().as_str() {
 					"text/javascript"
 					| "application/javascript"
@@ -87,20 +87,20 @@ impl MinifyAttribute for Attribute {
 			// These tags serve no purpose if they have no values! There are
 			// lots of others, but these are the most common, and also the most
 			// asinine to leave blank.
-			"abbr"
-			| "alt"
-			| "class"
-			| "for"
-			| "href"
-			| "id"
-			| "name"
-			| "placeholder"
-			| "rel"
-			| "src"
-			| "srcset"
-			| "style"
-			| "target"
-			| "title" => self.value.is_empty(),
+			a::ABBR
+			| a::ALT
+			| a::CLASS
+			| a::FOR
+			| a::HREF
+			| a::ID
+			| a::NAME
+			| a::PLACEHOLDER
+			| a::REL
+			| a::SRC
+			| a::SRCSET
+			| a::STYLE
+			| a::TARGET
+			| a::TITLE => self.value.is_empty(),
 			// If this is a falsey boolean attribute, we can get rid of it.
 			_ => self.is_boolean() && self.value.eq_ignore_ascii_case("false"),
 		}
@@ -123,51 +123,37 @@ impl MinifyAttribute for Attribute {
 	/// so if they're true they don't need values, and if they're false they
 	/// don't need to be at all.
 	fn is_boolean(&self) -> bool {
-		match &*self.name.local {
-			"allowfullscreen"
-			| "allowpaymentrequest"
-			| "async"
-			| "autofocus"
-			| "autoplay"
-			| "checked"
-			| "compact"
-			| "controls"
-			| "declare"
-			| "default"
-			| "defaultchecked"
-			| "defaultmuted"
-			| "defaultselected"
-			| "defer"
-			| "disabled"
-			| "enabled"
-			| "formnovalidate"
-			| "hidden"
-			| "indeterminate"
-			| "inert"
-			| "ismap"
-			| "itemscope"
-			| "loop"
-			| "multiple"
-			| "muted"
-			| "nohref"
-			| "nomodule"
-			| "noresize"
-			| "noshade"
-			| "novalidate"
-			| "nowrap"
-			| "open"
-			| "pauseonexit"
-			| "playsinline"
-			| "readonly"
-			| "required"
-			| "reversed"
-			| "scoped"
-			| "seamless"
-			| "selected"
-			| "sortable"
-			| "truespeed"
-			| "typemustmatch"
-			| "visible" => true,
+		match self.name.local {
+			a::ALLOWFULLSCREEN
+			| a::ASYNC
+			| a::AUTOFOCUS
+			| a::AUTOPLAY
+			| a::CHECKED
+			| a::COMPACT
+			| a::CONTROLS
+			| a::DECLARE
+			| a::DEFAULT
+			| a::DEFER
+			| a::DISABLED
+			| a::FORMNOVALIDATE
+			| a::HIDDEN
+			| a::ISMAP
+			| a::ITEMSCOPE
+			| a::LOOP
+			| a::MULTIPLE
+			| a::MUTED
+			| a::NOHREF
+			| a::NOMODULE
+			| a::NORESIZE
+			| a::NOSHADE
+			| a::NOVALIDATE
+			| a::NOWRAP
+			| a::OPEN
+			| a::READONLY
+			| a::REQUIRED
+			| a::SCOPED
+			| a::SEAMLESS
+			| a::SELECTED => true,
 			_ => false,
 		}
 	}

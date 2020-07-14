@@ -6,11 +6,9 @@ This trait exposes a few methods to the `Element` struct.
 
 use marked::{
 	Element,
-	html::{
-		t,
-		TAG_META,
-	},
+	html::TAG_META,
 };
+use crate::meta::t;
 
 
 
@@ -98,7 +96,7 @@ impl MinifyElement for Element {
 	fn can_trim_whitespace(&self) -> bool {
 		match self.name.local {
 			t::NOSCRIPT | t::SCRIPT | t::STYLE | t::TITLE => true,
-			_ => &*self.name.local == "transition",
+			_ => self.name.local == *t::TRANSITION,
 		}
 	}
 }

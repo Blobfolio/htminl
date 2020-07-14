@@ -31,11 +31,13 @@
 
 pub mod meta;
 pub mod traits;
+mod serialize;
 
 
 
 use crate::{
 	meta::{a, t},
+	serialize::serialize,
 	traits::{
 		MinifyAttribute,
 		MinifyElement,
@@ -81,10 +83,7 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 
 	// Save it!
 	data.truncate(0);
-	doc.serialize(data)?;
-
-	// Final Pass: tidy up after the serializer.
-	post_minify(&mut data);
+	serialize(&mut data, &doc.document_node_ref())?;
 
 	// Return the amount saved.
 	let new_len: usize = data.len();
@@ -118,9 +117,9 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 					continue;
 				}
 
-				// Drop the value. Actual dropping is applied in post.
+				// Drop the value.
 				if attrs[idx].can_drop_value() {
-					attrs[idx].value = "*hNUL".into();
+					attrs[idx].value = StrTendril::new();
 				}
 				// Compact the value.
 				else if attrs[idx].can_compact_value() {
@@ -234,66 +233,6 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	}
 
 	Action::Continue
-}
-
-/// Post Compile Minify
-///
-/// The final minification pass runs in-place after serialization to clean up a
-/// few odds and ends.
-///
-/// It would be more efficient to handle this within the serializer, but that
-/// is outside the immediate scope of work. Maybe later…
-pub fn post_minify(data: &mut Vec<u8>) {
-	let len: usize = data.len();
-	let ptr = data.as_mut_ptr();
-	let mut del: usize = 0;
-
-	unsafe {
-		let mut idx: usize = 0;
-		while idx < len {
-			// We've made life easy on ourselves by using needles of the same
-			// length (8).
-			if idx + 8 < len {
-				// It's a path closure!
-				if &data[idx..idx+8] == b"></path>" {
-					// A quick shuffle places "/>" at the beginning of the
-					// slice (so we can just drop the rest).
-					ptr.add(idx).swap(ptr.add(idx + 2));
-					ptr.add(idx + 1).swap(ptr.add(idx + 2));
-
-					// If we've deleted stuff, we need to shift them both into
-					// place.
-					if del > 0 {
-						ptr.add(idx).swap(ptr.add(idx - del));
-						ptr.add(idx + 1).swap(ptr.add(idx + 1 - del));
-					}
-
-					// Increase the del and idx markers accordingly.
-					del += 6;
-					idx += 8;
-					continue;
-				}
-
-				// It's a null attribute value!
-				else if &data[idx..idx+8] == b"=\"*hNUL\"" {
-					del += 8;
-					idx += 8;
-					continue;
-				}
-			}
-
-			if del > 0 {
-				ptr.add(idx).swap(ptr.add(idx - del));
-			}
-
-			idx += 1;
-		}
-	}
-
-	// If we "removed" anything, truncate to drop the extra bits from memory.
-	if del > 0 {
-		data.truncate(len - del);
-	}
 }
 
 /// Unnecessary Whitespace-Only Text Node Sandwiches

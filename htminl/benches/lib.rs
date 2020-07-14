@@ -42,28 +42,11 @@ fn minify_html(c: &mut Criterion) {
 	group.finish();
 }
 
-fn post_minify(c: &mut Criterion) {
-	let mut group = c.benchmark_group("htminl::post_minify");
-
-	let path = PathBuf::from("../test-assets/half-min.html");
-	assert!(path.is_file());
-
-	group.bench_function("half-min.html", move |b| {
-		b.iter_with_setup(||
-			std::fs::read(&path).unwrap(),
-			|mut t| htminl::post_minify(&mut t)
-		)
-	});
-
-	group.finish();
-}
-
 
 
 criterion_group!(
 	benches,
 	minify_html,
 	collapse_whitespace,
-	post_minify,
 );
 criterion_main!(benches);

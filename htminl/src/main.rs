@@ -77,10 +77,6 @@ basic) optimizations for such content, but would benefit from crates like
 [minifier-rs](https://github.com/GuillaumeGomez/minifier-rs), should they
 become production-ready.
 
-* Runtime performance can be improved with the use of a more purposeful (i.e.
-custom) serialization implementation, instead of working around the one
-provided by [marked](https://github.com/dekellum/marked).
-
 * Minification is a quest! There are endless opportunities for savings that can
 be implemented into `HTMinL`; they just need to come to light!
 

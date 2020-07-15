@@ -51,12 +51,12 @@ impl MinifyStrTendril for StrTendril {
 							in_ws = true;
 							Some(b' ')
 						},
-					c2 => if in_ws {
+					c => if in_ws {
 							in_ws = false;
-							Some(c2)
+							Some(c)
 						}
 						else {
-							Some(c2)
+							Some(c)
 						},
 				})
 				.collect::<Vec<u8>>())

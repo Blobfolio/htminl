@@ -201,10 +201,18 @@ _bench-html-minifier:
 	# Node to run forever and ever without making any progress.
 	for i in $( find "{{ data_dir }}" -name "*.html" -type f ! -size 0 | sort ); do
 		html-minifier \
-			--case-sensitive \
+			--collapse-boolean-attributes \
 			--collapse-whitespace \
 			--decode-entities \
+			--remove-attribute-quotes \
 			--remove-comments \
+			--remove-empty-attributes \
+			--remove-optional-tags \
+			--remove-optional-tags \
+			--remove-redundant-attributes \
+			--remove-redundant-attributes \
+			--remove-script-type-attributes \
+			--remove-style-link-type-attributes \
 			-o "$i" \
 			"$i" >/dev/null 2>&1 || true
 	done

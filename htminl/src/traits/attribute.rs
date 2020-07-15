@@ -154,6 +154,8 @@ impl MinifyAttribute for Attribute {
 			| a::SCOPED
 			| a::SEAMLESS
 			| a::SELECTED => true,
+			// TODO: Is it worth matching other "boolean" attributes that Servo
+			// doesn't recognize, i.e. as strings?
 			_ => false,
 		}
 	}

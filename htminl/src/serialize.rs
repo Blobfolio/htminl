@@ -58,6 +58,60 @@ struct ElemInfo {
 
 
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+/// Quote Type
+pub enum QuoteKind {
+	/// No quotes.
+	None,
+	/// Double (") Quotes.
+	Double,
+	/// Single (') Quotes.
+	Single,
+	/// Nothing to quote at all!
+	Void,
+}
+
+impl Default for QuoteKind {
+	fn default() -> Self {
+		Self::Void
+	}
+}
+
+impl From<&str> for QuoteKind {
+	fn from(txt: &str) -> Self {
+		let mut none_ok: bool = true;
+		let mut double: u32 = 0;
+		let mut single: u32 = 0;
+
+		// Check each character to count the occurrences of each quote type,
+		// and check to see if there are any characters preventing unquoted
+		// presentation.
+		txt.chars().for_each(|c| match c {
+			'"' => { double += 1; },
+			'\'' => { single += 1; },
+			'&' | '`' | '=' | '<' | '>' => if none_ok { none_ok = false; },
+			c => if
+				none_ok &&
+				double == 0 &&
+				single == 0 &&
+				(c.is_whitespace() || c.is_control())
+			{
+				none_ok = false;
+			},
+		});
+
+		// There's nothing requiring quotes!
+		if none_ok && double == 0 && single == 0 { Self::None }
+		// There are fewer single quotes than double quotes, so wrapping in
+		// single will be more efficient.
+		else if 0 < single && single < double { Self::Single }
+		// Default to double quotes.
+		else { Self::Double }
+	}
+}
+
+
+
 /// Minification Serializer
 ///
 /// This is based on `html5ever`'s `HtmlSerializer` and works largely the same
@@ -109,21 +163,64 @@ impl<Wr: Write> MinifySerializer<Wr> {
 		self.stack.last_mut().unwrap()
 	}
 
-	/// Write Escaped.
+	/// Write Escaped Text Node.
 	///
-	/// Imported from `html5ever`.
-	fn write_escaped(&mut self, text: &str, attr_mode: bool) -> io::Result<()> {
+	/// HTML text requires escaping `&`, `<`, and `>`.
+	fn write_esc_text(&mut self, text: &str) -> io::Result<()> {
 		for c in text.chars() {
 			match c {
-				'&' => self.writer.write_all(b"&amp;"),
 				'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
-				'"' if attr_mode => self.writer.write_all(b"&quot;"),
-				'<' if !attr_mode => self.writer.write_all(b"&lt;"),
-				'>' if !attr_mode => self.writer.write_all(b"&gt;"),
+				'&' => self.writer.write_all(b"&amp;"),
+				'<' => self.writer.write_all(b"&lt;"),
+				'>' => self.writer.write_all(b"&gt;"),
 				c => self.writer.write_fmt(format_args!("{}", c)),
 			}?;
 		}
 		Ok(())
+	}
+
+	/// Write Escaped Attr.
+	///
+	/// HTML attributes require escaping of `&` and the wrapping character, if
+	/// any.
+	///
+	/// This method will pick the most compact quoting style, and escape
+	/// accordingly. (Empty values will have been weeded out before reaching
+	/// this point.)
+	fn write_esc_attr(&mut self, text: &str) -> io::Result<QuoteKind> {
+		match QuoteKind::from(text) {
+			QuoteKind::None => {
+				self.writer.write_all(b"=")?;
+				self.writer.write_all(text.as_bytes())?;
+				Ok(QuoteKind::None)
+			},
+			QuoteKind::Single => {
+				self.writer.write_all(b"='")?;
+				for c in text.chars() {
+					match c {
+						'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
+						'\'' => self.writer.write_all(b"&#39;"),
+						'&' => self.writer.write_all(b"&amp;"),
+						c => self.writer.write_fmt(format_args!("{}", c)),
+					}?;
+				}
+				self.writer.write_all(b"'")?;
+				Ok(QuoteKind::Single)
+			},
+			_ => {
+				self.writer.write_all(b"=\"")?;
+				for c in text.chars() {
+					match c {
+						'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
+						'"' => self.writer.write_all(b"&#34;"),
+						'&' => self.writer.write_all(b"&amp;"),
+						c => self.writer.write_fmt(format_args!("{}", c)),
+					}?;
+				}
+				self.writer.write_all(b"\"")?;
+				Ok(QuoteKind::Double)
+			}
+		}
 	}
 }
 
@@ -131,9 +228,11 @@ impl<Wr: Write> MinifySerializer<Wr> {
 impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Write Opening Tag.
 	///
-	/// This deviates from `html5ever`:
-	/// * SVG `<path>` elements are self-closed;
+	/// This differs from `html5ever`'s version in that:
+	/// * SVG `<path>` elements are self-closed with an XML slash;
 	/// * Empty attribute values are omitted;
+	/// * Attribute values that can go unquoted go unquoted;
+	/// * Attribute values that can be written more compactly with single quotes go single-quoted;
 	fn start_elem<'a, AttrIter>(&mut self, name: QualName, attrs: AttrIter) -> io::Result<()>
 	where AttrIter: Iterator<Item = AttrRef<'a>> {
 		let html_name = match name.ns {
@@ -153,6 +252,8 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 
 		self.writer.write_all(b"<")?;
 		self.writer.write_all(tagname(&name).as_bytes())?;
+
+		let mut last_quote = QuoteKind::Void;
 		for (name, value) in attrs {
 			self.writer.write_all(b" ")?;
 
@@ -176,27 +277,20 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 
 			// Only write values if they exist.
 			if ! value.is_empty() {
-				// TODO: quotes may be omitted if the value does not contain:
-				// & " ' ` = < > [any kind of whitespace]
-
-				// Will need to track the final attr quote style for path
-				// closures to ensure the /> doesn't get treated as part of the
-				// value.
-
-				// TODO: attributes without ' but with " could benefit from
-				// being enclosed in ='' instead. Will need a different escape
-				// function in such cases.
-
-				self.writer.write_all(b"=\"")?;
-				self.write_escaped(value, true)?;
-				self.writer.write_all(b"\"")?;
+				last_quote = self.write_esc_attr(value)?;
 			}
 		}
 
 		// SVG <path> tags should be self-closing in XML-style.
 		let is_svg_path: bool = name.local == local_name!("path");
 		if is_svg_path {
-			self.writer.write_all(b"/>")?;
+			// We don't want the slash mistaken for part of the value.
+			if last_quote == QuoteKind::None {
+				self.writer.write_all(b" />")?;
+			}
+			else {
+				self.writer.write_all(b"/>")?;
+			}
 		}
 		else {
 			self.writer.write_all(b">")?;
@@ -277,7 +371,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		};
 
 		if escape {
-			self.write_escaped(text, false)
+			self.write_esc_text(text)
 		} else {
 			self.writer.write_all(text.as_bytes())
 		}

@@ -77,27 +77,32 @@ impl Default for QuoteKind {
 	}
 }
 
-impl From<&str> for QuoteKind {
-	fn from(txt: &str) -> Self {
+impl From<&[u8]> for QuoteKind {
+	fn from(txt: &[u8]) -> Self {
 		let mut none_ok: bool = true;
 		let mut double: u32 = 0;
 		let mut single: u32 = 0;
 
-		// Check each character to count the occurrences of each quote type,
-		// and check to see if there are any characters preventing unquoted
-		// presentation.
-		txt.chars().for_each(|c| match c {
-			'"' => { double += 1; },
-			'\'' => { single += 1; },
-			'&' | '`' | '=' | '<' | '>' => if none_ok { none_ok = false; },
-			c => if
-				none_ok &&
-				double == 0 &&
-				single == 0 &&
-				(c.is_whitespace() || c.is_control())
-			{
-				none_ok = false;
-			},
+		// Loop through the bytes to count the quotes and see if there are any
+		// characters which might require quoting during write.
+		//
+		// While the HTML spec technically allows most anything without
+		// whitespace to be expressed without quotes, we're only going to
+		// propose nudity in cases where the whole string is made up of ASCII
+		// alphanumeric characters and/or `#,-.:?@_`.
+		txt.iter().for_each(|c| match *c {
+			b'"' => { double += 1; },
+			b'\'' => { single += 1; },
+			b'#'
+			| b','..=b'/'
+			| b':'
+			| b'?'
+			| b'@'
+			| b'_'
+			| b'0'..=b'9'
+			| b'A'..=b'Z'
+			| b'a'..=b'z' => {},
+			_ => if none_ok { none_ok = false; },
 		});
 
 		// There's nothing requiring quotes!
@@ -166,16 +171,25 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	/// Write Escaped Text Node.
 	///
 	/// HTML text requires escaping `&`, `<`, and `>`.
-	fn write_esc_text(&mut self, text: &str) -> io::Result<()> {
-		for c in text.chars() {
-			match c {
-				'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
-				'&' => self.writer.write_all(b"&amp;"),
-				'<' => self.writer.write_all(b"&lt;"),
-				'>' => self.writer.write_all(b"&gt;"),
-				c => self.writer.write_fmt(format_args!("{}", c)),
+	fn write_esc_text(&mut self, txt: &[u8]) -> io::Result<()> {
+		let mut idx: usize = 0;
+		let len: usize = txt.len();
+
+		while idx < len {
+			match txt[idx] {
+				194_u8 if idx + 1 < len && txt[idx + 1] == 160_u8 => {
+					idx += 1;
+					self.writer.write_all(b"&nbsp;")
+				},
+				b'&' => self.writer.write_all(b"&amp;"),
+				b'<' => self.writer.write_all(b"&lt;"),
+				b'>' => self.writer.write_all(b"&gt;"),
+				c => self.writer.write_all(&[c]),
 			}?;
+
+			idx += 1;
 		}
+
 		Ok(())
 	}
 
@@ -187,36 +201,54 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	/// This method will pick the most compact quoting style, and escape
 	/// accordingly. (Empty values will have been weeded out before reaching
 	/// this point.)
-	fn write_esc_attr(&mut self, text: &str) -> io::Result<QuoteKind> {
-		match QuoteKind::from(text) {
+	fn write_esc_attr(&mut self, txt: &[u8]) -> io::Result<QuoteKind> {
+		match QuoteKind::from(txt) {
 			QuoteKind::None => {
 				self.writer.write_all(b"=")?;
-				self.writer.write_all(text.as_bytes())?;
+				self.writer.write_all(txt)?;
 				Ok(QuoteKind::None)
 			},
 			QuoteKind::Single => {
 				self.writer.write_all(b"='")?;
-				for c in text.chars() {
-					match c {
-						'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
-						'\'' => self.writer.write_all(b"&#39;"),
-						'&' => self.writer.write_all(b"&amp;"),
-						c => self.writer.write_fmt(format_args!("{}", c)),
+
+				let mut idx: usize = 0;
+				let len: usize = txt.len();
+				while idx < len {
+					match txt[idx] {
+						194_u8 if idx + 1 < len && txt[idx + 1] == 160_u8 => {
+							idx += 1;
+							self.writer.write_all(b"&nbsp;")
+						},
+						b'&' => self.writer.write_all(b"&amp;"),
+						b'\'' => self.writer.write_all(b"&#39;"),
+						c => self.writer.write_all(&[c]),
 					}?;
+
+					idx += 1;
 				}
+
 				self.writer.write_all(b"'")?;
 				Ok(QuoteKind::Single)
 			},
 			_ => {
 				self.writer.write_all(b"=\"")?;
-				for c in text.chars() {
-					match c {
-						'\u{00A0}' => self.writer.write_all(b"&nbsp;"),
-						'"' => self.writer.write_all(b"&#34;"),
-						'&' => self.writer.write_all(b"&amp;"),
-						c => self.writer.write_fmt(format_args!("{}", c)),
+
+				let mut idx: usize = 0;
+				let len: usize = txt.len();
+				while idx < len {
+					match txt[idx] {
+						194_u8 if idx + 1 < len && txt[idx + 1] == 160_u8 => {
+							idx += 1;
+							self.writer.write_all(b"&nbsp;")
+						},
+						b'&' => self.writer.write_all(b"&amp;"),
+						b'"' => self.writer.write_all(b"&#34;"),
+						c => self.writer.write_all(&[c]),
 					}?;
+
+					idx += 1;
 				}
+
 				self.writer.write_all(b"\"")?;
 				Ok(QuoteKind::Double)
 			}
@@ -277,7 +309,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 
 			// Only write values if they exist.
 			if ! value.is_empty() {
-				last_quote = self.write_esc_attr(value)?;
+				last_quote = self.write_esc_attr(value.as_bytes())?;
 			}
 		}
 
@@ -357,7 +389,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Write Text.
 	///
 	/// Imported from `html5ever`.
-	fn write_text(&mut self, text: &str) -> io::Result<()> {
+	fn write_text(&mut self, txt: &str) -> io::Result<()> {
 		let escape = match self.parent().html_name {
 			Some(local_name!("style")) |
 			Some(local_name!("script")) |
@@ -371,9 +403,10 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		};
 
 		if escape {
-			self.write_esc_text(text)
-		} else {
-			self.writer.write_all(text.as_bytes())
+			self.write_esc_text(txt.as_bytes())
+		}
+		else {
+			self.writer.write_all(txt.as_bytes())
 		}
 	}
 
@@ -389,7 +422,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Write Comments.
 	///
 	/// Comments were stripped earlier, so this does nothing.
-	fn write_comment(&mut self, _text: &str) -> io::Result<()> {
+	fn write_comment(&mut self, _txt: &str) -> io::Result<()> {
 		Ok(())
 	}
 

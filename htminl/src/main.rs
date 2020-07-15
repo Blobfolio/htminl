@@ -165,7 +165,7 @@ fn main() -> Result<()> {
 	}
 	// With progress.
 	else {
-		walk.progress("HTMinL", minify_file);
+		walk.progress_crunch("HTMinL", minify_file);
 	}
 
 	Ok(())

@@ -53,7 +53,6 @@ use marked::{
 	NodeRef,
 };
 use std::{
-	borrow::Borrow,
 	cell::RefCell,
 	io,
 };
@@ -198,7 +197,7 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	if let Some(txt) = data.as_text_mut() {
 		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
 			// Special cases.
-			if txt.is_whitespace() && can_drop_if_whitespace(node.borrow()) {
+			if txt.is_whitespace() && node.can_drop_if_whitespace() {
 				return Action::Detach;
 			}
 
@@ -233,43 +232,4 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	}
 
 	Action::Continue
-}
-
-/// Unnecessary Whitespace-Only Text Node Sandwiches
-///
-/// There are a lot of common situations where formatting whitespace would
-/// never play any role in the document layout. This matches those.
-///
-/// The text node itself is not verified by this method; those checks should be
-/// done first.
-fn can_drop_if_whitespace(node: &NodeRef<'_>) -> bool {
-	// If the parent is a <pre> tag, we can trim between space between the
-	// inner code tags, otherwise all whitespace needs to stay where it is.
-	if node.parent_is_elem(t::PRE) {
-		return node.prev_sibling_is_elem(t::CODE) || node.next_sibling_is_elem(t::CODE);
-	}
-
-	// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
-	// we can drop it.
-	let mut droppable = false;
-
-	if let Some(el) = node.prev_sibling().as_ref().and_then(|n| n.as_element()) {
-		if el.can_drop_whitespace_sandwhich() {
-			droppable = true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	if let Some(el) = node.next_sibling().as_ref().and_then(|n| n.as_element()) {
-		if el.can_drop_whitespace_sandwhich() {
-			droppable = true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	droppable
 }

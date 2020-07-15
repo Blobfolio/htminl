@@ -4,6 +4,10 @@
 This trait exposes a few methods to the `NodeRef` struct.
 */
 
+use crate::{
+	meta::t,
+	traits::MinifyElement,
+};
 use marked::{
 	LocalName,
 	NodeRef,
@@ -13,20 +17,22 @@ use marked::{
 
 /// Minification-related Node(Ref) Methods.
 pub trait MinifyNodeRef {
-	/// Next Element Kind.
+	/// Unnecessary Whitespace-Only Text Node Sandwiches
 	///
-	/// Get the `LocalName` of the next sibling.
-	fn next_sibling_elem_kind(&self) -> Option<LocalName>;
+	/// There are a lot of common situations where formatting whitespace would
+	/// never play any role in the document layout. This matches those.
+	///
+	/// The text node itself is not verified by this method; those checks
+	/// should be done first.
+	fn can_drop_if_whitespace(&self) -> bool;
 
-	/// Previous Element Kind.
-	///
-	/// Get the `LocalName` of the previous sibling.
-	fn prev_sibling_elem_kind(&self) -> Option<LocalName>;
+	/// Can Drop If Sandwhiched?
+	fn can_drop_whitespace_sandwhich(&self) -> bool;
 
-	/// Parent Element Kind.
-	///
-	/// Get the `LocalName` of the parent element.
-	fn parent_elem_kind(&self) -> Option<LocalName>;
+	/// Has Sibling
+	fn has_sibling(&self) -> bool {
+		! self.is_first_child() || ! self.is_last_child()
+	}
 
 	/// Is First Child.
 	fn is_first_child(&self) -> bool;
@@ -34,76 +40,40 @@ pub trait MinifyNodeRef {
 	/// Is Last Child.
 	fn is_last_child(&self) -> bool;
 
-	#[must_use]
-	/// Sibling Element Kind
-	fn elem_kind(node: &NodeRef) -> Option<LocalName> {
-		node.as_element().map(|e| e.name.local.to_owned())
-	}
+	/// Next Sibling Is.
+	fn next_sibling_is_elem(&self, kind: LocalName) -> bool;
 
-	/// Next Element Is.
-	///
-	/// Quick method to see if the next sibling exists and is a certain kind of
-	/// element.
-	fn next_sibling_is_elem(&self, kind: LocalName) -> bool {
-		match self.next_sibling_elem_kind() {
-			Some(s) => s == kind,
-			_ => false,
-		}
-	}
+	/// Previous Sibling Is.
+	fn prev_sibling_is_elem(&self, kind: LocalName) -> bool;
 
-	/// Previous Element Is.
-	///
-	/// Quick method to see if the previous sibling exists and is a certain
-	/// kind of element.
-	fn prev_sibling_is_elem(&self, kind: LocalName) -> bool {
-		match self.prev_sibling_elem_kind() {
-			Some(s) => s == kind,
-			_ => false,
-		}
-	}
+	/// Parent Is.
+	fn parent_is_elem(&self, kind: LocalName) -> bool;
 
-	/// Sibling Element Is.
-	///
-	/// Quick method to see if either sibling is a certain kind of element.
+	/// Sibling Is.
 	fn sibling_is_elem(&self, kind: LocalName) -> bool {
-		if let Some(s) = self.prev_sibling_elem_kind() {
-			if s == kind { return true; }
-		}
-		self.next_sibling_is_elem(kind)
-	}
-
-	/// Parent Element Is.
-	///
-	/// Quick method to see if the parent exists and is a certain kind of
-	/// element.
-	fn parent_is_elem(&self, kind: LocalName) -> bool {
-		match self.parent_elem_kind() {
-			Some(s) => s == kind,
-			_ => false,
-		}
+		self.prev_sibling_is_elem(kind.clone()) || self.next_sibling_is_elem(kind)
 	}
 }
 
-impl MinifyNodeRef for NodeRef<'_> {
-	/// Next Element Kind.
-	///
-	/// Get the `LocalName` of the next sibling.
-	fn next_sibling_elem_kind(&self) -> Option<LocalName> {
-		self.next_sibling().as_ref().and_then(Self::elem_kind)
+impl<'a> MinifyNodeRef for NodeRef<'a> {
+	/// Unnecessary Whitespace-Only Text Node Sandwiches
+	fn can_drop_if_whitespace(&self) -> bool {
+		// If the parent is a <pre> tag, we can trim between space between the
+		// inner code tags, otherwise all whitespace needs to stay where it is.
+		if self.parent_is_elem(t::PRE) {
+			return self.sibling_is_elem(t::CODE);
+		}
+
+		// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
+		// we can drop it.
+		self.prev_sibling().map_or(true, |n| n.can_drop_whitespace_sandwhich()) &&
+		self.next_sibling().map_or(true, |n| n.can_drop_whitespace_sandwhich()) &&
+		self.has_sibling()
 	}
 
-	/// Previous Element Kind.
-	///
-	/// Get the `LocalName` of the previous sibling.
-	fn prev_sibling_elem_kind(&self) -> Option<LocalName> {
-		self.prev_sibling().as_ref().and_then(Self::elem_kind)
-	}
-
-	/// Parent Element Kind.
-	///
-	/// Get the `LocalName` of the parent element.
-	fn parent_elem_kind(&self) -> Option<LocalName> {
-		self.parent().as_ref().and_then(Self::elem_kind)
+	/// Can Drop If Sandwhiched?
+	fn can_drop_whitespace_sandwhich(&self) -> bool {
+		self.as_element().map_or(false, |e| e.can_drop_whitespace_sandwhich())
 	}
 
 	/// Is First Child.
@@ -114,5 +84,20 @@ impl MinifyNodeRef for NodeRef<'_> {
 	/// Is Last Child.
 	fn is_last_child(&self) -> bool {
 		self.next_sibling().is_none()
+	}
+
+	/// Next Sibling Is.
+	fn next_sibling_is_elem(&self, kind: LocalName) -> bool {
+		self.next_sibling().map_or(false, |n| n.is_elem(kind))
+	}
+
+	/// Previous Sibling Is.
+	fn prev_sibling_is_elem(&self, kind: LocalName) -> bool {
+		self.prev_sibling().map_or(false, |n| n.is_elem(kind))
+	}
+
+	/// Parent Is.
+	fn parent_is_elem(&self, kind: LocalName) -> bool {
+		self.parent().map_or(false, |n| n.is_elem(kind))
 	}
 }

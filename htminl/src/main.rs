@@ -136,6 +136,7 @@ use fyi_witcher::{
 	Witcher,
 };
 use std::{
+	ffi::OsStr,
 	fs,
 	io::{
 		self,
@@ -172,8 +173,8 @@ fn main() -> Result<()> {
 
 	// What path are we dealing with?
 	let walk = match args.pluck_opt(|x| x == "-l" || x == "--list") {
-		Some(p) => Witcher::from_file(p, r"(?i).+\.html?$"),
-		None => Witcher::new(&args.expect_args(), r"(?i).+\.html?$"),
+		Some(p) => unsafe { Witcher::from_file_custom(p, witch_filter) },
+		None => unsafe { Witcher::custom(&args.expect_args(), witch_filter) },
 	};
 
 	if walk.is_empty() {
@@ -190,6 +191,27 @@ fn main() -> Result<()> {
 	}
 
 	Ok(())
+}
+
+#[allow(clippy::needless_pass_by_value)] // Would if it were the expected signature!
+#[allow(trivial_casts)] // Trivial though it may be, the code doesn't work without it!
+/// Accept or Deny Files.
+fn witch_filter(res: Result<jwalk::DirEntry<((), ())>, jwalk::Error>) -> Option<PathBuf> {
+	res.ok()
+		.and_then(|p| if p.file_type().is_dir() { None } else { Some(p) })
+		.and_then(|p| fs::canonicalize(p.path()).ok())
+		.and_then(|p| {
+			let bytes: &[u8] = unsafe { &*(p.as_os_str() as *const OsStr as *const [u8]) };
+			let len: usize = bytes.len();
+			if
+				len > 5 &&
+				(
+					bytes[len-5..len].eq_ignore_ascii_case(b".html") ||
+					bytes[len-4..len].eq_ignore_ascii_case(b".htm")
+				)
+			{ Some(p) }
+			else { None }
+		})
 }
 
 #[allow(unused_must_use)]

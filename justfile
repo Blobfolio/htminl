@@ -20,8 +20,34 @@ rustflags   := "-C link-arg=-s"
 
 
 
+# Benchmark Rust functions.
+bench BENCH="" FILTER="":
+	#!/usr/bin/env bash
+
+	clear
+
+	if [ -z "{{ BENCH }}" ]; then
+		cargo bench \
+			-q \
+			--workspace \
+			--all-features \
+			--target x86_64-unknown-linux-gnu \
+			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+	else
+		cargo bench \
+			-q \
+			--bench "{{ BENCH }}" \
+			--workspace \
+			--all-features \
+			--target x86_64-unknown-linux-gnu \
+			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+	fi
+
+	exit 0
+
+
 # Benchmarks.
-bench CLEAN="":
+bench-bin CLEAN="":
 	#!/usr/bin/env bash
 
 	# Force a rebuild.
@@ -80,20 +106,15 @@ bench CLEAN="":
 # Build Man.
 @build-man: build
 	# Pre-clean.
-	find "{{ release_dir }}/man" -type f -delete
+	find "{{ pkg_dir1 }}/misc" -name "{{ pkg_id }}.1*" -type f -delete
 
 	# Use help2man to make a crappy MAN page.
-	help2man -o "{{ release_dir }}/man/{{ pkg_id }}.1" \
+	help2man -o "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1" \
 		-N "{{ cargo_bin }}"
 
-	# Strip some ugly out.
-	sd '{{ pkg_name }} [0-9.]+\nBlobfolio, LLC. <hello@blobfolio.com>\n' \
-		'' \
-		"{{ release_dir }}/man/{{ pkg_id }}.1"
-
 	# Gzip it and reset ownership.
-	gzip -k -f -9 "{{ release_dir }}/man/{{ pkg_id }}.1"
-	just _fix-chown "{{ release_dir }}/man"
+	gzip -k -f -9 "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1"
+	just _fix-chown "{{ pkg_dir1 }}"
 
 
 # Check Release!
@@ -119,11 +140,22 @@ bench CLEAN="":
 # Clippy.
 @clippy:
 	clear
-	cargo clippy \
+	RUSTFLAGS="{{ rustflags }}" cargo clippy \
+		--workspace \
+		--release \
+		--all-features \
+		--target x86_64-unknown-linux-gnu \
+		--target-dir "{{ cargo_dir }}"
+
+
+# Test Run.
+@run +ARGS:
+	RUSTFLAGS="{{ rustflags }}" cargo run \
 		--bin "{{ pkg_id }}" \
 		--release \
 		--target x86_64-unknown-linux-gnu \
-		--target-dir "{{ cargo_dir }}"
+		--target-dir "{{ cargo_dir }}" \
+		-- {{ ARGS }}
 
 
 # Get/Set version.
@@ -169,10 +201,18 @@ _bench-html-minifier:
 	# Node to run forever and ever without making any progress.
 	for i in $( find "{{ data_dir }}" -name "*.html" -type f ! -size 0 | sort ); do
 		html-minifier \
-			--case-sensitive \
+			--collapse-boolean-attributes \
 			--collapse-whitespace \
 			--decode-entities \
+			--remove-attribute-quotes \
 			--remove-comments \
+			--remove-empty-attributes \
+			--remove-optional-tags \
+			--remove-optional-tags \
+			--remove-redundant-attributes \
+			--remove-redundant-attributes \
+			--remove-script-type-attributes \
+			--remove-style-link-type-attributes \
 			-o "$i" \
 			"$i" >/dev/null 2>&1 || true
 	done
@@ -186,21 +226,6 @@ _bench-html-minifier:
 
 # Init dependencies.
 @_init:
-	# A hyperbuild dependency isn't working on 1.41+. Until there's a better
-	# solution, we need to downgrade.
-	rustup default 1.40.0
-	rustup component add clippy llvm-tools-preview
-
-	# And hyperbuild provides no configs, so we need to intervene.
-	git clone \
-		-b v0.0.45 \
-		--single-branch \
-		https://github.com/wilsonzlin/hyperbuild.git \
-		/tmp/hyperbuild
-	cp /share/hyperbuild.patch /tmp/hyperbuild/the.patch
-	cd /tmp/hyperbuild && patch -p1 -i the.patch
-	rm /tmp/hyperbuild/the.patch
-
 	[ ! -f "{{ justfile_directory() }}/Cargo.lock" ] || rm "{{ justfile_directory() }}/Cargo.lock"
 	cargo update
 

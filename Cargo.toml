@@ -7,12 +7,3 @@ members = [
 lto = true
 codegen-units = 1
 opt-level = 3
-debug = false
-debug-assertions = false
-incremental = false
-overflow-checks = false
-panic = "abort"
-rpath = false
-
-[patch.crates-io]
-hyperbuild = { path = "/tmp/hyperbuild" }

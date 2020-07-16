@@ -3,10 +3,10 @@
 
 `HTMinL` is a fast, in-place HTML minifier written in Rust for Linux. It
 prioritizes safety and code sanity over _ULTIMATE COMPRESSION_, so may not save
-quite as much as libraries like Node's [html-minifier](https://github.com/kangax/html-minifier), but is also much less
-likely to break shit.
+quite as much as libraries like Node's [html-minifier](https://github.com/kangax/html-minifier) — at least with all
+the plugins enabled — but is also much less likely to break shit.
 
-And it runs about 100x faster…
+And it runs about 150x faster…
 
 Speed, however, is not everything. Unlike virtually every other minification
 tool in the wild, `HTMinL` is *not* a stream processor; it builds a complete
@@ -18,6 +18,26 @@ Speaking of errors, if a document cannot be parsed — due to syntax or encoding
 errors, etc. — or if for some reason the "minified" version winds up bigger
 than the original, the original document is left as-was (i.e. no changes are
 written to it).
+
+
+
+## Use
+
+For basic use, just toss one or more file or directory paths after the command,
+like:
+```bash
+# Crunch one file.
+htminl /path/to/one.html
+
+# Recursively crunch every .htm(l) file in a directory.
+htminl /path/to
+
+# Do the same thing but with a progress bar.
+htminl -p /path/to
+
+# For a full list of options, run help:
+htminl -h
+```
 
 
 
@@ -33,8 +53,8 @@ like `<pre>` or `<textarea>`, where it generally matters.
 Speaking of "generally matters", `HTMinL` does *not* make any assumptions about
 the display type of elements, as *CSS is a Thing*. Just because a `<div>` is
 normally block doesn't mean someone hasn't styled one to render inline. While
-this will often mean an occasional extra (unnecessary) byte, styled layouts
-wont' break willynilly!
+this will often mean an occasional extra (unnecessary) byte, at least styled
+layouts wont' break willynilly!
 
 Additional savings are achieved by stripping:
 * HTML Comments;
@@ -66,6 +86,7 @@ choices that could potentially break documents, worth noting before you use it:
 * Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but other XML-ish data will likely be corrupted.
 * Child text nodes of `<html>` and `<head>` elements are removed. Text doesn't belong there anyway, but HTML is awfully forgiving; who knows what kinds of markup will be found in the wild!
 * CSS whitespace is trimmed and collapsed, which could break (very unlikely!) selectors like `input[value="Spa  ced"]`.
+* Element tags are normalized, which can break fussy `camelCaseCustomElements`. (Best to write tags like `my-custom-tag` anyway...)
 
 
 
@@ -176,8 +197,6 @@ fn main() -> Result<()> {
 fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
 		if htminl::minify_html(&mut data).is_ok() {
-			//println!("Saved {:?}\n\n", size);
-			//println!("{}", unsafe{ std::str::from_utf8_unchecked(&data) });
 			let mut out = tempfile_fast::Sponge::new_for(path).unwrap();
 			out.write_all(&data).unwrap();
 			out.commit().unwrap();

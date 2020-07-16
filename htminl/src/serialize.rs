@@ -373,7 +373,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	fn end_elem(&mut self, name: QualName) -> io::Result<()> {
 		let info = match self.stack.pop() {
 			Some(info) => info,
-			_ => panic!("no ElemInfo"),
+			None => panic!("no ElemInfo"),
 		};
 
 		// Childless tags don't need closures.

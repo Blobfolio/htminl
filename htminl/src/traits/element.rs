@@ -50,6 +50,7 @@ impl MinifyElement for Element {
 	fn can_collapse_whitespace(&self) -> bool {
 		match self.name.local {
 			t::CODE
+			| t::PLAINTEXT
 			| t::PRE
 			| t::SCRIPT
 			| t::SVG

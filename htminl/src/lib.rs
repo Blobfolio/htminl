@@ -214,12 +214,12 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 				// from the left or the right respectively.
 				if el.is_elem(t::BODY) {
 					// Drop the start.
-					if node.is_first_child() {
-						txt.trim_start();
+					if txt.starts_with(' ') && node.is_first_child() {
+						txt.pop_front(1);
 					}
 					// Drop the end.
-					if node.is_last_child() {
-						txt.trim_end();
+					if txt.ends_with(' ') && node.is_last_child() {
+						txt.pop_back(1);
 					}
 				}
 			}

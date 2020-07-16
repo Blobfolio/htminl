@@ -20,6 +20,35 @@ rustflags   := "-C link-arg=-s"
 
 
 
+# AB Comparisons.
+ab BIN="/usr/bin/htminl" REBUILD="":
+	#!/usr/bin/env bash
+
+	[ -z "{{ REBUILD }}" ] || just build
+	[ -f "{{ cargo_bin }}" ] || just build
+
+	clear
+
+	hyperfine --warmup 3 \
+		--prepare 'just _bench-reset;' \
+		--runs 20 \
+		'{{ BIN }} {{ data_dir }}' \
+		'{{ cargo_bin }} {{ data_dir }}'
+
+	# Let's check compression too.
+	START_SIZE=$( du -scb "{{ justfile_directory() }}/test-assets" | head -n 1 | cut -f1 )
+
+	just _bench-reset
+	{{ BIN }} {{ data_dir }}
+	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
+	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ BIN }}"
+
+	just _bench-reset
+	{{ cargo_bin }} {{ data_dir }}
+	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
+	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ cargo_bin }}"
+
+
 # Benchmark Rust functions.
 bench BENCH="" FILTER="":
 	#!/usr/bin/env bash

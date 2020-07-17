@@ -20,6 +20,35 @@ rustflags   := "-C link-arg=-s"
 
 
 
+# AB Comparisons.
+ab BIN="/usr/bin/htminl" REBUILD="":
+	#!/usr/bin/env bash
+
+	[ -z "{{ REBUILD }}" ] || just build
+	[ -f "{{ cargo_bin }}" ] || just build
+
+	clear
+
+	hyperfine --warmup 3 \
+		--prepare 'just _bench-reset;' \
+		--runs 20 \
+		'{{ BIN }} {{ data_dir }}' \
+		'{{ cargo_bin }} {{ data_dir }}' 2>/dev/null
+
+	# Let's check compression too.
+	START_SIZE=$( du -scb "{{ justfile_directory() }}/test-assets" | head -n 1 | cut -f1 )
+
+	just _bench-reset
+	{{ BIN }} {{ data_dir }}
+	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
+	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ BIN }}"
+
+	just _bench-reset
+	{{ cargo_bin }} {{ data_dir }}
+	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
+	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ cargo_bin }}"
+
+
 # Benchmark Rust functions.
 bench BENCH="" FILTER="":
 	#!/usr/bin/env bash
@@ -88,7 +117,7 @@ bench-bin CLEAN="":
 
 
 # Build Debian package!
-@build-deb: build-man
+@build-deb: build-man build
 	# cargo-deb doesn't support target_dir flags yet.
 	[ ! -d "{{ justfile_directory() }}/target" ] || rm -rf "{{ justfile_directory() }}/target"
 	mv "{{ cargo_dir }}" "{{ justfile_directory() }}/target"
@@ -104,9 +133,17 @@ bench-bin CLEAN="":
 
 
 # Build Man.
-@build-man: build
+@build-man:
 	# Pre-clean.
 	find "{{ pkg_dir1 }}/misc" -name "{{ pkg_id }}.1*" -type f -delete
+
+	# Build a quickie version with the unsexy help so help2man can parse it.
+	RUSTFLAGS="{{ rustflags }}" cargo build \
+		--bin "{{ pkg_id }}" \
+		--release \
+		--all-features \
+		--target x86_64-unknown-linux-gnu \
+		--target-dir "{{ cargo_dir }}"
 
 	# Use help2man to make a crappy MAN page.
 	help2man -o "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1" \

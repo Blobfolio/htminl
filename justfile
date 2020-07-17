@@ -117,7 +117,7 @@ bench-bin CLEAN="":
 
 
 # Build Debian package!
-@build-deb: build-man
+@build-deb: build-man build
 	# cargo-deb doesn't support target_dir flags yet.
 	[ ! -d "{{ justfile_directory() }}/target" ] || rm -rf "{{ justfile_directory() }}/target"
 	mv "{{ cargo_dir }}" "{{ justfile_directory() }}/target"
@@ -133,9 +133,17 @@ bench-bin CLEAN="":
 
 
 # Build Man.
-@build-man: build
+@build-man:
 	# Pre-clean.
 	find "{{ pkg_dir1 }}/misc" -name "{{ pkg_id }}.1*" -type f -delete
+
+	# Build a quickie version with the unsexy help so help2man can parse it.
+	RUSTFLAGS="{{ rustflags }}" cargo build \
+		--bin "{{ pkg_id }}" \
+		--release \
+		--all-features \
+		--target x86_64-unknown-linux-gnu \
+		--target-dir "{{ cargo_dir }}"
 
 	# Use help2man to make a crappy MAN page.
 	help2man -o "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1" \

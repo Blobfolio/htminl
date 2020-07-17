@@ -42,3 +42,7 @@ criterion = "*"
 [[bench]]
 name = "lib"
 harness = false
+
+[features]
+default = []
+man = []

@@ -24,7 +24,6 @@ assets = [
 html5ever = "*"
 jwalk = "*"
 lazy_static = "1.4.*"
-log = "0.4.*"
 marked = "0.2.*"
 tempfile-fast = "0.3.*"
 tendril = "0.4.*"

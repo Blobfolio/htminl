@@ -16,7 +16,6 @@ use html5ever::{
 		TraversalScope,
 	},
 };
-use log::warn;
 use marked::{
 	LocalName,
 	QualName,
@@ -125,21 +124,6 @@ impl From<&[u8]> for QuoteKind {
 struct MinifySerializer<Wr: Write> {
 	pub writer: Wr,
 	stack: Vec<ElemInfo>,
-}
-
-/// Retrieve Tag Name.
-///
-/// Imported from `html5ever`.
-fn tagname(name: &QualName) -> LocalName {
-	match name.ns {
-		ns!(html) | ns!(mathml) | ns!(svg) => (),
-		ref ns => {
-			// FIXME(#122)
-			warn!("node with weird namespace {:?}", ns);
-		},
-	}
-
-	name.local.clone()
 }
 
 #[allow(clippy::default_trait_access)]
@@ -283,7 +267,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		}
 
 		self.writer.write_all(b"<")?;
-		self.writer.write_all(tagname(&name).as_bytes())?;
+		self.writer.write_all(name.local.as_bytes())?;
 
 		let mut last_quote = QuoteKind::Void;
 		for (name, value) in attrs {
@@ -298,9 +282,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 					}
 				},
 				ns!(xlink) => self.writer.write_all(b"xlink:")?,
-				ref ns => {
-					// FIXME(#122)
-					warn!("attr with weird namespace {:?}", ns);
+				_ => {
 					self.writer.write_all(b"unknown_namespace:")?;
 				},
 			}
@@ -382,7 +364,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		}
 
 		self.writer.write_all(b"</")?;
-		self.writer.write_all(tagname(&name).as_bytes())?;
+		self.writer.write_all(name.local.as_bytes())?;
 		self.writer.write_all(b">")
 	}
 

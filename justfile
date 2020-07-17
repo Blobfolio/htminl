@@ -33,7 +33,7 @@ ab BIN="/usr/bin/htminl" REBUILD="":
 		--prepare 'just _bench-reset;' \
 		--runs 20 \
 		'{{ BIN }} {{ data_dir }}' \
-		'{{ cargo_bin }} {{ data_dir }}'
+		'{{ cargo_bin }} {{ data_dir }}' 2>/dev/null
 
 	# Let's check compression too.
 	START_SIZE=$( du -scb "{{ justfile_directory() }}/test-assets" | head -n 1 | cut -f1 )

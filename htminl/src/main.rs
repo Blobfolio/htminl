@@ -133,6 +133,7 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 use fyi_menu::ArgList;
+use fyi_msg::MsgKind;
 use fyi_witcher::{
 	Result,
 	Witcher,
@@ -158,7 +159,7 @@ const FLAG_VERSION: u8  = 0b0100;
 
 
 
-fn main() -> Result<()> {
+fn main() -> std::result::Result<(), ()> {
 	let mut args = ArgList::default();
 	args.expect();
 
@@ -180,7 +181,8 @@ fn main() -> Result<()> {
 	};
 
 	if walk.is_empty() {
-		return Err("No HTML files were found.".to_string());
+		MsgKind::Error.as_msg("No encodable files were found.").eprintln();
+		return Err(());
 	}
 
 	// Without progress.

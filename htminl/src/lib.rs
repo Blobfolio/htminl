@@ -31,21 +31,18 @@
 
 
 
+pub mod attribute;
+pub mod element;
 pub mod meta;
-pub mod traits;
+pub mod noderef;
 mod serialize;
+pub mod strtendril;
 
 
 
 use crate::{
 	meta::{a, t},
 	serialize::serialize,
-	traits::{
-		MinifyAttribute,
-		MinifyElement,
-		MinifyNodeRef,
-		MinifyStrTendril,
-	},
 };
 use marked::{
 	Element,
@@ -108,23 +105,23 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 			while idx < len {
 				// Almost always trim...
 				if attrs[idx].name.local != a::VALUE {
-					attrs[idx].value.trim();
+					strtendril::trim(&mut attrs[idx].value);
 				}
 
 				// Drop the whole thing.
-				if attrs[idx].can_drop(&name.local) {
+				if attribute::can_drop(&attrs[idx], &name.local) {
 					attrs.remove(idx);
 					len -= 1;
 					continue;
 				}
 
 				// Drop the value.
-				if attrs[idx].can_drop_value() {
+				if attribute::can_drop_value(&attrs[idx]) {
 					attrs[idx].value = StrTendril::new();
 				}
 				// Compact the value.
-				else if attrs[idx].can_compact_value() {
-					attrs[idx].value.collapse_whitespace();
+				else if attribute::can_compact_value(&attrs[idx]) {
+					strtendril::collapse_whitespace(&mut attrs[idx].value);
 				}
 
 				idx += 1;
@@ -135,7 +132,7 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 		NodeData::Text(_) => {
 			// We never need text nodes in the `<head>` or `<html>`.
 			if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
-				if el.can_drop_text_nodes() {
+				if element::can_drop_text_nodes(el) {
 					return Action::Detach;
 				}
 			}
@@ -196,31 +193,32 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
 ///
 /// See `collapse_whitespace` for more details.
 pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
+	use std::borrow::BorrowMut;
 	if let Some(txt) = data.as_text_mut() {
 		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
 			// Special cases.
-			if txt.is_whitespace() && node.can_drop_if_whitespace() {
+			if strtendril::is_whitespace(txt) && noderef::can_drop_if_whitespace(&node) {
 				return Action::Detach;
 			}
 
 			// Can we trim the text?
-			if el.can_trim_whitespace() {
-				txt.trim();
+			if element::can_trim_whitespace(el) {
+				strtendril::trim(txt.borrow_mut());
 			}
 
 			// How about collapse it?
-			if el.can_collapse_whitespace() {
-				txt.collapse_whitespace();
+			if element::can_collapse_whitespace(el) {
+				strtendril::collapse_whitespace(txt.borrow_mut());
 
 				// If the body starts or ends with a text node, we can trim it
 				// from the left or the right respectively.
 				if el.is_elem(t::BODY) {
 					// Drop the start.
-					if txt.starts_with(' ') && node.is_first_child() {
+					if txt.starts_with(' ') && noderef::is_first_child(&node) {
 						txt.pop_front(1);
 					}
 					// Drop the end.
-					if txt.ends_with(' ') && node.is_last_child() {
+					if txt.ends_with(' ') && noderef::is_last_child(&node) {
 						txt.pop_back(1);
 					}
 				}

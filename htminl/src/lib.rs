@@ -52,6 +52,7 @@ use marked::{
 	NodeRef,
 };
 use std::{
+	borrow::BorrowMut,
 	cell::RefCell,
 	io,
 };
@@ -193,7 +194,6 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
 ///
 /// See `collapse_whitespace` for more details.
 pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
-	use std::borrow::BorrowMut;
 	if let Some(txt) = data.as_text_mut() {
 		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
 			// Special cases.

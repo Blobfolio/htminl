@@ -224,12 +224,8 @@ fn witch_filter(res: Result<jwalk::DirEntry<((), ())>, jwalk::Error>) -> Option<
 			if
 				len > 5 &&
 				(
-					(
-						bytes[len-5] == b'.' && bytes[len-4..len].eq_ignore_ascii_case(b"html")
-					) ||
-					(
-						bytes[len-4] == b'.' && bytes[len-3..len].eq_ignore_ascii_case(b"htm")
-					)
+					bytes[len-5..len].eq_ignore_ascii_case(b".html") ||
+					bytes[len-4..len].eq_ignore_ascii_case(b".htm")
 				)
 			{ Some(p) }
 			else { None }

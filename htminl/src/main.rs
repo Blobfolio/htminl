@@ -125,12 +125,15 @@ be implemented into `HTMinL`; they just need to come to light!
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_sign_loss)]
-#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::missing_errors_doc)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::unknown_clippy_lints)]
 
 
 
 use fyi_menu::ArgList;
+use fyi_msg::MsgKind;
 use fyi_witcher::{
 	Result,
 	Witcher,
@@ -143,6 +146,7 @@ use std::{
 		Write,
 	},
 	path::PathBuf,
+	process,
 };
 
 
@@ -156,41 +160,55 @@ const FLAG_VERSION: u8  = 0b0100;
 
 
 
-fn main() -> Result<()> {
+#[allow(clippy::if_not_else)] // Code is confusing otherwise.
+fn main() {
 	let mut args = ArgList::default();
 	args.expect();
 
-	let flags = _flags(&mut args);
-	// Help or Version?
+	let mut flags: u8 = 0;
+	args.pluck_flags(
+		&mut flags,
+		&[
+			"-h", "--help",
+			"-p", "--progress",
+			"-V", "--version",
+		],
+		&[
+			FLAG_HELP, FLAG_HELP,
+			FLAG_PROGRESS, FLAG_PROGRESS,
+			FLAG_VERSION, FLAG_VERSION,
+		],
+	);
+
+	// Help.
 	if 0 != flags & FLAG_HELP {
 		_help();
-		return Ok(());
 	}
+	// Version.
 	else if 0 != flags & FLAG_VERSION {
 		_version();
-		return Ok(());
 	}
-
-	// What path are we dealing with?
-	let walk = match args.pluck_opt(|x| x == "-l" || x == "--list") {
-		Some(p) => unsafe { Witcher::from_file_custom(p, witch_filter) },
-		None => unsafe { Witcher::custom(&args.expect_args(), witch_filter) },
-	};
-
-	if walk.is_empty() {
-		return Err("No HTML files were found.".to_string());
-	}
-
-	// Without progress.
-	if 0 == flags & FLAG_PROGRESS {
-		walk.process(minify_file);
-	}
-	// With progress.
+	// Actual stuff!
 	else {
-		walk.progress_crunch("HTMinL", minify_file);
-	}
+		// What path are we dealing with?
+		let walk = match args.pluck_opt(|x| x == "-l" || x == "--list") {
+			Some(p) => unsafe { Witcher::from_file_custom(p, witch_filter) },
+			None => unsafe { Witcher::custom(&args.expect_args(), witch_filter) },
+		};
 
-	Ok(())
+		if walk.is_empty() {
+			MsgKind::Error.as_msg("No encodable files were found.").eprintln();
+			process::exit(1);
+		}
+		// Without progress.
+		else if 0 == flags & FLAG_PROGRESS {
+			walk.process(minify_file);
+		}
+		// With progress.
+		else {
+			walk.progress_crunch("HTMinL", minify_file);
+		}
+	}
 }
 
 #[allow(clippy::needless_pass_by_value)] // Would if it were the expected signature!
@@ -226,61 +244,12 @@ fn minify_file(path: &PathBuf) {
 	}
 }
 
-/// Fetch Flags.
-fn _flags(args: &mut ArgList) -> u8 {
-	let len: usize = args.len();
-	if 0 == len { 0 }
-	else {
-		let mut flags: u8 = 0;
-		let mut del = 0;
-		let raw = args.as_mut_vec();
-
-		// This is basically what `Vec.retain()` does, except we're hitting
-		// multiple patterns at once and sending back the results.
-		let ptr = raw.as_mut_ptr();
-		unsafe {
-			let mut idx: usize = 0;
-			while idx < len {
-				match (*ptr.add(idx)).as_str() {
-					"-h" | "--help" => {
-						flags |= FLAG_HELP;
-						del += 1;
-					},
-					"-p" | "--progress" => {
-						flags |= FLAG_PROGRESS;
-						del += 1;
-					},
-					"-V" | "--version" => {
-						flags |= FLAG_VERSION;
-						del += 1;
-					},
-					_ => if del > 0 {
-						ptr.add(idx).swap(ptr.add(idx - del));
-					}
-				}
-
-				idx += 1;
-			}
-		}
-
-		// Did we find anything? If so, run `truncate()` to free the memory
-		// and return the flags.
-		if del > 0 {
-			raw.truncate(len - del);
-			flags
-		}
-		else { 0 }
-	}
-}
-
 #[cfg(not(feature = "man"))]
 #[cold]
 /// Print Help.
 fn _help() {
-	io::stdout().write_all({
-		let mut s = String::with_capacity(1024);
-		s.push_str(&format!(
-			r"
+	io::stdout().write_fmt(format_args!(
+		r"
      __,---.__
   ,-'         `-.__
 &/           `._\ _\
@@ -288,15 +257,12 @@ fn _help() {
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
-",
-			"\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v",
-			env!("CARGO_PKG_VERSION"),
-			"\x1b[0m"
-		));
-		s.push_str(include_str!("../misc/help.txt"));
-		s.push('\n');
-		s
-	}.as_bytes()).unwrap();
+{}\n",
+		"\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v",
+		env!("CARGO_PKG_VERSION"),
+		"\x1b[0m",
+		include_str!("../misc/help.txt")
+	)).unwrap();
 }
 
 #[cfg(feature = "man")]
@@ -306,27 +272,23 @@ fn _help() {
 /// This is a stripped-down version of the help screen made specifically for
 /// `help2man`, which gets run during the Debian package release build task.
 fn _help() {
-	io::stdout().write_all({
-		let mut s = String::with_capacity(1024);
-		s.push_str("HTMinL ");
-		s.push_str(env!("CARGO_PKG_VERSION"));
-		s.push('\n');
-		s.push_str(env!("CARGO_PKG_DESCRIPTION"));
-		s.push('\n');
-		s.push('\n');
-		s.push_str(include_str!("../misc/help.txt"));
-		s.push('\n');
-		s
-	}.as_bytes()).unwrap();
+	io::stdout().write_all(&[
+		b"HTMinL ",
+		env!("CARGO_PKG_VERSION").as_bytes(),
+		b"\n",
+		env!("CARGO_PKG_DESCRIPTION").as_bytes(),
+		b"\n\n",
+		include_bytes!("../misc/help.txt"),
+		b"\n",
+	].concat()).unwrap();
 }
 
 #[cold]
 /// Print version and exit.
 fn _version() {
-	io::stdout().write_all({
-		let mut s = String::from("HTMinL ");
-		s.push_str(env!("CARGO_PKG_VERSION"));
-		s.push('\n');
-		s
-	}.as_bytes()).unwrap();
+	io::stdout().write_all(&[
+		b"HTMinL ",
+		env!("CARGO_PKG_VERSION").as_bytes(),
+		b"\n"
+	].concat()).unwrap();
 }

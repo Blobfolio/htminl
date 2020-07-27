@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.2.1"
+version = "0.2.2"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -29,6 +29,10 @@ tempfile-fast = "0.3.*"
 tendril = "0.4.*"
 
 [dependencies.fyi_menu]
+git = "https://github.com/Blobfolio/fyi.git"
+branch = "master"
+
+[dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
 

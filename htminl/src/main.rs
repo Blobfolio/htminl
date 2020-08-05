@@ -132,6 +132,11 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
+use fyi_msg::MsgKind;
+use fyi_progress::{
+	Progress,
+	ProgressParallelism,
+};
 use fyi_witcher::{
 	self,
 	Witcher,
@@ -182,23 +187,23 @@ fn main() {
 	}
 
 	// What path are we dealing with?
-	let walk = match list {
-		Some(p) => Witcher::read_paths_from_file(p),
-		None => Witcher::from(args),
-	}
-		.filter(witch_filter)
-		.collect::<Vec<PathBuf>>();
+	let walker = Progress::<PathBuf>::new(
+		match list {
+			Some(p) => Witcher::read_paths_from_file(p),
+			None => Witcher::from(args),
+		}
+			.filter(witch_filter)
+			.collect::<Vec<PathBuf>>(),
+		MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}")
+	).with_threads(ProgressParallelism::Heavy);
 
-	if walk.is_empty() {
-		fyi_menu::die(b"No encodable files were found.");
-	}
 	// With progress.
-	else if progress {
-		fyi_witcher::progress_crunch(&walk, "HTMinL", minify_file);
+	if progress {
+		fyi_witcher::progress_crunch(walker, minify_file);
 	}
 	// Without progress.
 	else {
-		fyi_witcher::process(&walk, minify_file);
+		walker.silent(minify_file);
 	}
 }
 

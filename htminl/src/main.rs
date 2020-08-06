@@ -195,7 +195,8 @@ fn main() {
 			.filter(witch_filter)
 			.collect::<Vec<PathBuf>>(),
 		MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}")
-	).with_threads(ProgressParallelism::Heavy);
+	)
+		.with_threads(ProgressParallelism::Heavy);
 
 	// With progress.
 	if progress {

@@ -255,6 +255,39 @@ _bench-html-minifier:
 	done
 
 
+# Download Top 500 Sites.
+_bench-500:
+	#!/usr/bin/env bash
+	[ -d "/tmp/500" ] || mkdir "/tmp/500"
+
+	if [ ! -f "/tmp/500/list.csv" ]; then
+		wget -q -O "/tmp/500/list.csv" "https://moz.com/top-500/download/?table=top500Domains"
+		sed -i 1d "/tmp/500/list.csv"
+	fi
+
+	if [ ! -d "/tmp/500/raw" ]; then
+		fyi info "Gathering Top 500 Sites."
+		mkdir "/tmp/500/raw"
+
+		# Fake a user agent.
+		_user="\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36\""
+
+		# Download everything.
+		cat "/tmp/500/list.csv" | rargs \
+			-p '^"(?P<id>\d+)","(?P<url>[^"]+)"' \
+			-j 50 \
+			wget -q -T5 -t1 -U "$_user" -O "/tmp/500/raw/{url}.html" "https://{url}"
+
+		# Kill dead files.
+		find /tmp/500 -type f -size 0 -delete
+	fi
+
+	[ ! -d "/tmp/500/test" ] || rm -rf "/tmp/500/test"
+	cp -aR /tmp/500/raw /tmp/500/test
+
+	exit 0
+
+
 # Reset benchmarks.
 @_bench-reset:
 	[ ! -d "{{ data_dir }}" ] || rm -rf "{{ data_dir }}"

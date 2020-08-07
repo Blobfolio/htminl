@@ -178,25 +178,25 @@ fn main() {
 	}
 
 	// What path(s) are we dealing with?
-	let walker = Progress::<PathBuf>::new(
+	let walker = Progress::<PathBuf>::from(
 		if list.is_empty() {
 			if idx < args.len() { Witcher::from(&args[idx..]) }
 			else { Witcher::default() }
 		}
 		else { Witcher::read_paths_from_file(list) }
 			.filter(witch_filter)
-			.collect::<Vec<PathBuf>>(),
-		MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}")
-	);
+			.collect::<Vec<PathBuf>>()
+	)
+		.with_title(
+			MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}").to_string()
+		);
 
 	// With progress.
 	if progress {
 		fyi_witcher::progress_crunch(walker, minify_file);
 	}
 	// Without progress.
-	else {
-		walker.silent(minify_file);
-	}
+	else { walker.silent(minify_file); }
 }
 
 #[allow(trivial_casts)] // Trivial though it may be, the code doesn't work without it!

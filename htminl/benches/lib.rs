@@ -7,7 +7,7 @@ use criterion::{
 	criterion_group,
 	criterion_main,
 };
-use htminl::traits::MinifyStrTendril;
+use htminl::strtendril;
 use std::path::PathBuf;
 use tendril::StrTendril;
 
@@ -19,7 +19,7 @@ fn collapse_whitespace(c: &mut Criterion) {
 	group.bench_function(format!("{:?}", "My name is 	Jeffrey.\n\nI like flowers!     "), move |b| {
 		b.iter_with_setup(||
 			StrTendril::from("My name is 	Jeffrey.\n\nI like flowers!     "),
-			|mut st| st.collapse_whitespace()
+			|mut st| strtendril::collapse_whitespace(&mut st)
 		)
 	});
 

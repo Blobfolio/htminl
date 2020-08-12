@@ -133,13 +133,8 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 use fyi_msg::MsgKind;
-use fyi_progress::Progress;
-use fyi_witcher::{
-	self,
-	Witcher,
-};
+use fyi_witcher::Witcher;
 use std::{
-	ffi::OsStr,
 	fs,
 	io::{
 		self,
@@ -178,36 +173,18 @@ fn main() {
 	}
 
 	// What path(s) are we dealing with?
-	let walker = Progress::<PathBuf>::from(
+	let witched =
 		if list.is_empty() {
 			if idx < args.len() { Witcher::from(&args[idx..]) }
 			else { Witcher::default() }
 		}
-		else { Witcher::read_paths_from_file(list) }
-			.filter(witch_filter)
-			.collect::<Vec<PathBuf>>()
-	)
-		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"));
+		else { Witcher::from_list(list) }
+			.filter_into_progress(r"(?i).+\.html?$")
+			.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
+			.with_display(progress);
 
-	// With progress.
-	if progress {
-		fyi_witcher::progress_crunch(walker, minify_file);
-	}
-	// Without progress.
-	else { walker.silent(minify_file); }
-}
-
-#[allow(trivial_casts)] // Trivial though it may be, the code doesn't work without it!
-/// Accept or Deny Files.
-fn witch_filter(path: &PathBuf) -> bool {
-	let bytes: &[u8] = unsafe { &*(path.as_os_str() as *const OsStr as *const [u8]) };
-	let len: usize = bytes.len();
-
-	len > 5 &&
-	(
-		bytes[len-5..len].eq_ignore_ascii_case(b".html") ||
-		bytes[len-4..len].eq_ignore_ascii_case(b".htm")
-	)
+	witched.crunch(minify_file);
+	witched.print_summary("file", "files");
 }
 
 #[allow(unused_must_use)]

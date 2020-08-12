@@ -173,18 +173,15 @@ fn main() {
 	}
 
 	// What path(s) are we dealing with?
-	let witched =
-		if list.is_empty() {
-			if idx < args.len() { Witcher::from(&args[idx..]) }
-			else { Witcher::default() }
-		}
-		else { Witcher::from_list(list) }
-			.filter_into_progress(r"(?i).+\.html?$")
-			.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
-			.with_display(progress);
-
-	witched.crunch(minify_file);
-	witched.print_summary("file", "files");
+	if list.is_empty() {
+		if idx < args.len() { Witcher::from(&args[idx..]) }
+		else { Witcher::default() }
+	}
+	else { Witcher::from_list(list) }
+		.filter_into_progress(r"(?i).+\.html?$")
+		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
+		.with_display(progress)
+		.crunch(minify_file);
 }
 
 #[allow(unused_must_use)]

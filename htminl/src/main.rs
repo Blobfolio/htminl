@@ -179,8 +179,8 @@ fn main() {
 	}
 	else { Witcher::from_list(list) }
 		.filter_into_progress(r"(?i).+\.html?$")
-		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
 		.with_display(progress)
+		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
 		.crunch(minify_file);
 }
 

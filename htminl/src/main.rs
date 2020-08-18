@@ -132,19 +132,17 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
+use fyi_menu::Argue;
 use fyi_msg::MsgKind;
-use fyi_progress::Progress;
 use fyi_witcher::{
-	self,
 	Witcher,
+	WITCHING_DIFF,
+	WITCHING_QUIET,
+	WITCHING_SUMMARIZE,
 };
 use std::{
-	ffi::OsStr,
 	fs,
-	io::{
-		self,
-		Write,
-	},
+	io::Write,
 	path::PathBuf,
 };
 
@@ -152,62 +150,27 @@ use std::{
 
 #[allow(clippy::if_not_else)] // Code is confusing otherwise.
 fn main() {
-	let args = fyi_menu::parse_env_args(fyi_menu::FLAG_ALL);
-	let mut progress: bool = false;
-	let mut list: &str = "";
+	// Parse CLI arguments.
+	let args = Argue::new()
+		.with_any()
+		.with_version(versioner)
+		.with_help(helper)
+		.with_list();
 
-	// Run through the arguments to see what we've got going on!
-	let mut idx: usize = 0;
-	let len: usize = args.len();
-	while idx < len {
-		match args[idx].as_str() {
-			"-h" | "--help" => { return _help(); },
-			"-V" | "--version" => { return _version(); },
-			"-p" | "--progress" => {
-				progress = true;
-				idx += 1;
-			},
-			"-l" | "--list" =>
-				if idx + 1 < len {
-					list = &args[idx + 1];
-					idx += 2;
-				}
-				else { idx += 1 },
-			_ => { break; }
-		}
+	let mut flags: u8 = WITCHING_QUIET | WITCHING_SUMMARIZE | WITCHING_DIFF;
+	if args.switch2("-p", "--progress") {
+		flags &= ! WITCHING_QUIET;
 	}
 
-	// What path(s) are we dealing with?
-	let walker = Progress::<PathBuf>::from(
-		if list.is_empty() {
-			if idx < args.len() { Witcher::from(&args[idx..]) }
-			else { Witcher::default() }
-		}
-		else { Witcher::read_paths_from_file(list) }
-			.filter(witch_filter)
-			.collect::<Vec<PathBuf>>()
-	)
-		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"));
-
-	// With progress.
-	if progress {
-		fyi_witcher::progress_crunch(walker, minify_file);
-	}
-	// Without progress.
-	else { walker.silent(minify_file); }
-}
-
-#[allow(trivial_casts)] // Trivial though it may be, the code doesn't work without it!
-/// Accept or Deny Files.
-fn witch_filter(path: &PathBuf) -> bool {
-	let bytes: &[u8] = unsafe { &*(path.as_os_str() as *const OsStr as *const [u8]) };
-	let len: usize = bytes.len();
-
-	len > 5 &&
-	(
-		bytes[len-5..len].eq_ignore_ascii_case(b".html") ||
-		bytes[len-4..len].eq_ignore_ascii_case(b".htm")
-	)
+	// Put it all together!
+	Witcher::default()
+		.with_ext2(b".html", b".htm")
+		.with_paths(args.args())
+		.into_witching()
+		.with_flags(flags)
+		.with_labels("document", "documents")
+		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
+		.run(minify_file);
 }
 
 #[allow(unused_must_use)]
@@ -225,8 +188,8 @@ fn minify_file(path: &PathBuf) {
 #[cfg(not(feature = "man"))]
 #[cold]
 /// Print Help.
-fn _help() {
-	io::stdout().write_fmt(format_args!(
+fn helper(_: Option<&str>) {
+	std::io::stdout().write_fmt(format_args!(
 		r"
      __,---.__
   ,-'         `-.__
@@ -249,24 +212,29 @@ fn _help() {
 ///
 /// This is a stripped-down version of the help screen made specifically for
 /// `help2man`, which gets run during the Debian package release build task.
-fn _help() {
-	io::stdout().write_all(&[
-		b"HTMinL ",
-		env!("CARGO_PKG_VERSION").as_bytes(),
-		b"\n",
-		env!("CARGO_PKG_DESCRIPTION").as_bytes(),
-		b"\n\n",
-		include_bytes!("../misc/help.txt"),
-		b"\n",
-	].concat()).unwrap();
+fn helper(_: Option<&str>) {
+	let writer = std::io::stdout();
+	let mut handle = writer.lock();
+
+	handle.write_all(b"HTMinL ").unwrap();
+	handle.write_all(env!("CARGO_PKG_VERSION").as_bytes()).unwrap();
+	handle.write_all(b"\n").unwrap();
+	handle.write_all(env!("CARGO_PKG_DESCRIPTION").as_bytes()).unwrap();
+	handle.write_all(b"\n\n").unwrap();
+	handle.write_all(include_bytes!("../misc/help.txt")).unwrap();
+	handle.write_all(b"\n").unwrap();
+
+	handle.flush().unwrap();
 }
 
-#[cold]
-/// Print version and exit.
-fn _version() {
-	io::stdout().write_all(&[
-		b"HTMinL ",
-		env!("CARGO_PKG_VERSION").as_bytes(),
-		b"\n"
-	].concat()).unwrap();
+/// Print Version.
+fn versioner() {
+	let writer = std::io::stdout();
+	let mut handle = writer.lock();
+
+	handle.write_all(b"HTMinL ").unwrap();
+	handle.write_all(env!("CARGO_PKG_VERSION").as_bytes()).unwrap();
+	handle.write_all(b"\n").unwrap();
+
+	handle.flush().unwrap();
 }

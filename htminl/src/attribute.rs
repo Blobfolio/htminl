@@ -19,7 +19,7 @@ use crate::meta::{a, t};
 /// types of attributes like classes and styles (which can get long
 /// enough while writing that devs might choose to split them into
 /// separate lines, etc.).
-pub fn can_compact_value(attr: &Attribute) -> bool {
+pub const fn can_compact_value(attr: &Attribute) -> bool {
 	match attr.name.local {
 		a::CLASS | a::STYLE => true,
 		_ => false,
@@ -87,7 +87,7 @@ pub fn can_drop_value(attr: &Attribute) -> bool {
 /// These attributes either are or aren't. Their existence implies "true",
 /// so if they're true they don't need values, and if they're false they
 /// don't need to be at all.
-pub fn is_boolean(attr: &Attribute) -> bool {
+pub const fn is_boolean(attr: &Attribute) -> bool {
 	match attr.name.local {
 		a::ALLOWFULLSCREEN
 		| a::ASYNC

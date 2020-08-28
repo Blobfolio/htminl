@@ -30,11 +30,12 @@ use std::{
 
 
 
+#[allow(clippy::redundant_pub_crate)] // It isn't exported beyond the crate.
 /// Serialize W/ Serializer
 ///
 /// This is a convenience method for serializing a node with our particular
 /// serializer implementation.
-pub fn serialize<Wr, T>(writer: Wr, node: &T) -> io::Result<()>
+pub(crate) fn serialize<Wr, T>(writer: Wr, node: &T) -> io::Result<()>
 where
 	Wr: Write,
 	T: Serialize,
@@ -59,7 +60,7 @@ struct ElemInfo {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 /// Quote Type
-pub enum QuoteKind {
+enum QuoteKind {
 	/// No quotes.
 	None,
 	/// Double (") Quotes.
@@ -122,7 +123,7 @@ impl From<&[u8]> for QuoteKind {
 /// way, except some byte-saving routines are employed to reduce the output
 /// size.
 struct MinifySerializer<Wr: Write> {
-	pub writer: Wr,
+	pub(crate) writer: Wr,
 	stack: Vec<ElemInfo>,
 }
 
@@ -131,7 +132,7 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	/// New Instance.
 	///
 	/// Imported from `html5ever`.
-	pub fn new(writer: Wr) -> Self {
+	pub(crate) fn new(writer: Wr) -> Self {
 		Self {
 			writer,
 			stack: vec![ElemInfo {

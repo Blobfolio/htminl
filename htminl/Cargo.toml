@@ -21,11 +21,10 @@ assets = [
 ]
 
 [dependencies]
-html5ever = "*"
-lazy_static = "1.4.*"
-marked = "0.2.*"
 tempfile-fast = "0.3.*"
-tendril = "0.4.*"
+
+[dependencies.htminl_core]
+path = "../htminl_core"
 
 [dependencies.fyi_menu]
 git = "https://github.com/Blobfolio/fyi.git"
@@ -38,13 +37,6 @@ branch = "master"
 [dependencies.fyi_witcher]
 git = "https://github.com/Blobfolio/fyi.git"
 branch = "master"
-
-[dev-dependencies]
-criterion = "*"
-
-[[bench]]
-name = "lib"
-harness = false
 
 [features]
 default = []

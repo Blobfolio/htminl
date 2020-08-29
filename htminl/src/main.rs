@@ -119,8 +119,8 @@ be implemented into `HTMinL`; they just need to come to light!
 #![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
 #![warn(unreachable_pub)]
-//#![warn(unused_crate_dependencies)]
-//#![warn(unused_extern_crates)]
+#![warn(unused_crate_dependencies)]
+#![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 
 #![allow(clippy::cast_possible_truncation)]
@@ -178,7 +178,7 @@ fn main() {
 /// Do the dirty work!
 fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
-		if htminl::minify_html(&mut data).is_ok() {
+		if htminl_core::minify_html(&mut data).is_ok() {
 			let mut out = tempfile_fast::Sponge::new_for(path).unwrap();
 			out.write_all(&data).unwrap();
 			out.commit().unwrap();

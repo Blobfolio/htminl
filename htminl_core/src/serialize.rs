@@ -316,7 +316,8 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 			is_svg_path ||
 			(
 				name.ns == ns!(html) &&
-				match name.local {
+				matches!(
+					name.local,
 					local_name!("area") |
 					local_name!("base") |
 					local_name!("basefont") |
@@ -334,9 +335,8 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 					local_name!("param") |
 					local_name!("source") |
 					local_name!("track") |
-					local_name!("wbr") => true,
-					_ => false,
-				}
+					local_name!("wbr")
+				)
 			);
 
 		self.parent().processed_first_child = true;
@@ -369,6 +369,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		self.writer.write_all(b">")
 	}
 
+	#[allow(clippy::match_like_matches_macro)] // We're matching a negation.
 	/// Write Text.
 	///
 	/// Imported from `html5ever`.

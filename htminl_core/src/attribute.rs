@@ -20,10 +20,7 @@ use crate::meta::{a, t};
 /// enough while writing that devs might choose to split them into
 /// separate lines, etc.).
 pub const fn can_compact_value(attr: &Attribute) -> bool {
-	match attr.name.local {
-		a::CLASS | a::STYLE => true,
-		_ => false,
-	}
+	matches!(attr.name.local, a::CLASS | a::STYLE)
 }
 
 /// Can Drop Attribute?
@@ -37,15 +34,15 @@ pub fn can_drop(attr: &Attribute, tag: &LocalName) -> bool {
 		// also a default, but because it is frequently matched in CSS
 		// rules, we'll leave those be.
 		a::TYPE => match *tag {
-			t::SCRIPT => match attr.value.to_ascii_lowercase().as_str() {
+			t::SCRIPT => matches!(
+				attr.value.to_ascii_lowercase().as_str(),
 				"text/javascript"
 				| "application/javascript"
 				| "application/x-javascript"
 				| "text/ecmascript"
 				| "application/ecmascript"
-				| "text/jscript" => true,
-				_ => false,
-			},
+				| "text/jscript"
+			),
 			t::STYLE => attr.value.eq_ignore_ascii_case("text/css"),
 			_ => attr.value.is_empty(),
 		},
@@ -88,7 +85,8 @@ pub fn can_drop_value(attr: &Attribute) -> bool {
 /// so if they're true they don't need values, and if they're false they
 /// don't need to be at all.
 pub const fn is_boolean(attr: &Attribute) -> bool {
-	match attr.name.local {
+	matches!(
+		attr.name.local,
 		a::ALLOWFULLSCREEN
 		| a::ASYNC
 		| a::AUTOFOCUS
@@ -118,9 +116,6 @@ pub const fn is_boolean(attr: &Attribute) -> bool {
 		| a::REQUIRED
 		| a::SCOPED
 		| a::SEAMLESS
-		| a::SELECTED => true,
-		// TODO: Is it worth matching other "boolean" attributes that Servo
-		// doesn't recognize, i.e. as strings?
-		_ => false,
-	}
+		| a::SELECTED
+	)
 }

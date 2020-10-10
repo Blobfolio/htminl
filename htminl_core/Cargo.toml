@@ -1,0 +1,21 @@
+[package]
+name = "htminl_core"
+version = "0.3.4"
+license = "WTFPL"
+authors = ["Josh Stoik <josh@blobfolio.com>"]
+edition = "2018"
+description = "In-place minification of HTML file(s)."
+publish = false
+
+[dependencies]
+html5ever = "*"
+lazy_static = "1.4.*"
+marked = "0.2.*"
+tendril = "0.4.*"
+
+[dev-dependencies]
+criterion = "*"
+
+[[bench]]
+name = "lib"
+harness = false

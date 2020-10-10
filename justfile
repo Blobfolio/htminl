@@ -10,6 +10,7 @@
 pkg_id      := "htminl"
 pkg_name    := "HTMinL"
 pkg_dir1    := justfile_directory() + "/htminl"
+pkg_dir2    := justfile_directory() + "/htminl_core"
 
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
 cargo_bin   := cargo_dir + "/x86_64-unknown-linux-gnu/release/" + pkg_id
@@ -109,7 +110,7 @@ bench-bin CLEAN="":
 # Build Release!
 @build: clean
 	# First let's build the Rust bit.
-	RUSTFLAGS="{{ rustflags }}" cargo build \
+	RUSTFLAGS="--emit asm {{ rustflags }}" cargo build \
 		--bin "{{ pkg_id }}" \
 		--release \
 		--target x86_64-unknown-linux-gnu \
@@ -172,6 +173,7 @@ bench-bin CLEAN="":
 	# they place *other* shit in the designated target dir. Haha.
 	[ ! -d "{{ justfile_directory() }}/target" ] || rm -rf "{{ justfile_directory() }}/target"
 	[ ! -d "{{ pkg_dir1 }}/target" ] || rm -rf "{{ pkg_dir1 }}/target"
+	[ ! -d "{{ pkg_dir2 }}/target" ] || rm -rf "{{ pkg_dir2 }}/target"
 
 
 # Clippy.
@@ -215,6 +217,7 @@ version:
 
 	# Set the release version!
 	just _version "{{ pkg_dir1 }}" "$_ver2"
+	just _version "{{ pkg_dir2 }}" "$_ver2"
 
 
 # Set version for real.

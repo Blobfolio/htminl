@@ -37,15 +37,15 @@ pub fn can_collapse_whitespace(el: &Element) -> bool {
 ///
 /// Text nodes in these elements are never needed.
 pub const fn can_drop_text_nodes(el: &Element) -> bool {
-	match el.name.local {
+	matches!(
+		el.name.local,
 		t::AUDIO
 		| t::HEAD
 		| t::HTML
 		| t::OPTION
 		| t::PICTURE
-		| t::VIDEO => true,
-		_ => false,
-	}
+		| t::VIDEO
+	)
 }
 
 #[must_use]
@@ -54,12 +54,10 @@ pub const fn can_drop_text_nodes(el: &Element) -> bool {
 /// Whitespace-only text nodes sitting between two elements of this kind
 /// (or at the beginning and end of the parent) can be safely dropped.
 pub const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
-	match el.name.local {
-		t::NOSCRIPT
-		| t::SCRIPT
-		| t::STYLE => true,
-		_ => false,
-	}
+	matches!(
+		el.name.local,
+		t::NOSCRIPT | t::SCRIPT | t::STYLE
+	)
 }
 
 #[must_use]

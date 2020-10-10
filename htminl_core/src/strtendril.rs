@@ -48,6 +48,7 @@ pub fn collapse_whitespace(txt: &mut StrTendril) {
 	}
 }
 
+#[allow(clippy::match_like_matches_macro)] // We're matching a negation.
 /// Is (Only) Whitespace?
 ///
 /// Returns `true` if the node is empty or contains only whitespace.
@@ -70,10 +71,7 @@ pub fn trim(txt: &mut StrTendril) {
 pub fn trim_start(txt: &mut StrTendril) {
 	let len: u32 = txt.as_bytes()
 		.iter()
-		.take_while(|c| match *c {
-			b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => true,
-			_ => false,
-		})
+		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
 		.count() as u32;
 	if 0 != len {
 		txt.pop_front(len);
@@ -85,10 +83,7 @@ pub fn trim_end(txt: &mut StrTendril) {
 	let len: u32 = txt.as_bytes()
 		.iter()
 		.rev()
-		.take_while(|c| match *c {
-			b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => true,
-			_ => false,
-		})
+		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
 		.count() as u32;
 	if 0 != len {
 		txt.pop_back(len);

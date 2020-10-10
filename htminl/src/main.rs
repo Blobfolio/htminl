@@ -103,16 +103,6 @@ be implemented into `HTMinL`; they just need to come to light!
 
 */
 
-#![warn(missing_docs)]
-#![warn(trivial_casts)]
-#![warn(trivial_numeric_casts)]
-#![warn(unused_import_braces)]
-
-#![deny(missing_copy_implementations)]
-#![deny(missing_debug_implementations)]
-
-#![allow(clippy::unknown_clippy_lints)]
-
 #![warn(clippy::filetype_is_file)]
 #![warn(clippy::integer_division)]
 #![warn(clippy::needless_borrow)]
@@ -121,23 +111,36 @@ be implemented into `HTMinL`; they just need to come to light!
 #![warn(clippy::perf)]
 #![warn(clippy::suboptimal_flops)]
 #![warn(clippy::unneeded_field_pattern)]
+#![warn(macro_use_extern_crate)]
+#![warn(missing_copy_implementations)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
+#![warn(non_ascii_idents)]
+#![warn(trivial_casts)]
+#![warn(trivial_numeric_casts)]
+#![warn(unreachable_pub)]
+#![warn(unused_crate_dependencies)]
+#![warn(unused_extern_crates)]
+#![warn(unused_import_braces)]
 
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_sign_loss)]
-#![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::unknown_clippy_lints)]
 
 
 
-use fyi_menu::Argue;
+use fyi_menu::{
+	Argue,
+	FLAG_REQUIRED,
+};
 use fyi_msg::{
 	Msg,
 	MsgKind,
 };
 use fyi_witcher::{
+	utility,
 	Witcher,
 	WITCHING_DIFF,
 	WITCHING_QUIET,
@@ -154,8 +157,7 @@ use std::{
 #[allow(clippy::if_not_else)] // Code is confusing otherwise.
 fn main() {
 	// Parse CLI arguments.
-	let args = Argue::new()
-		.with_any()
+	let args = Argue::new(FLAG_REQUIRED)
 		.with_version(b"HTMinL", env!("CARGO_PKG_VERSION").as_bytes())
 		.with_help(helper)
 		.with_list();
@@ -166,7 +168,27 @@ fn main() {
 
 	// Put it all together!
 	Witcher::default()
-		.with_ext2(b".html", b".htm")
+		.with_filter(|p: &PathBuf| {
+			let p: &[u8] = utility::path_as_bytes(p);
+			let p_len: usize = p.len();
+
+			p_len > 5 &&
+			(
+				(
+					p[p_len - 4] == b'.' &&
+					p[p_len - 3].to_ascii_lowercase() == b'h' &&
+					p[p_len - 2].to_ascii_lowercase() == b't' &&
+					p[p_len - 1].to_ascii_lowercase() == b'm'
+				) ||
+				(
+					p[p_len - 5] == b'.' &&
+					p[p_len - 4].to_ascii_lowercase() == b'h' &&
+					p[p_len - 3].to_ascii_lowercase() == b't' &&
+					p[p_len - 2].to_ascii_lowercase() == b'm' &&
+					p[p_len - 1].to_ascii_lowercase() == b'l'
+				)
+			)
+		})
 		.with_paths(args.args())
 		.into_witching()
 		.with_flags(flags)
@@ -179,7 +201,7 @@ fn main() {
 /// Do the dirty work!
 fn minify_file(path: &PathBuf) {
 	if let Ok(mut data) = fs::read(path) {
-		if htminl::minify_html(&mut data).is_ok() {
+		if htminl_core::minify_html(&mut data).is_ok() {
 			let mut out = tempfile_fast::Sponge::new_for(path).unwrap();
 			out.write_all(&data).unwrap();
 			out.commit().unwrap();

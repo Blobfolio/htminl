@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "htminl",
+    "htminl_core",
 ]
 
 [profile.release]

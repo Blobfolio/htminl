@@ -131,12 +131,16 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
-use fyi_menu::Argue;
+use fyi_menu::{
+	Argue,
+	FLAG_REQUIRED,
+};
 use fyi_msg::{
 	Msg,
 	MsgKind,
 };
 use fyi_witcher::{
+	utility,
 	Witcher,
 	WITCHING_DIFF,
 	WITCHING_QUIET,
@@ -153,8 +157,7 @@ use std::{
 #[allow(clippy::if_not_else)] // Code is confusing otherwise.
 fn main() {
 	// Parse CLI arguments.
-	let args = Argue::new()
-		.with_any()
+	let args = Argue::new(FLAG_REQUIRED)
 		.with_version(b"HTMinL", env!("CARGO_PKG_VERSION").as_bytes())
 		.with_help(helper)
 		.with_list();
@@ -165,7 +168,27 @@ fn main() {
 
 	// Put it all together!
 	Witcher::default()
-		.with_ext2(b".html", b".htm")
+		.with_filter(|p: &PathBuf| {
+			let p: &[u8] = utility::path_as_bytes(p);
+			let p_len: usize = p.len();
+
+			p_len > 5 &&
+			(
+				(
+					p[p_len - 4] == b'.' &&
+					p[p_len - 3].to_ascii_lowercase() == b'h' &&
+					p[p_len - 2].to_ascii_lowercase() == b't' &&
+					p[p_len - 1].to_ascii_lowercase() == b'm'
+				) ||
+				(
+					p[p_len - 5] == b'.' &&
+					p[p_len - 4].to_ascii_lowercase() == b'h' &&
+					p[p_len - 3].to_ascii_lowercase() == b't' &&
+					p[p_len - 2].to_ascii_lowercase() == b'm' &&
+					p[p_len - 1].to_ascii_lowercase() == b'l'
+				)
+			)
+		})
 		.with_paths(args.args())
 		.into_witching()
 		.with_flags(flags)

@@ -54,7 +54,7 @@ Speaking of "generally matters", `HTMinL` does *not* make any assumptions about
 the display type of elements, as *CSS is a Thing*. Just because a `<div>` is
 normally block doesn't mean someone hasn't styled one to render inline. While
 this will often mean an occasional extra (unnecessary) byte, at least styled
-layouts wont' break willynilly!
+layouts won't break willynilly!
 
 Additional savings are achieved by stripping:
 * HTML Comments;

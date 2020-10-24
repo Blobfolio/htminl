@@ -1,4 +1,6 @@
 /Cargo.lock
+/doc/
 /htminl/misc/htminl.1.gz
 /htminl/target/
+/htminl_core/target/
 /target/

@@ -1,10 +1,18 @@
 ##
 # Development Recipes
 #
-# This requires Just: https://github.com/casey/just
+# This justfile is intended to be run from inside a Docker sandbox:
+# https://github.com/Blobfolio/righteous-sandbox
 #
-# To see possible tasks, run:
-# just --list
+# docker run \
+#	--rm \
+#	-v "{{ invocation_directory() }}":/share \
+#	-it \
+#	--name "righteous_sandbox" \
+#	"righteous/sandbox:debian"
+#
+# Alternatively, you can just run cargo commands the usual way and ignore these
+# recipes.
 ##
 
 pkg_id      := "htminl"
@@ -15,39 +23,11 @@ pkg_dir2    := justfile_directory() + "/htminl_core"
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
 cargo_bin   := cargo_dir + "/x86_64-unknown-linux-gnu/release/" + pkg_id
 data_dir    := "/tmp/bench-data"
+doc_dir     := justfile_directory() + "/doc"
 release_dir := justfile_directory() + "/release"
 
 rustflags   := "-C link-arg=-s"
 
-
-
-# AB Comparisons.
-ab BIN="/usr/bin/htminl" REBUILD="":
-	#!/usr/bin/env bash
-
-	[ -z "{{ REBUILD }}" ] || just build
-	[ -f "{{ cargo_bin }}" ] || just build
-
-	clear
-
-	hyperfine --warmup 3 \
-		--prepare 'just _bench-reset;' \
-		--runs 20 \
-		'{{ BIN }} {{ data_dir }}' \
-		'{{ cargo_bin }} {{ data_dir }}' 2>/dev/null
-
-	# Let's check compression too.
-	START_SIZE=$( du -scb "{{ justfile_directory() }}/test-assets" | head -n 1 | cut -f1 )
-
-	just _bench-reset
-	{{ BIN }} {{ data_dir }}
-	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
-	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ BIN }}"
-
-	just _bench-reset
-	{{ cargo_bin }} {{ data_dir }}
-	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
-	echo "$(($START_SIZE-$END_SIZE)) <-- saved by {{ cargo_bin }}"
 
 
 # Benchmark Rust functions.
@@ -76,35 +56,80 @@ bench BENCH="" FILTER="":
 	exit 0
 
 
-# Benchmarks.
-bench-bin CLEAN="":
+# Bench Bin.
+bench-bin DIR NATIVE="":
 	#!/usr/bin/env bash
 
-	# Force a rebuild.
-	if [ ! -z "{{ CLEAN }}" ]; then
-		just build
-	elif [ ! -f "{{ cargo_bin }}" ]; then
-		just build
+	# Validate directory.
+	if [ ! -d "{{ DIR }}" ]; then
+		fyi error "Invalid directory."
+		exit 1
 	fi
 
 	clear
-	hyperfine --warmup 3 \
-		--prepare 'just _bench-reset;' \
-		'just _bench-html-minifier' \
-		'{{ cargo_bin }} {{ data_dir }}'
 
-	# Let's check compression too.
-	START_SIZE=$( du -scb "{{ justfile_directory() }}/test-assets" | head -n 1 | cut -f1 )
+	# Before Stats.
+	before=$( find "{{ DIR }}" \
+		\( -iname "*.htm" -o -iname "*.html" \) \
+		-type f \
+		-print0 | \
+			xargs -r0 du -scb | \
+				tail -n 1 | \
+					cut -f 1 )
 
-	just _bench-reset
-	just _bench-html-minifier
-	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
-	echo "$(($START_SIZE-$END_SIZE)) <-- saved by html-minifier"
+	if [ -z "{{ NATIVE }}" ]; then
+		# Make sure we have a bin built.
+		[ -f "{{ cargo_bin }}" ] || just build
 
-	just _bench-reset
-	{{ cargo_bin }} {{ data_dir }}
-	END_SIZE=$( du -scb "{{ data_dir }}" | head -n 1 | cut -f1 )
-	echo "$(($START_SIZE-$END_SIZE)) <-- saved by htminl"
+		fyi print -p "{{ cargo_bin }}" -c 199 "$( "{{ cargo_bin }}" -V )"
+
+		start_time="$(date -u +%s.%N)"
+		"{{ cargo_bin }}" "{{ DIR }}"
+		end_time="$(date -u +%s.%N)"
+		elapsed="$(bc <<<"$end_time-$start_time")"
+	elif [ -f "{{ NATIVE }}" ]; then
+		echo Native
+	else
+		fyi print -p "$( command -v html-minifier )" -c 199 "$( html-minifier -V )"
+
+		start_time="$(date -u +%s.%N)"
+
+		for i in $( find "{{ DIR }}" \( -iname "*.htm" -o -iname "*.html" \) -type f ! -size 0 | sort ); do
+			html-minifier \
+				--collapse-boolean-attributes \
+				--collapse-whitespace \
+				--decode-entities \
+				--remove-attribute-quotes \
+				--remove-comments \
+				--remove-empty-attributes \
+				--remove-optional-tags \
+				--remove-optional-tags \
+				--remove-redundant-attributes \
+				--remove-redundant-attributes \
+				--remove-script-type-attributes \
+				--remove-style-link-type-attributes \
+				-o "$i" \
+				"$i" >/dev/null 2>&1 || true
+		done
+
+		end_time="$(date -u +%s.%N)"
+		elapsed="$(bc <<<"$end_time-$start_time")"
+	fi
+
+	# After Stats.
+	after=$( find "{{ DIR }}" \
+		\( -iname "*.htm" -o -iname "*.html" \) \
+		-type f \
+		-print0 | \
+			xargs -r0 du -scb | \
+				tail -n 1 | \
+					cut -f 1 )
+
+	# Print the info!
+	fyi blank
+	fyi print -p "Elapsed" -c 15 "${elapsed} seconds"
+	fyi print -p " Before" -c 53 "${before} bytes"
+	fyi print -p "  After" -c 53 "${after} bytes"
 
 
 # Build Release!
@@ -187,6 +212,29 @@ bench-bin CLEAN="":
 		--target-dir "{{ cargo_dir }}"
 
 
+# Build Docs.
+doc:
+	#!/usr/bin/env bash
+
+	# Make sure nightly is installed; this version generates better docs.
+	rustup install nightly
+
+	# Make the docs.
+	cargo +nightly doc \
+		--workspace \
+		--release \
+		--no-deps \
+		--target x86_64-unknown-linux-gnu \
+		--target-dir "{{ cargo_dir }}"
+
+	# Move the docs and clean up ownership.
+	[ ! -d "{{ doc_dir }}" ] || rm -rf "{{ doc_dir }}"
+	mv "{{ cargo_dir }}/x86_64-unknown-linux-gnu/doc" "{{ justfile_directory() }}"
+	just _fix-chown "{{ doc_dir }}"
+
+	exit 0
+
+
 # Test Run.
 @run +ARGS:
 	RUSTFLAGS="{{ rustflags }}" cargo run \
@@ -230,75 +278,49 @@ version:
 	mv "/tmp/Cargo.toml" "{{ DIR }}/Cargo.toml"
 
 
-# Wrapper for testing HTML-Minifier performance.
-_bench-html-minifier:
+# Benchmark data.
+_bench-init:
 	#!/usr/bin/env bash
 
-	# Such a piece of shit. Haha. While there are input/output dir
-	# options, they're all-or-nothing shots (and move shit around); to
-	# mimic in-place, arbitrary minification, we need to pipe from
-	# `find`, and we need to filter out any empty entries as that causes
-	# Node to run forever and ever without making any progress.
-	for i in $( find "{{ data_dir }}" -name "*.html" -type f ! -size 0 | sort ); do
-		html-minifier \
-			--collapse-boolean-attributes \
-			--collapse-whitespace \
-			--decode-entities \
-			--remove-attribute-quotes \
-			--remove-comments \
-			--remove-empty-attributes \
-			--remove-optional-tags \
-			--remove-optional-tags \
-			--remove-redundant-attributes \
-			--remove-redundant-attributes \
-			--remove-script-type-attributes \
-			--remove-style-link-type-attributes \
-			-o "$i" \
-			"$i" >/dev/null 2>&1 || true
-	done
+	# Make sure the data dir is set up.
+	[ -d "{{ data_dir }}" ] || mkdir "{{ data_dir }}"
 
+	# Pull some test assets.
+	if [ ! -d "{{ data_dir }}/raw" ]; then
+		mkdir "{{ data_dir }}/raw"
 
-# Download Top 500 Sites.
-_bench-500:
-	#!/usr/bin/env bash
-	[ -d "/tmp/500" ] || mkdir "/tmp/500"
+		# Vue JS.
+		fyi blank
+		fyi task "VueJS.org"
+		git clone --single-branch \
+			-b master \
+			https://github.com/vuejs/vuejs.org \
+			"{{ data_dir }}/raw/tmp"
+		cd "{{ data_dir }}/raw/tmp" && npm i && npm run build
+		mv "{{ data_dir }}/raw/tmp/public" "{{ data_dir }}/raw/vue"
+		cd "{{ justfile_directory() }}"
+		rm -rf "{{ data_dir }}/raw/tmp"
 
-	if [ ! -f "/tmp/500/list.csv" ]; then
-		wget -q -O "/tmp/500/list.csv" "https://moz.com/top-500/download/?table=top500Domains"
-		sed -i 1d "/tmp/500/list.csv"
+		# Build site docs.
+		just doc
+		cp -aR "{{ doc_dir }}" "{{ data_dir }}/raw/"
 	fi
 
-	if [ ! -d "/tmp/500/raw" ]; then
-		fyi info "Gathering Top 500 Sites."
-		mkdir "/tmp/500/raw"
-
-		# Fake a user agent.
-		_user="\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36\""
-
-		# Download everything.
-		cat "/tmp/500/list.csv" | rargs \
-			-p '^"(?P<id>\d+)","(?P<url>[^"]+)"' \
-			-j 50 \
-			wget -q -T5 -t1 -U "$_user" -O "/tmp/500/raw/{url}.html" "https://{url}"
-
-		# Kill dead files.
-		find /tmp/500 -type f -size 0 -delete
-	fi
-
-	[ ! -d "/tmp/500/test" ] || rm -rf "/tmp/500/test"
-	cp -aR /tmp/500/raw /tmp/500/test
-
-	exit 0
+	# Fix permissions.
+	just _fix-chown "{{ data_dir }}"
 
 
 # Reset benchmarks.
-@_bench-reset:
-	[ ! -d "{{ data_dir }}" ] || rm -rf "{{ data_dir }}"
-	cp -aR "{{ justfile_directory() }}/test-assets" "{{ data_dir }}"
+@_bench-reset: _bench-init
+	[ ! -d "{{ data_dir }}/test" ] || rm -rf "{{ data_dir }}/test"
+	cp -aR "{{ data_dir }}/raw" "{{ data_dir }}/test"
 
 
 # Init dependencies.
 @_init:
+	apt-get update
+	apt-fast install -y build-essential nodejs ruby ruby-dev zlib1g-dev
+
 	[ ! -f "{{ justfile_directory() }}/Cargo.lock" ] || rm "{{ justfile_directory() }}/Cargo.lock"
 	cargo update
 

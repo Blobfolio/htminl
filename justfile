@@ -318,9 +318,6 @@ _bench-init:
 
 # Init dependencies.
 @_init:
-	apt-get update
-	apt-fast install -y build-essential nodejs ruby ruby-dev zlib1g-dev
-
 	[ ! -f "{{ justfile_directory() }}/Cargo.lock" ] || rm "{{ justfile_directory() }}/Cargo.lock"
 	cargo update
 

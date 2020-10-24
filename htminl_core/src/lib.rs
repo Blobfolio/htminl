@@ -18,7 +18,6 @@
 #![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
 #![warn(unreachable_pub)]
-#![warn(unused_crate_dependencies)]
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 
@@ -27,6 +26,7 @@
 #![allow(clippy::cast_sign_loss)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
+#![allow(unused_crate_dependencies)]
 
 
 
@@ -60,6 +60,9 @@ use tendril::StrTendril;
 
 
 /// Minify HTML.
+///
+/// This convenience method minifies (in-place) the HTML source in the byte
+/// vector, and returns the size savings (if any).
 pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	// We need something to encode!
 	if data.is_empty() {

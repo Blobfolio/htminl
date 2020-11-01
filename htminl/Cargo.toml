@@ -1,11 +1,12 @@
 [package]
 name = "htminl"
-version = "0.3.5"
+version = "0.3.6"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
 description = "In-place minification of HTML file(s)."
 publish = false
+build = "build.rs"
 
 [package.metadata.deb]
 maintainer = "Josh Stoik <hello@blobfolio.com>"
@@ -19,6 +20,10 @@ assets = [
     ["./misc/htminl.bash", "etc/bash_completion.d/", "644"],
     ["./misc/htminl.1.gz", "usr/share/man/man1/", "644"],
 ]
+
+[build-dependencies.fyi_menu]
+git = "https://github.com/Blobfolio/fyi.git"
+branch = "master"
 
 [dependencies]
 tempfile-fast = "0.3.*"

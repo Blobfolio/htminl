@@ -171,6 +171,10 @@ bench-bin DIR NATIVE="":
 		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
+	# Clean up the BASH completion script.
+	just _fix-chown "{{ pkg_dir1 }}/misc/{{ pkg_id }}.bash"
+	chmod 644 "{{ pkg_dir1 }}/misc/{{ pkg_id }}.bash"
+
 	# Use help2man to make a crappy MAN page.
 	help2man -o "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1" \
 		-N "{{ cargo_bin }}"
@@ -318,9 +322,6 @@ _bench-init:
 
 # Init dependencies.
 @_init:
-	apt-get update
-	apt-fast install -y build-essential nodejs ruby ruby-dev zlib1g-dev
-
 	[ ! -f "{{ justfile_directory() }}/Cargo.lock" ] || rm "{{ justfile_directory() }}/Cargo.lock"
 	cargo update
 

@@ -160,10 +160,7 @@ bench-bin DIR NATIVE="":
 
 # Build Man.
 @build-man:
-	# Pre-clean.
-	find "{{ pkg_dir1 }}/misc" -name "{{ pkg_id }}.1*" -type f -delete
-
-	# Build a quickie version with the unsexy help so help2man can parse it.
+	# Build with "man" feature, triggering MAN and BASH builds.
 	RUSTFLAGS="{{ rustflags }}" cargo build \
 		--bin "{{ pkg_id }}" \
 		--release \
@@ -171,17 +168,11 @@ bench-bin DIR NATIVE="":
 		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
-	# Clean up the BASH completion script.
-	just _fix-chown "{{ pkg_dir1 }}/misc/{{ pkg_id }}.bash"
-	chmod 644 "{{ pkg_dir1 }}/misc/{{ pkg_id }}.bash"
-
-	# Use help2man to make a crappy MAN page.
-	help2man -o "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1" \
-		-N "{{ cargo_bin }}"
-
-	# Gzip it and reset ownership.
+	# Gzip Man page.
 	gzip -k -f -9 "{{ pkg_dir1 }}/misc/{{ pkg_id }}.1"
-	just _fix-chown "{{ pkg_dir1 }}"
+
+	# Fix permissions.
+	just _fix-chown "{{ pkg_dir1 }}/misc"
 
 
 # Check Release!

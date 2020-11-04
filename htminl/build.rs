@@ -1,37 +1,67 @@
-#[cfg(feature = "man")]
-/// # Build BASH Completions.
+#[cfg(not(feature = "man"))]
+/// # Do Nothing.
 ///
-/// We can do this in the same run we use for building the MAN pages.
+/// We only need to rebuild stuff for new releases. The "man" feature is
+/// basically used to figure that out.
+fn main() {}
+
+
+
+#[cfg(feature = "man")]
+/// # Build.
 fn main() {
-	use fyi_menu::Basher;
+	use fyi_menu::{
+		Agree,
+		AgreeKind,
+		FLAG_MAN_ALL,
+	};
 	use std::{
 		env,
 		path::PathBuf,
 	};
 
-	// We're going to shove this in "htminl/misc/htminl.bash". If we used
-	// `OUT_DIR` like Cargo suggests, we'd never be able to find it to shove
-	// it into the `.deb` package.
+	let app: Agree = Agree::new(
+		"HTMinL",
+		env!("CARGO_PKG_NAME"),
+		env!("CARGO_PKG_VERSION"),
+		env!("CARGO_PKG_DESCRIPTION"),
+	)
+		.with_flags(FLAG_MAN_ALL)
+		.with_arg(
+			AgreeKind::switch("Print help information.")
+				.with_short("-h")
+				.with_long("--help")
+		)
+		.with_arg(
+			AgreeKind::switch("Show progress bar while working.")
+				.with_short("-p")
+				.with_long("--progress")
+		)
+		.with_arg(
+			AgreeKind::switch("Print program version.")
+				.with_short("-V")
+				.with_long("--version")
+		)
+		.with_arg(
+			AgreeKind::option("<FILE>", "Read file paths from this text file.", true)
+				.with_short("-l")
+				.with_long("--list")
+		)
+		.with_arg(
+			AgreeKind::arg("<PATH(s)…>", "Any number of files and directories to crawl and crunch.")
+		);
+
+	// Our files will go to ./misc.
 	let mut path: PathBuf = env::var("CARGO_MANIFEST_DIR")
 		.ok()
 		.and_then(|x| std::fs::canonicalize(x).ok())
-		.expect("Missing completion script directory.");
+		.expect("Missing output directory.");
 
 	path.push("misc");
-	path.push("htminl.bash");
 
-	// All of our options.
-	let b = Basher::new("htminl")
-		.with_option(Some("-l"), Some("--list"))
-		.with_switch(Some("-h"), Some("--help"))
-		.with_switch(Some("-p"), Some("--progress"))
-		.with_switch(Some("-V"), Some("--version"));
-
-	// Write it!
-	b.write(&path)
-		.unwrap_or_else(|_| panic!("Unable to write completion script: {:?}", path));
+	// Write 'em!
+	app.write_bash(&path)
+		.unwrap_or_else(|_| panic!("Unable to write BASH completion script: {:?}", path));
+	app.write_man(&path)
+		.unwrap_or_else(|_| panic!("Unable to write MAN page: {:?}", path));
 }
-
-#[cfg(not(feature = "man"))]
-/// # Do Nothing.
-fn main() {}

@@ -13,7 +13,6 @@ fn main() {
 	use fyi_menu::{
 		Agree,
 		AgreeKind,
-		FLAG_MAN_ALL,
 	};
 	use std::{
 		env,
@@ -26,7 +25,6 @@ fn main() {
 		env!("CARGO_PKG_VERSION"),
 		env!("CARGO_PKG_DESCRIPTION"),
 	)
-		.with_flags(FLAG_MAN_ALL)
 		.with_arg(
 			AgreeKind::switch("Print help information.")
 				.with_short("-h")

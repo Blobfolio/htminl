@@ -222,10 +222,23 @@ fn helper(_: Option<&str>) {
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
-{}",
+USAGE:
+    htminl [FLAGS] [OPTIONS] <PATH(S)>...
+
+FLAGS:
+    -h, --help        Prints help information
+    -p, --progress    Show progress bar while minifying.
+    -V, --version     Prints version information
+
+OPTIONS:
+    -l, --list <list>    Read file paths from this list.
+
+ARGS:
+    <PATH(S)>...    One or more files or directories to compress.
+
+",
 		"\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v",
 		env!("CARGO_PKG_VERSION"),
 		"\x1b[0m",
-		include_str!("../help.txt")
 	)).print();
 }

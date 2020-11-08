@@ -225,6 +225,6 @@ fn helper(_: Option<&str>) {
 		"\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v",
 		env!("CARGO_PKG_VERSION"),
 		"\x1b[0m",
-		include_str!("../misc/help.txt")
+		include_str!("../help.txt")
 	)).print();
 }

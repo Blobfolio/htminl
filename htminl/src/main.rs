@@ -209,6 +209,7 @@ fn minify_file(path: &PathBuf) {
 	}
 }
 
+#[allow(clippy::non_ascii_literal)] // It's an r""; escapes don't work.
 #[cold]
 /// Print Help.
 fn helper(_: Option<&str>) {

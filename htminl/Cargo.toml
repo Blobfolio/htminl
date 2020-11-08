@@ -1,12 +1,11 @@
 [package]
 name = "htminl"
-version = "0.3.8"
+version = "0.3.9"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
 description = "In-place minification of HTML file(s)."
 publish = false
-build = "build.rs"
 
 [package.metadata.deb]
 maintainer = "Josh Stoik <hello@blobfolio.com>"
@@ -17,13 +16,40 @@ depends = "$auto"
 section = "utility"
 assets = [
     ["../target/x86_64-unknown-linux-gnu/release/htminl", "usr/bin/", "755"],
-    ["./misc/htminl.bash", "etc/bash_completion.d/", "644"],
-    ["./misc/htminl.1.gz", "usr/share/man/man1/", "644"],
+    ["../release/completions/htminl.bash", "etc/bash_completion.d/", "644"],
+    ["../release/man/htminl.1.gz", "usr/share/man/man1/", "644"],
 ]
 
-[build-dependencies.fyi_menu]
-git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+[package.metadata.bashman]
+name = "HTMinL"
+bash-dir = "../release/completions"
+man-dir = "../release/man"
+
+[[package.metadata.bashman.switches]]
+short = "-h"
+long = "--help"
+description = "Print help information."
+
+[[package.metadata.bashman.switches]]
+short = "-p"
+long = "--progress"
+description = "Show progress bar while working."
+
+[[package.metadata.bashman.switches]]
+short = "-V"
+long = "--version"
+description = "Print program version."
+
+[[package.metadata.bashman.options]]
+short = "-l"
+long = "--list"
+label = "<FILE>"
+description = "Read file paths from this text file."
+path = true
+
+[[package.metadata.bashman.arguments]]
+label = "<PATH(s)…>"
+description = "Any number of files and directories to crawl and crunch."
 
 [dependencies]
 tempfile-fast = "0.3.*"

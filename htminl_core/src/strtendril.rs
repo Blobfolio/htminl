@@ -27,18 +27,18 @@ pub fn collapse_whitespace(txt: &mut StrTendril) {
 		std::str::from_utf8_unchecked(&txt.as_bytes()
 			.iter()
 			.filter_map(|c| match *c {
-				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => if in_ws { None }
+				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' =>
+					if in_ws { None }
 					else {
 						in_ws = true;
 						Some(b' ')
 					},
-				c => if in_ws {
+				c =>
+					if in_ws {
 						in_ws = false;
 						Some(c)
 					}
-					else {
-						Some(c)
-					},
+					else { Some(c) },
 			})
 			.collect::<Vec<u8>>())
 	});

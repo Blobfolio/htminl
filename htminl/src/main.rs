@@ -126,6 +126,7 @@ be implemented into `HTMinL`; they just need to come to light!
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_sign_loss)]
+#![allow(clippy::map_err_ignore)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
 
@@ -200,16 +201,14 @@ fn main() {
 #[allow(unused_must_use)]
 /// Do the dirty work!
 fn minify_file(path: &PathBuf) {
-	if let Ok(mut data) = fs::read(path) {
-		if htminl_core::minify_html(&mut data).is_ok() {
-			let mut out = tempfile_fast::Sponge::new_for(path).unwrap();
-			out.write_all(&data).unwrap();
-			out.commit().unwrap();
-		}
-	}
+	let _ = fs::read(path)
+		.and_then(|mut data| htminl_core::minify_html(&mut data)
+			.and_then(|_| tempfile_fast::Sponge::new_for(path))
+			.and_then(|mut out| out.write_all(&data).and_then(|_| out.commit()))
+		);
 }
 
-#[allow(clippy::non_ascii_literal)] // It's an r""; escapes don't work.
+#[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.
 #[cold]
 /// Print Help.
 fn helper(_: Option<&str>) {

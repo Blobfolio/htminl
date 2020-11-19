@@ -24,6 +24,7 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_sign_loss)]
+#![allow(clippy::map_err_ignore)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(unused_crate_dependencies)]
@@ -134,10 +135,13 @@ pub fn filter_minify_one(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 		},
 		NodeData::Text(_) => {
 			// We never need text nodes in the `<head>` or `<html>`.
-			if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
-				if element::can_drop_text_nodes(el) {
-					return Action::Detach;
-				}
+			if node.parent()
+				.as_deref()
+				.and_then(|p| p.as_element())
+				.filter(|el| element::can_drop_text_nodes(el))
+				.is_some()
+			{
+				return Action::Detach;
 			}
 
 			Action::Continue
@@ -196,40 +200,40 @@ pub fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
 ///
 /// See `collapse_whitespace` for more details.
 pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
-	if let Some(txt) = data.as_text_mut() {
-		if let Some(el) = node.parent().as_deref().and_then(|p| p.as_element()) {
-			// Special cases.
-			if strtendril::is_whitespace(txt) && noderef::can_drop_if_whitespace(&node) {
-				return Action::Detach;
-			}
+	if let Some((txt, el)) = data.as_text_mut()
+		.zip(node.parent().as_deref().and_then(|p| p.as_element()))
+	{
+		// Special cases.
+		if strtendril::is_whitespace(txt) && noderef::can_drop_if_whitespace(&node) {
+			return Action::Detach;
+		}
 
-			// Can we trim the text?
-			if element::can_trim_whitespace(el) {
-				strtendril::trim(txt.borrow_mut());
-			}
+		// Can we trim the text?
+		if element::can_trim_whitespace(el) {
+			strtendril::trim(txt.borrow_mut());
+		}
 
-			// How about collapse it?
-			if element::can_collapse_whitespace(el) {
-				strtendril::collapse_whitespace(txt.borrow_mut());
+		// How about collapse it?
+		if element::can_collapse_whitespace(el) {
+			strtendril::collapse_whitespace(txt.borrow_mut());
 
-				// If the body starts or ends with a text node, we can trim it
-				// from the left or the right respectively.
-				if el.is_elem(t::BODY) {
-					// Drop the start.
-					if txt.starts_with(' ') && noderef::is_first_child(&node) {
-						txt.pop_front(1);
-					}
-					// Drop the end.
-					if txt.ends_with(' ') && noderef::is_last_child(&node) {
-						txt.pop_back(1);
-					}
+			// If the body starts or ends with a text node, we can trim it
+			// from the left or the right respectively.
+			if el.is_elem(t::BODY) {
+				// Drop the start.
+				if txt.starts_with(' ') && noderef::is_first_child(&node) {
+					txt.pop_front(1);
+				}
+				// Drop the end.
+				if txt.ends_with(' ') && noderef::is_last_child(&node) {
+					txt.pop_back(1);
 				}
 			}
+		}
 
-			// Drop empty nodes entirely.
-			if txt.is_empty() {
-				return Action::Detach;
-			}
+		// Drop empty nodes entirely.
+		if txt.is_empty() {
+			return Action::Detach;
 		}
 	}
 

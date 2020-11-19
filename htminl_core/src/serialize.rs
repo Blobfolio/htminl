@@ -147,9 +147,7 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	///
 	/// Imported from `html5ever`.
 	fn parent(&mut self) -> &mut ElemInfo {
-		if self.stack.is_empty() {
-			panic!("no parent ElemInfo")
-		}
+		if self.stack.is_empty() { panic!("No parent ElemInfo.") }
 		self.stack.last_mut().unwrap()
 	}
 
@@ -406,14 +404,10 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Write Comments.
 	///
 	/// Comments were stripped earlier, so this does nothing.
-	fn write_comment(&mut self, _txt: &str) -> io::Result<()> {
-		Ok(())
-	}
+	fn write_comment(&mut self, _txt: &str) -> io::Result<()> { Ok(()) }
 
 	/// Write Processing Instructions.
 	///
 	/// PIs were stripped earlier, so this does nothing.
-	fn write_processing_instruction(&mut self, _target: &str, _data: &str) -> io::Result<()> {
-		Ok(())
-	}
+	fn write_processing_instruction(&mut self, _target: &str, _data: &str) -> io::Result<()> { Ok(()) }
 }

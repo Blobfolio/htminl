@@ -2,10 +2,6 @@
 
 HTMinL is a CLI tool for x86-64 Linux machines that simplifies the task of minifying HTML in-place for production environments.
 
-**This software is a work-in-progress.**
-
-Feel free to use it, but if something weird happens — or if you have ideas for improvement — please open an [issue](https://github.com/Blobfolio/htminl/issues)!
-
 
 
 ## Features
@@ -96,7 +92,6 @@ With the exception of CSS — which has its whitespace fully minified — inline
 While care has been taken to balance savings and safety, there are a few design choices that could potentially break documents, worth noting before you use it on your project:
 
  * Documents are expected to be encoded in UTF-8. Other encodings might be OK, but some text could get garbled.
- * Only complete documents — containing a `DOCTYPE`, `<html>`, `<head>`, and `<body>` — are supported; fragments will either fail to process or be altered to include those missing tags;
  * Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but it may well corrupt other XML-ish data.
  * Child text nodes of `<html>` and `<head>` elements are removed. Text doesn't belong there anyway, but HTML is awfully forgiving; who knows what kinds of markup will be found in the wild!
  * CSS whitespace is trimmed and collapsed, which could break (very unlikely!) selectors like `input[value="Spa  ced"]`.

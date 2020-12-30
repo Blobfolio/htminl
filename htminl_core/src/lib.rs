@@ -65,6 +65,12 @@ use tendril::StrTendril;
 /// This convenience method minifies (in-place) the HTML source in the byte
 /// vector, and returns the size savings (if any).
 pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
+	use regex::bytes::Regex;
+
+	lazy_static::lazy_static! {
+		static ref RE_HAS_HTML: Regex = Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap();
+	}
+
 	// We need something to encode!
 	if data.is_empty() {
 		return Err(io::ErrorKind::WriteZero.into());
@@ -72,6 +78,14 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 
 	// Note our starting length.
 	let old_len: usize = data.len();
+
+	// Is this a fragment? If so, we'll wrap it in a temporary scaffold so the
+	// DOM tree can be built.
+	let fragment: bool = ! RE_HAS_HTML.is_match(data);
+	if fragment {
+		unsafe { prepend_slice(&mut data, b"<html><head></head><body>"); }
+		data.extend_from_slice(b"</body></html>");
+	}
 
 	// Parse the document.
 	let mut doc = parse_utf8(data);
@@ -86,6 +100,21 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	// Save it!
 	data.truncate(0);
 	serialize(&mut data, &doc.document_node_ref())?;
+
+	// Chop off the fragment scaffold, if present.
+	if fragment {
+		if
+			data.starts_with(b"<html><head></head><body>") &&
+			data.ends_with(b"</body></html>")
+		{
+			data.drain(0..25);
+			data.truncate(data.len() - 14);
+		}
+		// Something went weird.
+		else {
+			return Err(io::ErrorKind::UnexpectedEof.into());
+		}
+	}
 
 	// Return the amount saved.
 	let new_len: usize = data.len();
@@ -238,4 +267,31 @@ pub fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	}
 
 	Action::Continue
+}
+
+/// # Prepend Data to Vec.
+///
+/// Insert a slice into the beginning of an array.
+///
+/// ## Safety
+///
+/// This copies data with pointers, but allocates as needed so should be fine.
+unsafe fn prepend_slice<T: Copy>(vec: &mut Vec<T>, slice: &[T]) {
+	use std::ptr;
+
+	let len = vec.len();
+	let amt = slice.len();
+	vec.reserve(amt);
+
+	ptr::copy(
+		vec.as_ptr(),
+		vec.as_mut_ptr().add(amt),
+		len
+	);
+	ptr::copy(
+		slice.as_ptr(),
+		vec.as_mut_ptr(),
+		amt
+	);
+	vec.set_len(len + amt);
 }

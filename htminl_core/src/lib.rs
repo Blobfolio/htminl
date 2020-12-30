@@ -102,13 +102,18 @@ pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	serialize(&mut data, &doc.document_node_ref())?;
 
 	// Chop off the fragment scaffold, if present.
-	if
-		fragment &&
-		data.starts_with(b"<html><head></head><body>") &&
-		data.ends_with(b"</body></html>")
-	{
-		data.drain(0..25);
-		data.truncate(data.len() - 14);
+	if fragment {
+		if
+			data.starts_with(b"<html><head></head><body>") &&
+			data.ends_with(b"</body></html>")
+		{
+			data.drain(0..25);
+			data.truncate(data.len() - 14);
+		}
+		// Something went weird.
+		else {
+			return Err(io::ErrorKind::UnexpectedEof.into());
+		}
 	}
 
 	// Return the amount saved.

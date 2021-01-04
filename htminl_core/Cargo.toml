@@ -4,7 +4,8 @@ version = "0.4.3"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
-description = "In-place minification of HTML file(s)."
+description = "Library for HTMinL."
+repository = "https://github.com/Blobfolio/htminl"
 publish = false
 
 [dependencies]

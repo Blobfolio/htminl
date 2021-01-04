@@ -11,7 +11,7 @@ publish = false
 [dependencies]
 html5ever = "*"
 lazy_static = "1.4.*"
-marked = "0.2.*"
+marked = "0.3.*"
 regex = "1.4.*"
 tendril = "0.4.*"
 

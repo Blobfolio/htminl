@@ -15,7 +15,7 @@ License details for project dependencies are listed below.
 
 **Used By:**
 
-* [const_fn 0.4.4](https://github.com/taiki-e/const_fn)
+* [const_fn 0.4.5](https://github.com/taiki-e/const_fn)
 
 
 ```
@@ -851,7 +851,7 @@ limitations under the License.
 * [futf 0.1.4](https://github.com/servo/futf)
 * [html5ever 0.25.1](https://github.com/servo/html5ever)
 * [lazy_static 1.4.0](https://github.com/rust-lang-nursery/lazy-static.rs)
-* [libc 0.2.81](https://github.com/rust-lang/libc)
+* [libc 0.2.82](https://github.com/rust-lang/libc)
 * [markup5ever 0.10.0](https://github.com/servo/html5ever)
 * [mime 0.3.16](https://github.com/hyperium/mime)
 * [num-integer 0.1.44](https://github.com/rust-num/num-integer)
@@ -859,16 +859,15 @@ limitations under the License.
 * [num_cpus 1.13.0](https://github.com/seanmonstar/num_cpus)
 * [rayon 1.5.0](https://github.com/rayon-rs/rayon)
 * [rayon-core 1.9.0](https://github.com/rayon-rs/rayon)
-* [regex 1.4.2](https://github.com/rust-lang/regex)
-* [regex-syntax 0.6.21](https://github.com/rust-lang/regex)
+* [regex 1.4.3](https://github.com/rust-lang/regex)
+* [regex-syntax 0.6.22](https://github.com/rust-lang/regex)
 * [scopeguard 1.1.0](https://github.com/bluss/scopeguard)
 * [serde 1.0.118](https://github.com/serde-rs/serde)
 * [string_cache 0.8.1](https://github.com/servo/string-cache)
 * [tempfile 3.1.0](https://github.com/Stebalien/tempfile)
-* [tendril 0.4.1](https://github.com/servo/tendril)
+* [tendril 0.4.2](https://github.com/servo/tendril)
 * [term_size 0.3.2](https://github.com/kbknapp/term_size-rs.git)
-* [thread_local 1.0.1](https://github.com/Amanieu/thread_local-rs)
-* [time 0.1.44](https://github.com/time-rs/time)
+* [thread_local 1.1.0](https://github.com/Amanieu/thread_local-rs)
 * [unicode-width 0.1.8](https://github.com/unicode-rs/unicode-width)
 
 
@@ -2233,8 +2232,11 @@ THE SOFTWARE.
 
 **Used By:**
 
-* [htminl 0.4.3](https://github.com/Blobfolio/htminl)
-* [htminl_core 0.4.3](https://github.com/Blobfolio/htminl)
+* [fyi_menu 0.5.0](https://github.com/Blobfolio/fyi)
+* [fyi_msg 0.5.0](https://github.com/Blobfolio/fyi)
+* [fyi_witcher 0.5.0](https://github.com/Blobfolio/fyi)
+* [htminl 0.4.4](https://github.com/Blobfolio/htminl)
+* [htminl_core 0.4.4](https://github.com/Blobfolio/htminl)
 
 
 ```

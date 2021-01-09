@@ -136,10 +136,7 @@ use fyi_menu::{
 	Argue,
 	FLAG_REQUIRED,
 };
-use fyi_msg::{
-	Msg,
-	MsgKind,
-};
+use fyi_msg::Msg;
 use fyi_witcher::{
 	utility,
 	Witcher,
@@ -159,7 +156,7 @@ use std::{
 fn main() {
 	// Parse CLI arguments.
 	let args = Argue::new(FLAG_REQUIRED)
-		.with_version(b"HTMinL", env!("CARGO_PKG_VERSION").as_bytes())
+		.with_version("HTMinL", env!("CARGO_PKG_VERSION"))
 		.with_help(helper)
 		.with_list();
 
@@ -194,7 +191,7 @@ fn main() {
 		.into_witching()
 		.with_flags(flags)
 		.with_labels("document", "documents")
-		.with_title(MsgKind::new("HTMinL", 199).into_msg("Reticulating &splines;\u{2026}"))
+		.with_title(Msg::custom("HTMinL", 199, "Reticulating &splines;\u{2026}"))
 		.run(minify_file);
 }
 
@@ -212,7 +209,7 @@ fn minify_file(path: &PathBuf) {
 #[cold]
 /// Print Help.
 fn helper(_: Option<&str>) {
-	Msg::from(format!(
+	Msg::plain(format!(
 		r"
      __,---.__
   ,-'         `-.__

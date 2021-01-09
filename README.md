@@ -153,19 +153,9 @@ Still, not too shabby!
 
 
 
-## Credits
-| Library | License | Author |
-| ---- | ---- | ---- |
-| [criterion](https://crates.io/crates/criterion) | Apache-2.0 OR MIT | Jorge Aparicio, Brook Heisler |
-| [html5ever](https://crates.io/crates/html5ever) | Apache-2.0 OR MIT | The html5ever Project Developers |
-| [lazy_static](https://crates.io/crates/lazy_static) | Apache-2.0 OR MIT | Marvin Löbel |
-| [marked](https://crates.io/crates/marked) | Apache-2.0 OR MIT | David Kellum |
-| [tempfile-fast](https://crates.io/crates/tempfile-fast) | MIT | Chris West (Faux) |
-| [tendril](https://crates.io/crates/tendril) | Apache-2.0 OR MIT | Keegan McAllister, Simon Sapin, Chris Morgan |
-
-
-
 ## License
+
+See also: [CREDITS.md](CREDITS.md)
 
 Copyright © 2021 [Blobfolio, LLC](https://blobfolio.com) &lt;hello@blobfolio.com&gt;
 
@@ -173,14 +163,14 @@ This work is free. You can redistribute it and/or modify it under the terms of t
 
     DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
     Version 2, December 2004
-
+    
     Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
-
+    
     Everyone is permitted to copy and distribute verbatim or modified
     copies of this license document, and changing it is allowed as long
     as the name is changed.
-
+    
     DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
     TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
+    
     0. You just DO WHAT THE FUCK YOU WANT TO.

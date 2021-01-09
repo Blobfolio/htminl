@@ -1,16 +1,17 @@
 [package]
 name = "htminl_core"
-version = "0.4.3"
+version = "0.4.4"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
-description = "In-place minification of HTML file(s)."
+description = "Library for HTMinL."
+repository = "https://github.com/Blobfolio/htminl"
 publish = false
 
 [dependencies]
 html5ever = "*"
 lazy_static = "1.4.*"
-marked = "0.2.*"
+marked = "0.3.*"
 regex = "1.4.*"
 tendril = "0.4.*"
 

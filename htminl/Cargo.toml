@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.4.3"
+version = "0.4.4"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -60,15 +60,15 @@ path = "../htminl_core"
 
 [dependencies.fyi_menu]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+tag = "v0.5.0"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+tag = "v0.5.0"
 
 [dependencies.fyi_witcher]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "master"
+tag = "v0.5.0"
 
 [features]
 default = []

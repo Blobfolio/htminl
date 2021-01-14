@@ -52,24 +52,21 @@ path = true
 label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
-[dependencies]
-tempfile-fast = "0.3.*"
+[dependencies.fyi_menu]
+git = "https://github.com/Blobfolio/fyi.git"
+tag = "v0.5.1"
+
+[dependencies.fyi_msg]
+git = "https://github.com/Blobfolio/fyi.git"
+tag = "v0.5.1"
+
+[dependencies.fyi_witcher]
+git = "https://github.com/Blobfolio/fyi.git"
+tag = "v0.5.1"
 
 [dependencies.htminl_core]
 path = "../htminl_core"
 
-[dependencies.fyi_menu]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.0"
-
-[dependencies.fyi_msg]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.0"
-
-[dependencies.fyi_witcher]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.0"
-
-[features]
-default = []
-man = []
+[dependencies.tempfile-fast]
+git = "https://github.com/FauxFaux/tempfile-fast-rs.git"
+rev = "7cd84b2"

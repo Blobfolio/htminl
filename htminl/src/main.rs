@@ -164,28 +164,29 @@ fn main() {
 		if args.switch2("-p", "--progress") { WITCHING_SUMMARIZE | WITCHING_DIFF }
 		else { WITCHING_QUIET | WITCHING_SUMMARIZE | WITCHING_DIFF };
 
+	// Build our extension patterns as u32s for quick comparison. A number of
+	// assumptions are made here that would normally be quite bad, but for our
+	// limited (and controlled) use case, it works well.
+	let lower: u32 = {
+		let val: u8 = 1 << 5;
+		unsafe { *([val, val, val, val].as_ptr().cast::<u32>()) }
+	};
+	let ext_htm: u32 = unsafe { *(b".htm".as_ptr().cast::<u32>()) } | lower;
+	let ext_html: u32 = unsafe { *(b"html".as_ptr().cast::<u32>()) } | lower;
+
 	// Put it all together!
 	Witcher::default()
-		.with_filter(|p: &PathBuf| {
+		.with_filter(move |p: &PathBuf| {
 			let p: &[u8] = utility::path_as_bytes(p);
 			let p_len: usize = p.len();
 
-			p_len > 5 &&
-			(
-				(
-					p[p_len - 4] == b'.' &&
-					p[p_len - 3].to_ascii_lowercase() == b'h' &&
-					p[p_len - 2].to_ascii_lowercase() == b't' &&
-					p[p_len - 1].to_ascii_lowercase() == b'm'
-				) ||
-				(
-					p[p_len - 5] == b'.' &&
-					p[p_len - 4].to_ascii_lowercase() == b'h' &&
-					p[p_len - 3].to_ascii_lowercase() == b't' &&
-					p[p_len - 2].to_ascii_lowercase() == b'm' &&
-					p[p_len - 1].to_ascii_lowercase() == b'l'
-				)
-			)
+			if p_len < 5 { false }
+			else {
+				let ext_p: u32 = unsafe { *(p[p_len - 4..].as_ptr().cast::<u32>()) } | lower;
+
+				ext_p == ext_htm ||
+				(ext_p == ext_html && p[p_len - 5] == b'.')
+			}
 		})
 		.with_paths(args.args())
 		.into_witching()

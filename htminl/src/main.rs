@@ -209,13 +209,13 @@ fn minify_file(path: &PathBuf) {
 #[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.
 #[cold]
 /// Print Help.
-fn helper(_: Option<&str>) {
-	Msg::plain(format!(
+const fn helper() -> &'static str {
+	concat!(
 		r"
      __,---.__
   ,-'         `-.__
 &/           `._\ _\
-/               ''._    {}{}{}
+/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r"
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
@@ -232,10 +232,6 @@ OPTIONS:
 
 ARGS:
     <PATH(S)>...    One or more files or directories to compress.
-
-",
-		"\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v",
-		env!("CARGO_PKG_VERSION"),
-		"\x1b[0m",
-	)).print();
+"
+	)
 }

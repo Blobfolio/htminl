@@ -1,6 +1,6 @@
 [package]
 name = "htminl_core"
-version = "0.4.6"
+version = "0.4.7"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -15,8 +15,9 @@ marked = "0.3.*"
 regex = "1.4.*"
 tendril = "0.4.*"
 
-[dev-dependencies]
-criterion = "*"
+[dev-dependencies.criterion]
+version = ">= 0.3.4"
+default-features = false
 
 [[bench]]
 name = "lib"

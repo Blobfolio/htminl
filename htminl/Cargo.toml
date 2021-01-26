@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.4.6"
+version = "0.4.7"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -54,15 +54,15 @@ description = "Any number of files and directories to crawl and crunch."
 
 [dependencies.fyi_menu]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.4"
+tag = "v0.5.5"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.4"
+tag = "v0.5.5"
 
 [dependencies.fyi_witcher]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.5.4"
+tag = "v0.5.5"
 features = [ "witching" ]
 
 [dependencies.htminl_core]

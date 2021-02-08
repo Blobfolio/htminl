@@ -15,9 +15,9 @@ marked = "0.3.*"
 regex = "1.4.*"
 tendril = "0.4.*"
 
-[dev-dependencies.criterion]
-version = ">= 0.3.4"
-default-features = false
+[dev-dependencies.fyi_bench]
+git = "https://github.com/Blobfolio/fyi.git"
+branch = "feature/next"
 
 [[bench]]
 name = "lib"

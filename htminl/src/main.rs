@@ -134,7 +134,10 @@ be implemented into `HTMinL`; they just need to come to light!
 
 use fyi_menu::{
 	Argue,
+	ArgueError,
+	FLAG_HELP,
 	FLAG_REQUIRED,
+	FLAG_VERSION,
 };
 use fyi_msg::Msg;
 use fyi_witcher::{
@@ -145,23 +148,41 @@ use fyi_witcher::{
 	WITCHING_SUMMARIZE,
 };
 use std::{
+	ffi::OsStr,
 	fs,
 	io::Write,
+	os::unix::ffi::OsStrExt,
 	path::PathBuf,
 };
 
 
 
-#[allow(clippy::if_not_else)] // Code is confusing otherwise.
+/// Main.
 fn main() {
+	if let Err(e) = _main() {
+		match e {
+			ArgueError::WantsVersion => {
+				fyi_msg::plain!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
+			},
+			ArgueError::WantsHelp => {
+				helper();
+			},
+			_ => {
+				Msg::error(e).die(1);
+			}
+		}
+	}
+}
+
+#[inline]
+/// Actual Main.
+fn _main() -> Result<(), ArgueError> {
 	// Parse CLI arguments.
-	let args = Argue::new(FLAG_REQUIRED)
-		.with_version("HTMinL", env!("CARGO_PKG_VERSION"))
-		.with_help(helper)
+	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
 		.with_list();
 
 	let flags: u8 =
-		if args.switch2("-p", "--progress") { WITCHING_SUMMARIZE | WITCHING_DIFF }
+		if args.switch2(b"-p", b"--progress") { WITCHING_SUMMARIZE | WITCHING_DIFF }
 		else { WITCHING_QUIET | WITCHING_SUMMARIZE | WITCHING_DIFF };
 
 	// Build our extension patterns as u32s for quick comparison. A number of
@@ -188,12 +209,14 @@ fn main() {
 				(ext_p == ext_html && p[p_len - 5] == b'.')
 			}
 		})
-		.with_paths(args.args())
+		.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x.as_ref())))
 		.into_witching()
 		.with_flags(flags)
 		.with_labels("document", "documents")
 		.with_title(Msg::custom("HTMinL", 199, "Reticulating &splines;\u{2026}"))
 		.run(minify_file);
+
+	Ok(())
 }
 
 #[allow(unused_must_use)]
@@ -209,8 +232,8 @@ fn minify_file(path: &PathBuf) {
 #[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.
 #[cold]
 /// Print Help.
-const fn helper() -> &'static str {
-	concat!(
+fn helper() {
+	fyi_msg::plain!(concat!(
 		r"
      __,---.__
   ,-'         `-.__
@@ -233,5 +256,5 @@ OPTIONS:
 ARGS:
     <PATH(S)>...    One or more files or directories to compress.
 "
-	)
+	));
 }

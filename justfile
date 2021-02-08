@@ -30,28 +30,25 @@ rustflags   := "-C link-arg=-s"
 
 
 
-# Benchmark Rust functions.
-bench BENCH="" FILTER="":
+# Bench it!
+bench BENCH="":
 	#!/usr/bin/env bash
 
 	clear
-
 	if [ -z "{{ BENCH }}" ]; then
-		RUSTFLAGS="{{ rustflags }}" cargo-criterion \
+		RUSTFLAGS="{{ rustflags }}" cargo bench \
 			--benches \
 			--workspace \
-			--plotting-backend disabled \
 			--all-features \
 			--target x86_64-unknown-linux-gnu \
-			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+			--target-dir "{{ cargo_dir }}"
 	else
-		RUSTFLAGS="{{ rustflags }}" cargo-criterion \
+		RUSTFLAGS="{{ rustflags }}" cargo bench \
 			--bench "{{ BENCH }}" \
 			--workspace \
-			--plotting-backend disabled \
 			--all-features \
 			--target x86_64-unknown-linux-gnu \
-			--target-dir "{{ cargo_dir }}" -- "{{ FILTER }}"
+			--target-dir "{{ cargo_dir }}"
 	fi
 	exit 0
 
@@ -271,6 +268,8 @@ version:
 # Benchmark data.
 _bench-init:
 	#!/usr/bin/env bash
+
+	[ $( command -v html-minifier ) ] || npm i -g html-minifier
 
 	# Make sure the data dir is set up.
 	[ -d "{{ data_dir }}" ] || mkdir "{{ data_dir }}"

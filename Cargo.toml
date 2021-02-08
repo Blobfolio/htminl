@@ -4,6 +4,11 @@ members = [
     "htminl_core",
 ]
 
+[profile.bench]
+lto = true
+codegen-units = 1
+opt-level = 3
+
 [profile.release]
 lto = true
 codegen-units = 1

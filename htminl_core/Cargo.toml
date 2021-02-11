@@ -17,7 +17,7 @@ tendril = "0.4.*"
 
 [dev-dependencies.fyi_bench]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "feature/next"
+tag = "v0.6.1"
 
 [[bench]]
 name = "lib"

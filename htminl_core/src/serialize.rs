@@ -46,6 +46,7 @@ where
 
 
 
+#[allow(dead_code)]
 #[derive(Default)]
 /// Element Info.
 ///

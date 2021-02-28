@@ -132,13 +132,13 @@ use argyle::{
 	FLAG_REQUIRED,
 	FLAG_VERSION,
 };
-use dactyl::NiceU32;
 use dowser::{
 	Dowser,
 	utility::du,
 };
 use fyi_msg::{
 	Msg,
+	MsgKind,
 	Progless,
 };
 use rayon::iter::{
@@ -219,7 +219,7 @@ fn _main() -> Result<(), ArgyleError> {
 		});
 
 		// Finish up.
-		let elapsed = progress.finish();
+		let _ = progress.finish();
 		let after: u64 = du(&paths);
 
 		let saved: u64 =
@@ -235,14 +235,7 @@ fn _main() -> Result<(), ArgyleError> {
 			else { None };
 
 		// Print a summary!
-		unsafe {
-			Msg::crunched_unchecked(&[
-				NiceU32::from(len).as_bytes(),
-				if len == 1 { b" document in " } else { b" documents in " },
-				elapsed.as_bytes(),
-				b".",
-			].concat())
-		}
+		progress.summary(MsgKind::Crunched, "document", "documents")
 			.with_bytes_saved(saved, percent)
 			.print();
 	}

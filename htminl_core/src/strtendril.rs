@@ -5,6 +5,7 @@ This trait exposes a few string manipulation methods to the `StrTendril`
 struct.
 */
 
+use dactyl::traits::SaturatingFrom;
 use tendril::StrTendril;
 
 
@@ -69,10 +70,10 @@ pub fn trim(txt: &mut StrTendril) {
 
 /// Trim Start.
 pub fn trim_start(txt: &mut StrTendril) {
-	let len: u32 = txt.as_bytes()
+	let len: u32 = u32::saturating_from(txt.as_bytes()
 		.iter()
 		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count() as u32;
+		.count());
 	if 0 != len {
 		txt.pop_front(len);
 	}
@@ -80,11 +81,11 @@ pub fn trim_start(txt: &mut StrTendril) {
 
 /// Trim End.
 pub fn trim_end(txt: &mut StrTendril) {
-	let len: u32 = txt.as_bytes()
+	let len: u32 = u32::saturating_from(txt.as_bytes()
 		.iter()
 		.rev()
 		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count() as u32;
+		.count());
 	if 0 != len {
 		txt.pop_back(len);
 	}

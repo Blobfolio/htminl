@@ -21,13 +21,7 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 
-#![allow(clippy::cast_possible_truncation)]
-#![allow(clippy::cast_precision_loss)]
-#![allow(clippy::cast_sign_loss)]
-#![allow(clippy::map_err_ignore)]
-#![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(unused_crate_dependencies)]
 
 
 
@@ -64,6 +58,12 @@ use tendril::StrTendril;
 ///
 /// This convenience method minifies (in-place) the HTML source in the byte
 /// vector, and returns the size savings (if any).
+///
+/// ## Errors
+///
+/// This method returns an error if the file is invalid, empty, or minification
+/// otherwise fails, including cases where everything worked but no compression
+/// was possible.
 pub fn minify_html(mut data: &mut Vec<u8>) -> io::Result<usize> {
 	use regex::bytes::Regex;
 

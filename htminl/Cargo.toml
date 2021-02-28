@@ -52,18 +52,17 @@ path = true
 label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
-[dependencies.fyi_menu]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.6.1"
+[dependencies]
+argyle = "0.3.*"
+dactyl = "0.1.*"
+dowser = "0.1.*"
+num-traits = "0.2.*"
+rayon = "1.5.*"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.6.1"
-
-[dependencies.fyi_witcher]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.6.1"
-features = [ "witching" ]
+branch = "feature/next"
+features = [ "progress" ]
 
 [dependencies.htminl_core]
 path = "../htminl_core"

@@ -9,16 +9,9 @@ repository = "https://github.com/Blobfolio/htminl"
 publish = false
 
 [dependencies]
+dactyl = "0.1.*"
 html5ever = "*"
 lazy_static = "1.4.*"
 marked = "0.3.*"
 regex = "1.4.*"
 tendril = "0.4.*"
-
-[dev-dependencies.fyi_bench]
-git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.6.1"
-
-[[bench]]
-name = "lib"
-harness = false

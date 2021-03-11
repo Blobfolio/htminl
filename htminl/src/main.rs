@@ -185,8 +185,7 @@ fn _main() -> Result<(), ArgyleError> {
 
 		// Put it all together!
 	let paths = Vec::<PathBuf>::try_from(
-		Dowser::default()
-			.with_filter(|p: &Path| p.extension()
+		Dowser::filtered(|p: &Path| p.extension()
 				.map_or(
 					false,
 					|e| {
@@ -200,12 +199,9 @@ fn _main() -> Result<(), ArgyleError> {
 
 	// Sexy run-through.
 	if args.switch2(b"-p", b"--progress") {
-		// The length has to fit in `u32`.
-		let len: u32 = u32::try_from(paths.len())
-			.map_err(|_| ArgyleError::Custom("Only 4,294,967,295 files can be crunched at one time."))?;
-
 		// Boot up a progress bar.
-		let progress = Progless::steady(len)
+		let progress = Progless::try_from(paths.len())
+			.map_err(|_| ArgyleError::Custom("Progress can only be displayed for up to 4,294,967,295 files. Try again with fewer files or without the -p/--progress flag."))?
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
 		// Check file sizes before we start.
@@ -223,7 +219,7 @@ fn _main() -> Result<(), ArgyleError> {
 		ba.stop(du(&paths));
 
 		// Finish up.
-		let _ = progress.finish();
+		progress.finish();
 		progress.summary(MsgKind::Crunched, "document", "documents")
 			.with_bytes_saved(ba.less(), ba.less_percent())
 			.print();

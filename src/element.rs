@@ -20,7 +20,7 @@ use crate::meta::t;
 ///
 /// At the moment, this applies to all "known" tags other than `<code>`,
 /// `<pre>`, `<script>`, `<svg>`, and `<textarea>`.
-pub fn can_collapse_whitespace(el: &Element) -> bool {
+pub(super) fn can_collapse_whitespace(el: &Element) -> bool {
 	match el.name.local {
 		t::CODE
 		| t::PLAINTEXT
@@ -36,7 +36,7 @@ pub fn can_collapse_whitespace(el: &Element) -> bool {
 /// Can Drop Text Nodes?
 ///
 /// Text nodes in these elements are never needed.
-pub const fn can_drop_text_nodes(el: &Element) -> bool {
+pub(super) const fn can_drop_text_nodes(el: &Element) -> bool {
 	matches!(
 		el.name.local,
 		t::AUDIO
@@ -53,7 +53,7 @@ pub const fn can_drop_text_nodes(el: &Element) -> bool {
 ///
 /// Whitespace-only text nodes sitting between two elements of this kind
 /// (or at the beginning and end of the parent) can be safely dropped.
-pub const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
+pub(super) const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
 	matches!(
 		el.name.local,
 		t::NOSCRIPT | t::SCRIPT | t::STYLE
@@ -68,7 +68,7 @@ pub const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
 ///
 /// At the moment, this only applies to `<script>`, `<noscript>`,
 /// `<style>`, `<title>`, and `<transition>` tags.
-pub fn can_trim_whitespace(el: &Element) -> bool {
+pub(super) fn can_trim_whitespace(el: &Element) -> bool {
 	match el.name.local {
 		t::NOSCRIPT | t::SCRIPT | t::STYLE | t::TITLE => true,
 		_ => el.name.local == *t::TRANSITION,

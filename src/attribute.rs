@@ -19,7 +19,7 @@ use crate::meta::{a, t};
 /// types of attributes like classes and styles (which can get long
 /// enough while writing that devs might choose to split them into
 /// separate lines, etc.).
-pub const fn can_compact_value(attr: &Attribute) -> bool {
+pub(super) const fn can_compact_value(attr: &Attribute) -> bool {
 	matches!(attr.name.local, a::CLASS | a::STYLE)
 }
 
@@ -28,7 +28,7 @@ pub const fn can_compact_value(attr: &Attribute) -> bool {
 /// Certain attributes, such as `type="text/javascript"` on a `<script>`
 /// element are unnecessary (and actively discouraged), so can be safely
 /// removed from the document.
-pub fn can_drop(attr: &Attribute, tag: &LocalName) -> bool {
+pub(super) fn can_drop(attr: &Attribute, tag: &LocalName) -> bool {
 	match attr.name.local {
 		// Default "type" tags. Technically `<input type="text"/>` is
 		// also a default, but because it is frequently matched in CSS
@@ -74,7 +74,7 @@ pub fn can_drop(attr: &Attribute, tag: &LocalName) -> bool {
 /// "boolean"-like properties such as `autoplay`, `defer`, etc. In such
 /// cases the attribute name is all that matters; the value can be safely
 /// dropped.
-pub fn can_drop_value(attr: &Attribute) -> bool {
+pub(super) fn can_drop_value(attr: &Attribute) -> bool {
 	attr.value.is_empty() ||
 	(is_boolean(attr) && ! attr.value.eq_ignore_ascii_case("false"))
 }
@@ -84,7 +84,7 @@ pub fn can_drop_value(attr: &Attribute) -> bool {
 /// These attributes either are or aren't. Their existence implies "true",
 /// so if they're true they don't need values, and if they're false they
 /// don't need to be at all.
-pub const fn is_boolean(attr: &Attribute) -> bool {
+pub(super) const fn is_boolean(attr: &Attribute) -> bool {
 	matches!(
 		attr.name.local,
 		a::ALLOWFULLSCREEN

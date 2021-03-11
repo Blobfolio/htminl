@@ -127,12 +127,12 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
-pub mod attribute;
-pub mod element;
+pub(crate) mod attribute;
+pub(crate) mod element;
 pub mod meta;
-pub mod noderef;
-pub mod serialize;
-pub mod strtendril;
+pub(crate) mod noderef;
+pub(crate) mod serialize;
+pub(crate) mod strtendril;
 mod htminl;
 
 

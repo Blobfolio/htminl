@@ -17,8 +17,7 @@
 
 pkg_id      := "htminl"
 pkg_name    := "HTMinL"
-pkg_dir1    := justfile_directory() + "/htminl"
-pkg_dir2    := justfile_directory() + "/htminl_core"
+pkg_dir1    := justfile_directory()
 
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
 cargo_bin   := cargo_dir + "/x86_64-unknown-linux-gnu/release/" + pkg_id
@@ -38,14 +37,12 @@ bench BENCH="":
 	if [ -z "{{ BENCH }}" ]; then
 		RUSTFLAGS="{{ rustflags }}" cargo bench \
 			--benches \
-			--workspace \
 			--all-features \
 			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
 	else
 		RUSTFLAGS="{{ rustflags }}" cargo bench \
 			--bench "{{ BENCH }}" \
-			--workspace \
 			--all-features \
 			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
@@ -176,16 +173,14 @@ bench-bin DIR NATIVE="":
 	# they place *other* shit in the designated target dir. Haha.
 	[ ! -d "{{ justfile_directory() }}/target" ] || rm -rf "{{ justfile_directory() }}/target"
 	[ ! -d "{{ pkg_dir1 }}/target" ] || rm -rf "{{ pkg_dir1 }}/target"
-	[ ! -d "{{ pkg_dir2 }}/target" ] || rm -rf "{{ pkg_dir2 }}/target"
 
-	cargo update -w
+	cargo update
 
 
 # Clippy.
 @clippy:
 	clear
 	RUSTFLAGS="{{ rustflags }}" cargo clippy \
-		--workspace \
 		--release \
 		--all-features \
 		--target x86_64-unknown-linux-gnu \
@@ -210,7 +205,6 @@ bench-bin DIR NATIVE="":
 
 	# Make the docs.
 	cargo +nightly doc \
-		--workspace \
 		--release \
 		--no-deps \
 		--target x86_64-unknown-linux-gnu \
@@ -254,7 +248,6 @@ version:
 
 	# Set the release version!
 	just _version "{{ pkg_dir1 }}" "$_ver2"
-	just _version "{{ pkg_dir2 }}" "$_ver2"
 
 
 # Set version for real.

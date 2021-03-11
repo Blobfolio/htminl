@@ -35,9 +35,8 @@ use std::{
 ///
 /// This is a convenience method for serializing a node with our particular
 /// serializer implementation.
-pub(crate) fn serialize<Wr, T>(writer: Wr, node: &T) -> io::Result<()>
+pub(crate) fn serialize<T>(writer: &mut Vec<u8>, node: &T) -> io::Result<()>
 where
-	Wr: Write,
 	T: Serialize,
 {
 	let mut ser = MinifySerializer::new(writer);

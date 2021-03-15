@@ -5,6 +5,7 @@ This serializer is almost identical to the one used by `html5ever`, but
 includes a few space-saving optimizations.
 */
 
+use super::HtminlError;
 use html5ever::{
 	local_name,
 	namespace_url,
@@ -35,12 +36,13 @@ use std::{
 ///
 /// This is a convenience method for serializing a node with our particular
 /// serializer implementation.
-pub(crate) fn serialize<T>(writer: &mut Vec<u8>, node: &T) -> io::Result<()>
+pub(crate) fn serialize<T>(writer: &mut Vec<u8>, node: &T) -> Result<(), HtminlError>
 where
 	T: Serialize,
 {
 	let mut ser = MinifySerializer::new(writer);
 	node.serialize(&mut ser, TraversalScope::ChildrenOnly(None))
+		.map_err(|_| HtminlError::Parse)
 }
 
 

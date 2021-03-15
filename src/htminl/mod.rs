@@ -2,14 +2,17 @@
 # `HTMinL` - Helpers
 */
 
-use crate::{
-	attribute,
-	element,
-	noderef,
-	meta::{a, t},
-	serialize::serialize,
-	strtendril,
-};
+pub(self) mod attribute;
+pub(self) mod element;
+pub(super) mod error;
+mod meta;
+pub(self) mod noderef;
+pub(self) mod serialize;
+pub(self) mod strtendril;
+
+
+
+use error::HtminlError;
 use marked::{
 	Element,
 	filter::Action,
@@ -17,83 +20,137 @@ use marked::{
 	NodeData,
 	NodeRef,
 };
+use meta::{a, t};
+use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
 	cell::RefCell,
-	io,
+	convert::TryFrom,
+	io::Write,
+	num::NonZeroUsize,
+	path::PathBuf,
 };
 use tendril::StrTendril;
 
 
 
-/// Minify HTML.
-///
-/// This convenience method minifies (in-place) the HTML source in the byte
-/// vector, and returns the size savings (if any).
-///
-/// ## Errors
-///
-/// This method returns an error if the file is invalid, empty, or minification
-/// otherwise fails, including cases where everything worked but no compression
-/// was possible.
-pub(super) fn minify_html(data: &mut Vec<u8>) -> io::Result<usize> {
-	use regex::bytes::Regex;
+#[derive(Debug)]
+/// # `HTMinL`
+pub(super) struct Htminl<'a> {
+	src: &'a PathBuf,
+	buf: Vec<u8>,
+	size: NonZeroUsize,
+}
 
-	lazy_static::lazy_static! {
-		static ref RE_HAS_HTML: Regex = Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap();
+impl<'a> TryFrom<&'a PathBuf> for Htminl<'a> {
+	type Error = HtminlError;
+
+	fn try_from(src: &'a PathBuf) -> Result<Self, Self::Error> {
+		let buf: Vec<u8> = std::fs::read(src).map_err(|_| HtminlError::Read)?;
+		let size = NonZeroUsize::new(buf.len()).ok_or(HtminlError::EmptyFile)?;
+
+		Ok(Self { src, buf, size })
+	}
+}
+
+impl Htminl<'_> {
+	/// # Minify!
+	pub(super) fn minify(&mut self) -> Result<(), HtminlError> {
+		// Determine whether we're working on a whole document or fragment.
+		let fragment: bool = self.is_fragment();
+
+		// Add padding for fragments.
+		if fragment { self.make_whole(); }
+
+		// Parse the document.
+		let mut doc = parse_utf8(&self.buf);
+
+		// First Pass: clean up elements, strip pointless nodes.
+		// Second Pass: merge adjacent text nodes.
+		// Third Pass: clean up and minify text nodes.
+		doc.filter(filter_minify_one);
+		doc.filter(filter_minify_two);
+		doc.filter(filter_minify_three);
+
+		// Convert it back to an HTML string (er, byte slice)!
+		self.buf.truncate(0);
+		serialize(&mut self.buf, &doc.document_node_ref())?;
+
+		// Remove fragment padding.
+		if fragment { self.make_fragment()?; }
+
+		let new_len: usize = self.buf.len();
+		if 0 < new_len && new_len < self.size.get() {
+			// Save it!
+			tempfile_fast::Sponge::new_for(self.src)
+				.and_then(|mut file| file.write_all(&self.buf).and_then(|_| file.commit()))
+				.map_err(|_| HtminlError::Write)?;
+		}
+
+		Ok(())
 	}
 
-	// We need something to encode!
-	if data.is_empty() {
-		return Err(io::ErrorKind::WriteZero.into());
+	/// # Is Fragment.
+	fn is_fragment(&self) -> bool {
+		use regex::bytes::Regex;
+
+		lazy_static::lazy_static! {
+			static ref RE_HAS_HTML: Regex = Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap();
+		}
+
+		! RE_HAS_HTML.is_match(&self.buf)
 	}
 
-	// Note our starting length.
-	let old_len: usize = data.len();
+	/// # Make (Fragment) Whole.
+	fn make_whole(&mut self) {
+		// The combined length of the opener and closer.
+		const ADJ: usize = 25 + 14;
 
-	// Is this a fragment? If so, we'll wrap it in a temporary scaffold so the
-	// DOM tree can be built.
-	let fragment: bool = ! RE_HAS_HTML.is_match(data);
-	if fragment {
-		unsafe { prepend_slice(data, b"<html><head></head><body>"); }
-		data.extend_from_slice(b"</body></html>");
+		// Reserve space for the opener and closer.
+		self.buf.reserve(ADJ);
+
+		unsafe {
+			// Copy all content 25 (opener) to the right.
+			std::ptr::copy(
+				self.buf.as_ptr(),
+				self.buf.as_mut_ptr().add(25),
+				self.size.get()
+			);
+
+			// Copy opener.
+			std::ptr::copy_nonoverlapping(
+				b"<html><head></head><body>".as_ptr(),
+				self.buf.as_mut_ptr(),
+				25
+			);
+
+			// Copy closer.
+			std::ptr::copy_nonoverlapping(
+				b"</body></html>".as_ptr(),
+				self.buf.as_mut_ptr().add(self.size.get() + 25),
+				14
+			);
+
+			// Adjust the buffer length.
+			self.buf.set_len(self.size.get() + ADJ);
+		}
 	}
 
-	// Parse the document.
-	let mut doc = parse_utf8(data);
-
-	// First Pass: clean up elements, strip pointless nodes.
-	// Second Pass: merge adjacent text nodes.
-	// Third Pass: clean up and minify text nodes.
-	doc.filter(filter_minify_one);
-	doc.filter(filter_minify_two);
-	doc.filter(filter_minify_three);
-
-	// Save it!
-	data.truncate(0);
-	serialize(data, &doc.document_node_ref())?;
-
-	// Chop off the fragment scaffold, if present.
-	if fragment {
+	/// # Back to Fragment.
+	fn make_fragment(&mut self) -> Result<(), HtminlError> {
+		// Chop off the fragment scaffold, if present.
 		if
-			data.starts_with(b"<html><head></head><body>") &&
-			data.ends_with(b"</body></html>")
+			self.buf.starts_with(b"<html><head></head><body>") &&
+			self.buf.ends_with(b"</body></html>")
 		{
-			data.drain(0..25);
-			data.truncate(data.len() - 14);
+			self.buf.drain(0..25);
+			self.buf.truncate(self.buf.len() - 14);
+			Ok(())
 		}
-		// Something went weird.
 		else {
-			return Err(io::ErrorKind::UnexpectedEof.into());
+			Err(HtminlError::Parse)
 		}
 	}
-
-	// Return the amount saved.
-	let new_len: usize = data.len();
-	if new_len >= old_len {
-		Err(io::ErrorKind::Other.into())
-	}
-	else { Ok(old_len - new_len) }
 }
 
 /// Minify #1
@@ -239,31 +296,4 @@ fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	}
 
 	Action::Continue
-}
-
-/// # Prepend Data to Vec.
-///
-/// Insert a slice into the beginning of an array.
-///
-/// ## Safety
-///
-/// This copies data with pointers, but allocates as needed so should be fine.
-unsafe fn prepend_slice<T: Copy>(vec: &mut Vec<T>, slice: &[T]) {
-	use std::ptr;
-
-	let len = vec.len();
-	let amt = slice.len();
-	vec.reserve(amt);
-
-	ptr::copy(
-		vec.as_ptr(),
-		vec.as_mut_ptr().add(amt),
-		len
-	);
-	ptr::copy(
-		slice.as_ptr(),
-		vec.as_mut_ptr(),
-		amt
-	);
-	vec.set_len(len + amt);
 }

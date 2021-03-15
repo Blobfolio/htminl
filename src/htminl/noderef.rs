@@ -4,7 +4,7 @@
 This trait exposes a few methods to the `NodeRef` struct.
 */
 
-use crate::{
+use super::{
 	element,
 	meta::t,
 };

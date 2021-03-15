@@ -127,12 +127,6 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
-pub(crate) mod attribute;
-pub(crate) mod element;
-pub mod meta;
-pub(crate) mod noderef;
-pub(crate) mod serialize;
-pub(crate) mod strtendril;
 mod htminl;
 
 
@@ -161,8 +155,6 @@ use rayon::iter::{
 use std::{
 	convert::TryFrom,
 	ffi::OsStr,
-	fs,
-	io::Write,
 	os::unix::ffi::OsStrExt,
 	path::{
 		Path,
@@ -220,12 +212,14 @@ fn _main() -> Result<(), ArgyleError> {
 		let mut ba = BeforeAfter::start(du(&paths));
 
 		// Process!
-		paths.par_iter().for_each(|x| {
-			let tmp = x.to_string_lossy();
-			progress.add(&tmp);
-			minify_file(x);
-			progress.remove(&tmp);
-		});
+		paths.par_iter().for_each(|x|
+			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
+				let tmp = x.to_string_lossy();
+				progress.add(&tmp);
+				let _res = enc.minify();
+				progress.remove(&tmp);
+			}
+		);
 
 		// Check file sizes again.
 		ba.stop(du(&paths));
@@ -237,21 +231,14 @@ fn _main() -> Result<(), ArgyleError> {
 			.print();
 	}
 	else {
-		paths.par_iter().for_each(|x| {
-			minify_file(x);
-		});
+		paths.par_iter().for_each(|x|
+			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
+				let _res = enc.minify();
+			}
+		);
 	}
 
 	Ok(())
-}
-
-/// Do the dirty work!
-fn minify_file(path: &Path) {
-	let _res = fs::read(path)
-		.and_then(|mut data| htminl::minify_html(&mut data)
-			.and_then(|_| tempfile_fast::Sponge::new_for(path))
-			.and_then(|mut out| out.write_all(&data).and_then(|_| out.commit()))
-		);
 }
 
 #[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.

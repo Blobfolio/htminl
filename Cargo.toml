@@ -67,7 +67,7 @@ tendril = "0.4.*"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-branch = "feature/next"
+tag = "v0.7.0"
 features = [ "progress" ]
 
 [dependencies.tempfile-fast]

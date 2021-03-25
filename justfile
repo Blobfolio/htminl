@@ -200,11 +200,8 @@ bench-bin DIR NATIVE="":
 
 # Build Docs.
 @doc:
-	# Make sure nightly is installed; this version generates better docs.
-	env RUSTUP_PERMIT_COPY_RENAME=true rustup install nightly
-
 	# Make the docs.
-	cargo +nightly doc \
+	cargo doc \
 		--release \
 		--no-deps \
 		--target x86_64-unknown-linux-gnu \
@@ -303,8 +300,8 @@ _bench-init:
 # Init dependencies.
 @_init:
 	# We need beta until 1.51 is stable.
-	env RUSTUP_PERMIT_COPY_RENAME=true rustup default beta
-	env RUSTUP_PERMIT_COPY_RENAME=true rustup component add clippy
+	# env RUSTUP_PERMIT_COPY_RENAME=true rustup default beta
+	# env RUSTUP_PERMIT_COPY_RENAME=true rustup component add clippy
 
 
 # Fix file/directory permissions.

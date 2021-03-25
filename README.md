@@ -20,7 +20,7 @@ See the [minification](#minification) section for more details about the process
 
 This application is written in [Rust](https://www.rust-lang.org/) and can be installed using [Cargo](https://github.com/rust-lang/cargo).
 
-For stable Rust (>= `1.47.0`), run:
+For stable Rust (>= `1.51.0`), run:
 ```bash
 RUSTFLAGS="-C link-arg=-s" cargo install \
     --git https://github.com/Blobfolio/htminl.git \

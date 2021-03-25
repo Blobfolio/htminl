@@ -5,6 +5,7 @@ This serializer is almost identical to the one used by `html5ever`, but
 includes a few space-saving optimizations.
 */
 
+use super::HtminlError;
 use html5ever::{
 	local_name,
 	namespace_url,
@@ -35,18 +36,17 @@ use std::{
 ///
 /// This is a convenience method for serializing a node with our particular
 /// serializer implementation.
-pub(crate) fn serialize<Wr, T>(writer: Wr, node: &T) -> io::Result<()>
+pub(crate) fn serialize<T>(writer: &mut Vec<u8>, node: &T) -> Result<(), HtminlError>
 where
-	Wr: Write,
 	T: Serialize,
 {
 	let mut ser = MinifySerializer::new(writer);
 	node.serialize(&mut ser, TraversalScope::ChildrenOnly(None))
+		.map_err(|_| HtminlError::Parse)
 }
 
 
 
-#[allow(dead_code)]
 #[derive(Default)]
 /// Element Info.
 ///
@@ -54,7 +54,6 @@ where
 struct ElemInfo {
 	html_name: Option<LocalName>,
 	ignore_children: bool,
-	processed_first_child: bool,
 }
 
 
@@ -139,7 +138,6 @@ impl<Wr: Write> MinifySerializer<Wr> {
 			stack: vec![ElemInfo {
 				html_name: None,
 				ignore_children: false,
-				processed_first_child: false,
 			}],
 		}
 	}
@@ -261,7 +259,6 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 			self.stack.push(ElemInfo {
 				html_name,
 				ignore_children: true,
-				processed_first_child: false,
 			});
 			return Ok(());
 		}
@@ -338,12 +335,9 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 				)
 			);
 
-		self.parent().processed_first_child = true;
-
 		self.stack.push(ElemInfo {
 			html_name,
 			ignore_children,
-			processed_first_child: false,
 		});
 
 		Ok(())
@@ -373,7 +367,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	///
 	/// Imported from `html5ever`.
 	fn write_text(&mut self, txt: &str) -> io::Result<()> {
-		let escape = match self.parent().html_name {
+		match self.parent().html_name {
 			Some(local_name!("style")) |
 			Some(local_name!("script")) |
 			Some(local_name!("xmp")) |
@@ -381,15 +375,8 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 			Some(local_name!("noembed")) |
 			Some(local_name!("noframes")) |
 			Some(local_name!("noscript")) |
-			Some(local_name!("plaintext")) => false,
-			_ => true,
-		};
-
-		if escape {
-			self.write_esc_text(txt.as_bytes())
-		}
-		else {
-			self.writer.write_all(txt.as_bytes())
+			Some(local_name!("plaintext")) => self.writer.write_all(txt.as_bytes()),
+			_ => self.write_esc_text(txt.as_bytes()),
 		}
 	}
 

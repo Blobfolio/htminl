@@ -123,36 +123,43 @@ be implemented into `HTMinL`; they just need to come to light!
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 
-#![allow(clippy::cast_possible_truncation)]
-#![allow(clippy::cast_precision_loss)]
-#![allow(clippy::cast_sign_loss)]
-#![allow(clippy::map_err_ignore)]
-#![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
 
 
 
-use fyi_menu::{
+mod htminl;
+
+
+
+use argyle::{
 	Argue,
-	ArgueError,
+	ArgyleError,
 	FLAG_HELP,
 	FLAG_REQUIRED,
 	FLAG_VERSION,
 };
-use fyi_msg::Msg;
-use fyi_witcher::{
-	utility,
-	Witcher,
-	WITCHING_DIFF,
-	WITCHING_QUIET,
-	WITCHING_SUMMARIZE,
+use dowser::{
+	Dowser,
+	utility::du,
+};
+use fyi_msg::{
+	BeforeAfter,
+	Msg,
+	MsgKind,
+	Progless,
+};
+use rayon::iter::{
+	IntoParallelRefIterator,
+	ParallelIterator,
 };
 use std::{
+	convert::TryFrom,
 	ffi::OsStr,
-	fs,
-	io::Write,
 	os::unix::ffi::OsStrExt,
-	path::PathBuf,
+	path::{
+		Path,
+		PathBuf,
+	},
 };
 
 
@@ -160,79 +167,85 @@ use std::{
 /// Main.
 fn main() {
 	match _main() {
-		Err(ArgueError::WantsVersion) => {
-			fyi_msg::plain!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
+		Ok(_) => {},
+		Err(ArgyleError::WantsVersion) => {
+			println!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
 		},
-		Err(ArgueError::WantsHelp) => {
+		Err(ArgyleError::WantsHelp) => {
 			helper();
 		},
 		Err(e) => {
 			Msg::error(e).die(1);
 		},
-		Ok(_) => {},
 	}
 }
 
 #[inline]
 /// Actual Main.
-fn _main() -> Result<(), ArgueError> {
+fn _main() -> Result<(), ArgyleError> {
 	// Parse CLI arguments.
 	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
 		.with_list();
 
-	let flags: u8 =
-		if args.switch2(b"-p", b"--progress") { WITCHING_SUMMARIZE | WITCHING_DIFF }
-		else { WITCHING_QUIET | WITCHING_SUMMARIZE | WITCHING_DIFF };
+		// Put it all together!
+	let paths = Vec::<PathBuf>::try_from(
+		Dowser::filtered(|p: &Path| p.extension()
+				.map_or(
+					false,
+					|e| {
+						let ext = e.as_bytes().to_ascii_lowercase();
+						ext == b"html" || ext == b"htm"
+					}
+				)
+			)
+			.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x.as_ref())))
+	).map_err(|_| ArgyleError::Custom("No documents were found."))?;
 
-	// Build our extension patterns as u32s for quick comparison. A number of
-	// assumptions are made here that would normally be quite bad, but for our
-	// limited (and controlled) use case, it works well.
-	let lower: u32 = {
-		let val: u8 = 1 << 5;
-		unsafe { *([val, val, val, val].as_ptr().cast::<u32>()) }
-	};
-	let ext_htm: u32 = unsafe { *(b".htm".as_ptr().cast::<u32>()) } | lower;
-	let ext_html: u32 = unsafe { *(b"html".as_ptr().cast::<u32>()) } | lower;
+	// Sexy run-through.
+	if args.switch2(b"-p", b"--progress") {
+		// Boot up a progress bar.
+		let progress = Progless::try_from(paths.len())
+			.map_err(|_| ArgyleError::Custom("Progress can only be displayed for up to 4,294,967,295 files. Try again with fewer files or without the -p/--progress flag."))?
+			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
-	// Put it all together!
-	Witcher::default()
-		.with_filter(move |p: &PathBuf| {
-			let p: &[u8] = utility::path_as_bytes(p);
-			let p_len: usize = p.len();
+		// Check file sizes before we start.
+		let mut ba = BeforeAfter::start(du(&paths));
 
-			if p_len < 5 { false }
-			else {
-				let ext_p: u32 = unsafe { *(p[p_len - 4..].as_ptr().cast::<u32>()) } | lower;
-
-				ext_p == ext_htm ||
-				(ext_p == ext_html && p[p_len - 5] == b'.')
+		// Process!
+		paths.par_iter().for_each(|x|
+			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
+				let tmp = x.to_string_lossy();
+				progress.add(&tmp);
+				let _res = enc.minify();
+				progress.remove(&tmp);
 			}
-		})
-		.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x.as_ref())))
-		.into_witching()
-		.with_flags(flags)
-		.with_labels("document", "documents")
-		.with_title(Msg::custom("HTMinL", 199, "Reticulating &splines;\u{2026}"))
-		.run(minify_file);
+		);
+
+		// Check file sizes again.
+		ba.stop(du(&paths));
+
+		// Finish up.
+		progress.finish();
+		progress.summary(MsgKind::Crunched, "document", "documents")
+			.with_bytes_saved(ba)
+			.print();
+	}
+	else {
+		paths.par_iter().for_each(|x|
+			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
+				let _res = enc.minify();
+			}
+		);
+	}
 
 	Ok(())
-}
-
-#[allow(unused_must_use)]
-/// Do the dirty work!
-fn minify_file(path: &PathBuf) {
-	let _ = fs::read(path)
-		.and_then(|mut data| htminl_core::minify_html(&mut data)
-			.and_then(|_| tempfile_fast::Sponge::new_for(path))
-			.and_then(|mut out| out.write_all(&data).and_then(|_| out.commit()))
-		);
 }
 
 #[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.
 #[cold]
 /// Print Help.
 fn helper() {
-	fyi_msg::plain!(concat!(
+	println!(concat!(
 		r"
      __,---.__
   ,-'         `-.__

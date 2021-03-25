@@ -5,6 +5,7 @@ This trait exposes a few string manipulation methods to the `StrTendril`
 struct.
 */
 
+use dactyl::traits::SaturatingFrom;
 use tendril::StrTendril;
 
 
@@ -21,7 +22,7 @@ use tendril::StrTendril;
 /// Complete trimming gets dangerous, particularly given that CSS can
 /// override the display state of any element arbitrarily, so we are *not*
 /// doing that here.
-pub fn collapse_whitespace(txt: &mut StrTendril) {
+pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 	let alter = StrTendril::from(unsafe {
 		let mut in_ws: bool = false;
 		std::str::from_utf8_unchecked(&txt.as_bytes()
@@ -52,7 +53,7 @@ pub fn collapse_whitespace(txt: &mut StrTendril) {
 /// Is (Only) Whitespace?
 ///
 /// Returns `true` if the node is empty or contains only whitespace.
-pub fn is_whitespace(txt: &StrTendril) -> bool {
+pub(super) fn is_whitespace(txt: &StrTendril) -> bool {
 	! txt.as_bytes()
 		.iter()
 		.any(|c| match *c {
@@ -62,29 +63,29 @@ pub fn is_whitespace(txt: &StrTendril) -> bool {
 }
 
 /// Trim.
-pub fn trim(txt: &mut StrTendril) {
+pub(super) fn trim(txt: &mut StrTendril) {
 	trim_start(txt);
 	trim_end(txt);
 }
 
 /// Trim Start.
-pub fn trim_start(txt: &mut StrTendril) {
-	let len: u32 = txt.as_bytes()
+pub(super) fn trim_start(txt: &mut StrTendril) {
+	let len: u32 = u32::saturating_from(txt.as_bytes()
 		.iter()
 		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count() as u32;
+		.count());
 	if 0 != len {
 		txt.pop_front(len);
 	}
 }
 
 /// Trim End.
-pub fn trim_end(txt: &mut StrTendril) {
-	let len: u32 = txt.as_bytes()
+pub(super) fn trim_end(txt: &mut StrTendril) {
+	let len: u32 = u32::saturating_from(txt.as_bytes()
 		.iter()
 		.rev()
 		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count() as u32;
+		.count());
 	if 0 != len {
 		txt.pop_back(len);
 	}

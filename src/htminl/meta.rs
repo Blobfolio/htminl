@@ -4,11 +4,13 @@
 This module re-exports TAG and ATTRIBUTE constants, adding a few of its own.
 */
 
+#![allow(unreachable_pub)] // No combination makes the linter happy!
+
 
 
 #[allow(missing_docs)]
 /// Attribute Constants.
-pub mod a {
+pub(super) mod a {
 	use marked::LocalName;
 	use html5ever::local_name;
 	pub use marked::html::a::*;
@@ -46,7 +48,7 @@ pub mod a {
 }
 
 /// Tag Constants.
-pub mod t {
+pub(super) mod t {
 	use marked::LocalName;
 	pub use marked::html::t::*;
 

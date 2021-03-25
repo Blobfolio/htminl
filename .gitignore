@@ -1,6 +1,5 @@
-**.1.gz
+**.deb
+**.gz
+**/target/**
 /Cargo.lock
 /doc/
-/htminl/target/
-/htminl_core/target/
-/target/

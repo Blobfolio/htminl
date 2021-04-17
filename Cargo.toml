@@ -55,7 +55,7 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [dependencies]
-argyle = "0.3.*"
+argyle = "0.4.*"
 dactyl = "0.1.*"
 dowser = "0.2.*"
 html5ever = "*"
@@ -67,7 +67,7 @@ tendril = "0.4.*"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.7.0"
+tag = "v0.7.1"
 features = [ "progress" ]
 
 [dependencies.tempfile-fast]

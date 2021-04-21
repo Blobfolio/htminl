@@ -129,8 +129,6 @@ be implemented into `HTMinL`; they just need to come to light!
 
 mod htminl;
 
-
-
 use argyle::{
 	Argue,
 	ArgyleError,
@@ -140,6 +138,7 @@ use argyle::{
 };
 use dowser::{
 	Dowser,
+	Extension,
 	utility::du,
 };
 use fyi_msg::{
@@ -183,21 +182,22 @@ fn main() {
 #[inline]
 /// Actual Main.
 fn _main() -> Result<(), ArgyleError> {
+	// The extensions we care about.
+	const E_HTM: Extension = Extension::new3(*b"htm");
+	const E_HTML: Extension = Extension::new4(*b"html");
+
 	// Parse CLI arguments.
 	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
 		.with_list();
 
 		// Put it all together!
 	let paths = Vec::<PathBuf>::try_from(
-		Dowser::filtered(|p: &Path| p.extension()
-				.map_or(
-					false,
-					|e| {
-						let ext = e.as_bytes().to_ascii_lowercase();
-						ext == b"html" || ext == b"htm"
-					}
-				)
+		Dowser::filtered(|p: &Path|
+			Extension::try_from4(p).map_or_else(
+				|| Extension::try_from3(p).map_or(false, |e| e == E_HTM),
+				|e| e == E_HTML
 			)
+		)
 			.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x.as_ref())))
 	).map_err(|_| ArgyleError::Custom("No documents were found."))?;
 

@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.4.9"
+version = "0.5.0"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2018"
@@ -55,19 +55,19 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [dependencies]
-argyle = "0.3.*"
+argyle = "0.4.*"
 dactyl = "0.1.*"
 dowser = "0.2.*"
 html5ever = "*"
 lazy_static = "1.4.*"
 marked = "0.3.*"
 rayon = "1.5.*"
-regex = "1.4.*"
+regex = "1.5.*"
 tendril = "0.4.*"
 
 [dependencies.fyi_msg]
 git = "https://github.com/Blobfolio/fyi.git"
-tag = "v0.7.0"
+tag = "v0.7.1"
 features = [ "progress" ]
 
 [dependencies.tempfile-fast]

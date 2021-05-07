@@ -62,7 +62,7 @@ html5ever = "*"
 lazy_static = "1.4.*"
 marked = "0.3.*"
 rayon = "1.5.*"
-regex = "1.4.*"
+regex = "1.5.*"
 tendril = "0.4.*"
 
 [dependencies.fyi_msg]

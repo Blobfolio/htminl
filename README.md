@@ -1,5 +1,7 @@
 # HTMinL
 
+[![Build Status](https://github.com/Blobfolio/htminl/workflows/Build/badge.svg)](https://github.com/Blobfolio/htminl/actions)
+
 HTMinL is a CLI tool for x86-64 Linux machines that simplifies the task of minifying HTML in-place for production environments.
 
 

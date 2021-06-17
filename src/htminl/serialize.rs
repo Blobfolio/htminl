@@ -368,14 +368,16 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Imported from `html5ever`.
 	fn write_text(&mut self, txt: &str) -> io::Result<()> {
 		match self.parent().html_name {
-			Some(local_name!("style")) |
-			Some(local_name!("script")) |
-			Some(local_name!("xmp")) |
-			Some(local_name!("iframe")) |
-			Some(local_name!("noembed")) |
-			Some(local_name!("noframes")) |
-			Some(local_name!("noscript")) |
-			Some(local_name!("plaintext")) => self.writer.write_all(txt.as_bytes()),
+			Some(
+				local_name!("style") |
+				local_name!("script") |
+				local_name!("xmp") |
+				local_name!("iframe") |
+				local_name!("noembed") |
+				local_name!("noframes") |
+				local_name!("noscript") |
+				local_name!("plaintext")
+			) => self.writer.write_all(txt.as_bytes()),
 			_ => self.write_esc_text(txt.as_bytes()),
 		}
 	}

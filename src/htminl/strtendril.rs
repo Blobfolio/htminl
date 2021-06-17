@@ -34,12 +34,10 @@ pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 						in_ws = true;
 						Some(b' ')
 					},
-				c =>
-					if in_ws {
-						in_ws = false;
-						Some(c)
-					}
-					else { Some(c) },
+				c => {
+					if in_ws { in_ws = false; }
+					Some(c)
+				},
 			})
 			.collect::<Vec<u8>>())
 	});

@@ -5,7 +5,7 @@ License details for project dependencies are listed below.
 ## Overview of Licenses:
 
 * Apache License 2.0 (9)
-* MIT License (6)
+* MIT License (5)
 * Do What The F*ck You Want To Public License (1)
 
 
@@ -1940,38 +1940,6 @@ SOFTWARE.
 
 ```
 
-### MIT License
-
-**Used By:**
-
-* [tempfile-fast 0.3.3](https://github.com/FauxFaux/tempfile-fast-rs)
-
-
-```
-MIT License
-
-Copyright (c) 2017 Chris West
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
 ### Do What The F*ck You Want To Public License
 
 **Used By:**
@@ -1980,7 +1948,8 @@ SOFTWARE.
 * [dactyl 0.1.8](https://github.com/Blobfolio/dactyl)
 * [dowser 0.2.4](https://github.com/Blobfolio/dowser)
 * [fyi_msg 0.8.1](https://github.com/Blobfolio/fyi)
-* [htminl 0.5.1](https://github.com/Blobfolio/htminl)
+* [htminl 0.5.2](https://github.com/Blobfolio/htminl)
+* [write_atomic 0.1.0](https://github.com/Blobfolio/write_atomic)
 
 
 ```

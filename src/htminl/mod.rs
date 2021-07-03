@@ -26,7 +26,6 @@ use std::{
 	borrow::BorrowMut,
 	cell::RefCell,
 	convert::TryFrom,
-	io::Write,
 	num::NonZeroUsize,
 	path::PathBuf,
 };
@@ -82,8 +81,7 @@ impl Htminl<'_> {
 		let new_len: usize = self.buf.len();
 		if 0 < new_len && new_len < self.size.get() {
 			// Save it!
-			tempfile_fast::Sponge::new_for(self.src)
-				.and_then(|mut file| file.write_all(&self.buf).and_then(|_| file.commit()))
+			write_atomic::write_file(self.src, &self.buf)
 				.map_err(|_| HtminlError::Write)?;
 		}
 

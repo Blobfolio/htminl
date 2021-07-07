@@ -21,6 +21,7 @@ use marked::{
 	NodeRef,
 };
 use meta::{a, t};
+use once_cell::sync::Lazy;
 use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
@@ -92,9 +93,7 @@ impl Htminl<'_> {
 	fn is_fragment(&self) -> bool {
 		use regex::bytes::Regex;
 
-		lazy_static::lazy_static! {
-			static ref RE_HAS_HTML: Regex = Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap();
-		}
+		static RE_HAS_HTML: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap());
 
 		! RE_HAS_HTML.is_match(&self.buf)
 	}

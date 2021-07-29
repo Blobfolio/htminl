@@ -26,7 +26,7 @@ License details for project dependencies are listed below.
 * [futf 0.1.4](https://github.com/servo/futf)
 * [html5ever 0.25.1](https://github.com/servo/html5ever)
 * [lazy_static 1.4.0](https://github.com/rust-lang-nursery/lazy-static.rs)
-* [libc 0.2.97](https://github.com/rust-lang/libc)
+* [libc 0.2.98](https://github.com/rust-lang/libc)
 * [markup5ever 0.10.1](https://github.com/servo/html5ever)
 * [mime 0.3.16](https://github.com/hyperium/mime)
 * [num-traits 0.2.14](https://github.com/rust-num/num-traits)
@@ -1108,7 +1108,7 @@ limitations under the License.
 
 * [mac 0.1.1](https://github.com/reem/rust-mac.git)
 * [marked 0.3.0](https://github.com/dekellum/marked)
-* [siphasher 0.3.5](https://github.com/jedisct1/rust-siphash)
+* [siphasher 0.3.6](https://github.com/jedisct1/rust-siphash)
 
 
 ```
@@ -1948,7 +1948,7 @@ SOFTWARE.
 * [dactyl 0.1.8](https://github.com/Blobfolio/dactyl)
 * [dowser 0.2.4](https://github.com/Blobfolio/dowser)
 * [fyi_msg 0.8.1](https://github.com/Blobfolio/fyi)
-* [htminl 0.5.2](https://github.com/Blobfolio/htminl)
+* [htminl 0.5.3](https://github.com/Blobfolio/htminl)
 * [write_atomic 0.1.0](https://github.com/Blobfolio/write_atomic)
 
 

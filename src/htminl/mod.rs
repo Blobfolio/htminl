@@ -21,6 +21,7 @@ use marked::{
 	NodeRef,
 };
 use meta::{a, t};
+use once_cell::sync::Lazy;
 use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
@@ -92,9 +93,7 @@ impl Htminl<'_> {
 	fn is_fragment(&self) -> bool {
 		use regex::bytes::Regex;
 
-		lazy_static::lazy_static! {
-			static ref RE_HAS_HTML: Regex = Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap();
-		}
+		static RE_HAS_HTML: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap());
 
 		! RE_HAS_HTML.is_match(&self.buf)
 	}
@@ -225,7 +224,7 @@ fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
         let node_r = pos.next_sibling();
         if node_r.map_or(false, |n| n.as_text().is_some()) {
             MERGE_Q.with(|q| {
-                q.borrow_mut().push_tendril(t)
+                q.borrow_mut().push_tendril(t);
             });
             return Action::Detach;
         }

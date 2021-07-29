@@ -50,11 +50,10 @@ pub(super) mod a {
 /// Tag Constants.
 pub(super) mod t {
 	use marked::LocalName;
+	use once_cell::sync::Lazy;
 	pub use marked::html::t::*;
 
-	lazy_static::lazy_static! {
-		/// Vue Transition.
-		pub static ref TRANSITION: LocalName = "transition".into();
-	}
+	/// Vue Transition.
+	pub static TRANSITION: Lazy<LocalName> = Lazy::new(|| "transition".into());
 }
 

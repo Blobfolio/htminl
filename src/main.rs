@@ -152,7 +152,6 @@ use rayon::iter::{
 	ParallelIterator,
 };
 use std::{
-	convert::TryFrom,
 	ffi::OsStr,
 	os::unix::ffi::OsStrExt,
 	path::{

@@ -6,6 +6,7 @@ License details for project dependencies are listed below.
 
 * Apache License 2.0 (9)
 * MIT License (5)
+* BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License (1)
 * Do What The F*ck You Want To Public License (1)
 
 
@@ -15,34 +16,38 @@ License details for project dependencies are listed below.
 
 **Used By:**
 
-* [ahash 0.7.4](https://github.com/tkaitchuck/ahash)
+* [ahash 0.7.6](https://github.com/tkaitchuck/ahash)
 * [atomic 0.5.0](https://github.com/Amanieu/atomic-rs)
 * [cfg-if 1.0.0](https://github.com/alexcrichton/cfg-if)
 * [crossbeam-channel 0.5.1](https://github.com/crossbeam-rs/crossbeam)
-* [crossbeam-deque 0.8.0](https://github.com/crossbeam-rs/crossbeam)
+* [crossbeam-deque 0.8.1](https://github.com/crossbeam-rs/crossbeam)
 * [crossbeam-epoch 0.9.5](https://github.com/crossbeam-rs/crossbeam)
 * [crossbeam-utils 0.8.5](https://github.com/crossbeam-rs/crossbeam)
 * [either 1.6.1](https://github.com/bluss/either)
 * [futf 0.1.4](https://github.com/servo/futf)
 * [html5ever 0.25.1](https://github.com/servo/html5ever)
 * [lazy_static 1.4.0](https://github.com/rust-lang-nursery/lazy-static.rs)
-* [libc 0.2.98](https://github.com/rust-lang/libc)
+* [libc 0.2.104](https://github.com/rust-lang/libc)
+* [lock_api 0.4.5](https://github.com/Amanieu/parking_lot)
 * [markup5ever 0.10.1](https://github.com/servo/html5ever)
 * [mime 0.3.16](https://github.com/hyperium/mime)
 * [num-traits 0.2.14](https://github.com/rust-num/num-traits)
 * [num_cpus 1.13.0](https://github.com/seanmonstar/num_cpus)
 * [once_cell 1.8.0](https://github.com/matklad/once_cell)
+* [parking_lot 0.11.2](https://github.com/Amanieu/parking_lot)
+* [parking_lot_core 0.8.5](https://github.com/Amanieu/parking_lot)
 * [rayon 1.5.1](https://github.com/rayon-rs/rayon)
 * [rayon-core 1.9.1](https://github.com/rayon-rs/rayon)
 * [regex 1.5.4](https://github.com/rust-lang/regex)
 * [regex-syntax 0.6.25](https://github.com/rust-lang/regex)
 * [scopeguard 1.1.0](https://github.com/bluss/scopeguard)
-* [serde 1.0.126](https://github.com/serde-rs/serde)
-* [string_cache 0.8.1](https://github.com/servo/string-cache)
+* [serde 1.0.130](https://github.com/serde-rs/serde)
+* [smallvec 1.7.0](https://github.com/servo/rust-smallvec)
+* [string_cache 0.8.2](https://github.com/servo/string-cache)
 * [tempfile 3.2.0](https://github.com/Stebalien/tempfile)
 * [tendril 0.4.2](https://github.com/servo/tendril)
 * [term_size 0.3.2](https://github.com/kbknapp/term_size-rs.git)
-* [unicode-width 0.1.8](https://github.com/unicode-rs/unicode-width)
+* [unicode-width 0.1.9](https://github.com/unicode-rs/unicode-width)
 
 
 ```
@@ -466,7 +471,7 @@ limitations under the License.
 
 **Used By:**
 
-* [encoding_rs 0.8.28](https://github.com/hsivonen/encoding_rs)
+* [encoding_rs 0.8.29](https://github.com/hsivonen/encoding_rs)
 
 
 ```
@@ -1108,7 +1113,7 @@ limitations under the License.
 
 * [mac 0.1.1](https://github.com/reem/rust-mac.git)
 * [marked 0.3.0](https://github.com/dekellum/marked)
-* [siphasher 0.3.6](https://github.com/jedisct1/rust-siphash)
+* [siphasher 0.3.7](https://github.com/jedisct1/rust-siphash)
 
 
 ```
@@ -1192,7 +1197,7 @@ limitations under the License.
 
 **Used By:**
 
-* [ppv-lite86 0.2.10](https://github.com/cryptocorrosion/cryptocorrosion)
+* [ppv-lite86 0.2.14](https://github.com/cryptocorrosion/cryptocorrosion)
 
 
 ```
@@ -1789,12 +1794,50 @@ END OF TERMS AND CONDITIONS
 
 ```
 
+### BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License
+
+**Used By:**
+
+* [instant 0.1.12](https://github.com/sebcrozet/instant)
+
+
+```
+Copyright (c) 2019, Sébastien Crozet
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the author nor the names of its contributors may be used
+   to endorse or promote products derived from this software without specific
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+```
+
 ### MIT License
 
 **Used By:**
 
 * [aho-corasick 0.7.18](https://github.com/BurntSushi/aho-corasick)
-* [memchr 2.4.0](https://github.com/BurntSushi/rust-memchr)
+* [memchr 2.4.1](https://github.com/BurntSushi/memchr)
 
 
 ```
@@ -1944,12 +1987,12 @@ SOFTWARE.
 
 **Used By:**
 
-* [argyle 0.4.2](https://github.com/Blobfolio/argyle)
-* [dactyl 0.1.8](https://github.com/Blobfolio/dactyl)
-* [dowser 0.2.4](https://github.com/Blobfolio/dowser)
-* [fyi_msg 0.8.1](https://github.com/Blobfolio/fyi)
-* [htminl 0.5.3](https://github.com/Blobfolio/htminl)
-* [write_atomic 0.1.0](https://github.com/Blobfolio/write_atomic)
+* [argyle 0.5.0](https://github.com/Blobfolio/argyle)
+* [dactyl 0.2.0](https://github.com/Blobfolio/dactyl)
+* [dowser 0.3.0](https://github.com/Blobfolio/dowser)
+* [fyi_msg 0.9.0](https://github.com/Blobfolio/fyi)
+* [htminl 0.5.4](https://github.com/Blobfolio/htminl)
+* [write_atomic 0.2.0](https://github.com/Blobfolio/write_atomic)
 
 
 ```

@@ -26,7 +26,6 @@ use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
 	cell::RefCell,
-	convert::TryFrom,
 	num::NonZeroUsize,
 	path::PathBuf,
 };

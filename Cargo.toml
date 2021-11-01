@@ -16,7 +16,7 @@ copyright = "2021, Blobfolio, LLC <hello@blobfolio.com>"
 license-file = ["./LICENSE", "0"]
 extended-description = "In-place minification of HTML file(s)."
 revision = "1"
-depends = "libc6 (>= 2.18), libgcc-s1 (>= 4.2)"
+depends = "$auto"
 section = "utility"
 assets = [
     ["./target/x86_64-unknown-linux-gnu/release/htminl", "usr/bin/", "755"],

@@ -191,8 +191,8 @@ bench-bin DIR NATIVE="":
 @credits:
 	# Update CREDITS.html.
 	cargo about \
-		-m "{{ pkg_dir1 }}/Cargo.toml" \
 		generate \
+		-m "{{ pkg_dir1 }}/Cargo.toml" \
 		"{{ release_dir }}/credits/about.hbs" > "{{ justfile_directory() }}/CREDITS.md"
 
 	just _fix-chown "{{ justfile_directory() }}/CREDITS.md"

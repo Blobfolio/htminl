@@ -127,7 +127,6 @@ struct MinifySerializer<Wr: Write> {
 	stack: Vec<ElemInfo>,
 }
 
-#[allow(clippy::default_trait_access)]
 impl<Wr: Write> MinifySerializer<Wr> {
 	/// New Instance.
 	///
@@ -238,7 +237,6 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	}
 }
 
-#[allow(clippy::default_trait_access)]
 impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	/// Write Opening Tag.
 	///
@@ -362,7 +360,6 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 		self.writer.write_all(b">")
 	}
 
-	#[allow(clippy::match_like_matches_macro)] // We're matching a negation.
 	/// Write Text.
 	///
 	/// Imported from `html5ever`.

@@ -221,7 +221,6 @@ fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
     Action::Continue
 }
 
-#[allow(clippy::suspicious_else_formatting)] // Sorry not sorry.
 /// Minify #3
 ///
 /// This pass cleans up text nodes, collapsing whitespace (when it is safe to

@@ -48,17 +48,14 @@ pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 	}
 }
 
-#[allow(clippy::match_like_matches_macro)] // We're matching a negation.
 /// Is (Only) Whitespace?
 ///
 /// Returns `true` if the node is empty or contains only whitespace.
 pub(super) fn is_whitespace(txt: &StrTendril) -> bool {
-	! txt.as_bytes()
+	txt.is_empty() ||
+	txt.as_bytes()
 		.iter()
-		.any(|c| match *c {
-			b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' => false,
-			_ => true,
-		})
+		.all(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
 }
 
 /// Trim.

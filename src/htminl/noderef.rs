@@ -16,7 +16,6 @@ use marked::{
 
 
 #[must_use]
-#[allow(clippy::redundant_closure)] // Wrong signature.
 /// Unnecessary Whitespace-Only Text Node Sandwiches
 pub(super) fn can_drop_if_whitespace(node: &NodeRef) -> bool {
 	// If the parent is a <pre> tag, we can trim between space between the
@@ -27,8 +26,8 @@ pub(super) fn can_drop_if_whitespace(node: &NodeRef) -> bool {
 
 	// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
 	// we can drop it.
-	node.prev_sibling().map_or(true, |ref n| can_drop_whitespace_sandwhich(n)) &&
-	node.next_sibling().map_or(true, |ref n| can_drop_whitespace_sandwhich(n)) &&
+	node.prev_sibling().as_ref().map_or(true, can_drop_whitespace_sandwhich) &&
+	node.next_sibling().as_ref().map_or(true, can_drop_whitespace_sandwhich) &&
 	has_sibling(node)
 }
 

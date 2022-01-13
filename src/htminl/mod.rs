@@ -99,37 +99,12 @@ impl Htminl<'_> {
 
 	/// # Make (Fragment) Whole.
 	fn make_whole(&mut self) {
-		// The combined length of the opener and closer.
-		const ADJ: usize = 25 + 14;
+		let mut new: Vec<u8> = Vec::with_capacity(25 + 14 + self.buf.len());
+		new.extend_from_slice(b"<html><head></head><body>");
+		new.extend_from_slice(&self.buf);
+		new.extend_from_slice(b"</body></html>");
 
-		// Reserve space for the opener and closer.
-		self.buf.reserve(ADJ);
-
-		unsafe {
-			// Copy all content 25 (opener) to the right.
-			std::ptr::copy(
-				self.buf.as_ptr(),
-				self.buf.as_mut_ptr().add(25),
-				self.size.get()
-			);
-
-			// Copy opener.
-			std::ptr::copy_nonoverlapping(
-				b"<html><head></head><body>".as_ptr(),
-				self.buf.as_mut_ptr(),
-				25
-			);
-
-			// Copy closer.
-			std::ptr::copy_nonoverlapping(
-				b"</body></html>".as_ptr(),
-				self.buf.as_mut_ptr().add(self.size.get() + 25),
-				14
-			);
-
-			// Adjust the buffer length.
-			self.buf.set_len(self.size.get() + ADJ);
-		}
+		std::mem::swap(&mut self.buf, &mut new);
 	}
 
 	/// # Back to Fragment.
@@ -246,7 +221,6 @@ fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
     Action::Continue
 }
 
-#[allow(clippy::suspicious_else_formatting)] // Sorry not sorry.
 /// Minify #3
 ///
 /// This pass cleans up text nodes, collapsing whitespace (when it is safe to

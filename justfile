@@ -127,7 +127,7 @@ bench-bin DIR NATIVE="":
 
 
 # Build Release!
-@build: clean
+@build:
 	# First let's build the Rust bit.
 	RUSTFLAGS="--emit asm {{ rustflags }}" cargo build \
 		--bin "{{ pkg_id }}" \
@@ -137,10 +137,7 @@ bench-bin DIR NATIVE="":
 
 
 # Build Debian package!
-@build-deb: credits build
-	# Do completions/man.
-	cargo bashman -m "{{ pkg_dir1 }}/Cargo.toml"
-
+@build-deb: clean credits build
 	# cargo-deb doesn't support target_dir flags yet.
 	[ ! -d "{{ justfile_directory() }}/target" ] || rm -rf "{{ justfile_directory() }}/target"
 	mv "{{ cargo_dir }}" "{{ justfile_directory() }}/target"
@@ -149,7 +146,7 @@ bench-bin DIR NATIVE="":
 	cargo-deb \
 		--no-build \
 		-p {{ pkg_id }} \
-		-o "{{ justfile_directory() }}/release"
+		-o "{{ release_dir }}"
 
 	just _fix-chown "{{ release_dir }}"
 	mv "{{ justfile_directory() }}/target" "{{ cargo_dir }}"
@@ -189,12 +186,7 @@ bench-bin DIR NATIVE="":
 
 # Generate CREDITS.
 @credits:
-	# Update CREDITS.html.
-	cargo about \
-		generate \
-		-m "{{ pkg_dir1 }}/Cargo.toml" \
-		"{{ release_dir }}/credits/about.hbs" > "{{ justfile_directory() }}/CREDITS.md"
-
+	cargo bashman -m "{{ pkg_dir1 }}/Cargo.toml"
 	just _fix-chown "{{ justfile_directory() }}/CREDITS.md"
 
 

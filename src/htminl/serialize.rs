@@ -145,7 +145,7 @@ impl<Wr: Write> MinifySerializer<Wr> {
 	///
 	/// Imported from `html5ever`.
 	fn parent(&mut self) -> &mut ElemInfo {
-		if self.stack.is_empty() { panic!("No parent ElemInfo."); }
+		assert!(! self.stack.is_empty(), "No parent ElemInfo.");
 		self.stack.last_mut().unwrap()
 	}
 

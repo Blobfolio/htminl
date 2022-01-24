@@ -1,1 +1,2 @@
 test-assets/* linguist-detectable=false
+release/** linguist-detectable=false

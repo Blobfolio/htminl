@@ -26,7 +26,6 @@ use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
 	cell::RefCell,
-	num::NonZeroUsize,
 	path::PathBuf,
 };
 use tendril::StrTendril;
@@ -38,7 +37,7 @@ use tendril::StrTendril;
 pub(super) struct Htminl<'a> {
 	src: &'a PathBuf,
 	buf: Vec<u8>,
-	size: NonZeroUsize,
+	pub(super) size: u64,
 }
 
 impl<'a> TryFrom<&'a PathBuf> for Htminl<'a> {
@@ -46,7 +45,10 @@ impl<'a> TryFrom<&'a PathBuf> for Htminl<'a> {
 
 	fn try_from(src: &'a PathBuf) -> Result<Self, Self::Error> {
 		let buf: Vec<u8> = std::fs::read(src).map_err(|_| HtminlError::Read)?;
-		let size = NonZeroUsize::new(buf.len()).ok_or(HtminlError::EmptyFile)?;
+		let size = u64::try_from(buf.len()).map_err(|_| HtminlError::Read)?;
+		if size == 0 {
+			return Err(HtminlError::EmptyFile);
+		}
 
 		Ok(Self { src, buf, size })
 	}
@@ -54,7 +56,7 @@ impl<'a> TryFrom<&'a PathBuf> for Htminl<'a> {
 
 impl Htminl<'_> {
 	/// # Minify!
-	pub(super) fn minify(&mut self) -> Result<(), HtminlError> {
+	pub(super) fn minify(&mut self) -> Result<(u64, u64), HtminlError> {
 		// Determine whether we're working on a whole document or fragment.
 		let fragment: bool = self.is_fragment();
 
@@ -78,14 +80,19 @@ impl Htminl<'_> {
 		// Remove fragment padding.
 		if fragment { self.make_fragment()?; }
 
-		let new_len: usize = self.buf.len();
-		if 0 < new_len && new_len < self.size.get() {
-			// Save it!
-			write_atomic::write_file(self.src, &self.buf)
-				.map_err(|_| HtminlError::Write)?;
+		// Save it!
+		let new_len: u64 = self.buf.len() as u64;
+		if
+			0 < new_len &&
+			new_len < self.size &&
+			write_atomic::write_file(self.src, &self.buf).is_ok()
+		{
+			Ok((self.size, new_len))
 		}
-
-		Ok(())
+		// No change.
+		else {
+			Ok((self.size, self.size))
+		}
 	}
 
 	/// # Is Fragment.

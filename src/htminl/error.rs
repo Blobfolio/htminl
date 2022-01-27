@@ -13,7 +13,6 @@ pub(crate) enum HtminlError {
 	EmptyFile,
 	Parse,
 	Read,
-	Write,
 }
 
 impl fmt::Display for HtminlError {
@@ -32,7 +31,6 @@ impl HtminlError {
 			Self::EmptyFile => "The file is empty.",
 			Self::Parse => "Unable to parse the document.",
 			Self::Read => "Unable to read the file.",
-			Self::Write => "Unable to save the changes.",
 		}
 	}
 }

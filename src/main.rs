@@ -141,7 +141,6 @@ use argyle::{
 use dowser::{
 	Dowser,
 	Extension,
-	utility::du,
 };
 use fyi_msg::{
 	BeforeAfter,
@@ -159,6 +158,10 @@ use std::{
 	path::{
 		Path,
 		PathBuf,
+	},
+	sync::atomic::{
+		AtomicU64,
+		Ordering::SeqCst,
 	},
 };
 
@@ -210,25 +213,35 @@ fn _main() -> Result<(), ArgyleError> {
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
 		// Check file sizes before we start.
-		let mut ba = BeforeAfter::start(du(&paths));
+		let before = AtomicU64::new(0);
+		let after = AtomicU64::new(0);
 
 		// Process!
 		paths.par_iter().for_each(|x|
 			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
 				let tmp = x.to_string_lossy();
 				progress.add(&tmp);
-				let _res = enc.minify();
+
+				if let Ok((b, a)) = enc.minify() {
+					before.fetch_add(b, SeqCst);
+					after.fetch_add(a, SeqCst);
+				}
+				else {
+					before.fetch_add(enc.size, SeqCst);
+					after.fetch_add(enc.size, SeqCst);
+				}
+
 				progress.remove(&tmp);
 			}
 		);
 
-		// Check file sizes again.
-		ba.stop(du(&paths));
-
 		// Finish up.
 		progress.finish();
 		progress.summary(MsgKind::Crunched, "document", "documents")
-			.with_bytes_saved(ba)
+			.with_bytes_saved(BeforeAfter::from((
+				before.load(SeqCst),
+				after.load(SeqCst),
+			)))
 			.print();
 	}
 	else {

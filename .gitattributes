@@ -1,2 +1,3 @@
+release/completions/* linguist-detectable=false
+release/man/* linguist-detectable=false
 test-assets/* linguist-detectable=false
-release/** linguist-detectable=false

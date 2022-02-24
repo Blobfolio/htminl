@@ -14,10 +14,10 @@ publish = false
 maintainer = "Josh Stoik <hello@blobfolio.com>"
 copyright = "2022, Blobfolio, LLC <hello@blobfolio.com>"
 license-file = ["./LICENSE", "0"]
-extended-description = "In-place minification of HTML file(s)."
+extended-description = ""
 revision = "1"
 depends = "$auto"
-section = "utility"
+section = "utils"
 assets = [
     ["./target/x86_64-unknown-linux-gnu/release/htminl", "usr/bin/", "755"],
     ["./release/completions/htminl.bash", "etc/bash_completion.d/", "644"],

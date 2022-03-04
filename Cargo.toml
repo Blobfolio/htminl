@@ -70,7 +70,7 @@ write_atomic = "0.2.*"
 
 [dependencies.fyi_msg]
 version = "0.9.*"
-features = [ "progress" ]
+features = [ "progress", "parking_lot_mutex" ]
 
 [profile.release]
 lto = true

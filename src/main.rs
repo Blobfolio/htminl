@@ -155,10 +155,7 @@ use rayon::iter::{
 use std::{
 	ffi::OsStr,
 	os::unix::ffi::OsStrExt,
-	path::{
-		Path,
-		PathBuf,
-	},
+	path::PathBuf,
 	sync::atomic::{
 		AtomicU64,
 		Ordering::SeqCst,
@@ -195,15 +192,19 @@ fn _main() -> Result<(), ArgyleError> {
 		.with_list();
 
 		// Put it all together!
-	let paths = Vec::<PathBuf>::try_from(
-		Dowser::filtered(|p: &Path|
+	let paths: Vec<PathBuf> = Dowser::default()
+		.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x)))
+		.filter(|p|
 			Extension::try_from4(p).map_or_else(
-				|| Extension::try_from3(p).map_or(false, |e| e == E_HTM),
+				|| Some(E_HTM) == Extension::try_from3(p),
 				|e| e == E_HTML
 			)
 		)
-			.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x.as_ref())))
-	).map_err(|_| ArgyleError::Custom("No documents were found."))?;
+		.collect();
+
+	if paths.is_empty() {
+		return Err(ArgyleError::Custom("No documents were found."));
+	}
 
 	// Sexy run-through.
 	if args.switch2(b"-p", b"--progress") {

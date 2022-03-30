@@ -153,8 +153,6 @@ use rayon::iter::{
 	ParallelIterator,
 };
 use std::{
-	ffi::OsStr,
-	os::unix::ffi::OsStrExt,
 	path::PathBuf,
 	sync::atomic::{
 		AtomicU64,
@@ -193,7 +191,7 @@ fn _main() -> Result<(), ArgyleError> {
 
 		// Put it all together!
 	let paths: Vec<PathBuf> = Dowser::default()
-		.with_paths(args.args().iter().map(|x| OsStr::from_bytes(x)))
+		.with_paths(args.args_os())
 		.into_vec(|p|
 			Extension::try_from4(p).map_or_else(
 				|| Some(E_HTM) == Extension::try_from3(p),

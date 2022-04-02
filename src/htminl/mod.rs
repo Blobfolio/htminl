@@ -21,7 +21,6 @@ use marked::{
 	NodeRef,
 };
 use meta::{a, t};
-use once_cell::sync::Lazy;
 use serialize::serialize;
 use std::{
 	borrow::BorrowMut,
@@ -96,12 +95,27 @@ impl Htminl<'_> {
 	}
 
 	/// # Is Fragment.
+	///
+	/// This returns `false` if the document contains (case-insensitively)
+	/// `<html`, `<body`, `</body>`, or `</html>`.
 	fn is_fragment(&self) -> bool {
-		use regex::bytes::Regex;
+		for w in self.buf.windows(7) {
+			if w[0] == b'<' {
+				match w[1] {
+					b'/' => if w[6] == b'>' {
+						let mid = &w[2..6];
+						if mid.eq_ignore_ascii_case(b"body") || mid.eq_ignore_ascii_case(b"html") {
+							return false;
+						}
+					},
+					b'b' | b'B' => if w[2..5].eq_ignore_ascii_case(b"ody") { return false; },
+					b'h' | b'H' => if w[2..5].eq_ignore_ascii_case(b"tml") { return false; },
+					_ => {},
+				}
+			}
+		}
 
-		static RE_HAS_HTML: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)(<html|<body|</body>|</html>)").unwrap());
-
-		! RE_HAS_HTML.is_match(&self.buf)
+		true
 	}
 
 	/// # Make (Fragment) Whole.
@@ -273,4 +287,40 @@ fn filter_minify_three(node: NodeRef<'_>, data: &mut NodeData) -> Action {
 	}
 
 	Action::Continue
+}
+
+
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn t_is_fragment() {
+		let path = PathBuf::from("foo.html");
+		let mut h = Htminl {
+			src: &path,
+			buf: b"<html><body>Hi!</body></html>".to_vec(),
+			size: 0,
+		};
+
+		assert_eq!(h.is_fragment(), false);
+
+		h.buf.truncate(0);
+		h.buf.extend_from_slice(b"<div>Hello world!</div></body>");
+		assert_eq!(h.is_fragment(), false);
+
+		h.buf.truncate(0);
+		h.buf.extend_from_slice(b"<div>Hello world!</div></HTML>");
+		assert_eq!(h.is_fragment(), false);
+
+		h.buf.truncate(0);
+		h.buf.extend_from_slice(b"<body class='foo'>Hello world!</div>");
+		assert_eq!(h.is_fragment(), false);
+
+		h.buf.truncate(0);
+		h.buf.extend_from_slice(b"<div>Hello world!</div>");
+
+		assert_eq!(h.is_fragment(), true);
+	}
 }

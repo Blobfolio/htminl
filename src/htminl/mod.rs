@@ -296,14 +296,13 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn t_is_fragment() {
+	fn t_fragments() {
 		let path = PathBuf::from("foo.html");
 		let mut h = Htminl {
 			src: &path,
 			buf: b"<html><body>Hi!</body></html>".to_vec(),
 			size: 0,
 		};
-
 		assert_eq!(h.is_fragment(), false);
 
 		h.buf.truncate(0);
@@ -320,7 +319,13 @@ mod tests {
 
 		h.buf.truncate(0);
 		h.buf.extend_from_slice(b"<div>Hello world!</div>");
+		assert_eq!(h.is_fragment(), true);
+		h.make_whole();
+		assert_eq!(h.buf, b"<html><head></head><body><div>Hello world!</div></body></html>");
+		assert_eq!(h.is_fragment(), false);
 
+		assert!(h.make_fragment().is_ok());
+		assert_eq!(h.buf, b"<div>Hello world!</div>");
 		assert_eq!(h.is_fragment(), true);
 	}
 }

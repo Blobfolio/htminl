@@ -129,6 +129,7 @@ be implemented into `HTMinL`; they just need to come to light!
 
 
 
+mod error;
 mod htminl;
 
 use argyle::{
@@ -142,6 +143,7 @@ use dowser::{
 	Dowser,
 	Extension,
 };
+pub(crate) use error::HtminlError;
 use fyi_msg::{
 	BeforeAfter,
 	Msg,
@@ -166,10 +168,10 @@ use std::{
 fn main() {
 	match _main() {
 		Ok(_) => {},
-		Err(ArgyleError::WantsVersion) => {
+		Err(HtminlError::Argue(ArgyleError::WantsVersion)) => {
 			println!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
 		},
-		Err(ArgyleError::WantsHelp) => {
+		Err(HtminlError::Argue(ArgyleError::WantsHelp)) => {
 			helper();
 		},
 		Err(e) => {
@@ -180,7 +182,7 @@ fn main() {
 
 #[inline]
 /// Actual Main.
-fn _main() -> Result<(), ArgyleError> {
+fn _main() -> Result<(), HtminlError> {
 	// The extensions we care about.
 	const E_HTM: Extension = Extension::new3(*b"htm");
 	const E_HTML: Extension = Extension::new4(*b"html");
@@ -200,14 +202,14 @@ fn _main() -> Result<(), ArgyleError> {
 		);
 
 	if paths.is_empty() {
-		return Err(ArgyleError::Custom("No documents were found."));
+		return Err(HtminlError::NoDocuments);
 	}
 
 	// Sexy run-through.
 	if args.switch2(b"-p", b"--progress") {
 		// Boot up a progress bar.
 		let progress = Progless::try_from(paths.len())
-			.map_err(|_| ArgyleError::Custom("Progress can only be displayed for up to 4,294,967,295 files. Try again with fewer files or without the -p/--progress flag."))?
+			.map_err(|_| HtminlError::ProgressOverflow)?
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
 		// Check file sizes before we start.

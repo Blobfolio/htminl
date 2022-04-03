@@ -4,7 +4,6 @@
 
 pub(self) mod attribute;
 pub(self) mod element;
-pub(super) mod error;
 mod meta;
 pub(self) mod noderef;
 pub(self) mod serialize;
@@ -12,7 +11,7 @@ pub(self) mod strtendril;
 
 
 
-use error::HtminlError;
+use crate::HtminlError;
 use marked::{
 	Element,
 	filter::Action,

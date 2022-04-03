@@ -5,7 +5,7 @@ This serializer is almost identical to the one used by `html5ever`, but
 includes a few space-saving optimizations.
 */
 
-use super::HtminlError;
+use crate::HtminlError;
 use html5ever::{
 	local_name,
 	namespace_url,

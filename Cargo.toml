@@ -59,10 +59,10 @@ description = "Any number of files and directories to crawl and crunch."
 [dependencies]
 argyle = "0.5.*, >=0.5.3"
 dactyl = "0.3.*"
-dowser = "0.4.*, >=0.4.3"
-html5ever = ">=0.26.0, <0.27"
-rayon = "1.5.*"
-tendril = ">=0.4.1,  <0.5"
+dowser = "0.4.*, >=0.4.5"
+html5ever = "=0.26.0"
+rayon = "=1.5.1"
+tendril = "=0.4.3"
 write_atomic = "0.2.*"
 
 [dependencies.marked]

@@ -25,9 +25,8 @@ use tendril::StrTendril;
 pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 	let alter = StrTendril::from({
 		let mut in_ws: bool = false;
-		String::from_utf8_lossy(&txt.as_bytes()
-			.iter()
-			.filter_map(|c| match *c {
+		String::from_utf8_lossy(&txt.bytes()
+			.filter_map(|c| match c {
 				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' =>
 					if in_ws { None }
 					else {
@@ -53,9 +52,7 @@ pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 /// Returns `true` if the node is empty or contains only whitespace.
 pub(super) fn is_whitespace(txt: &StrTendril) -> bool {
 	txt.is_empty() ||
-	txt.as_bytes()
-		.iter()
-		.all(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
+	txt.bytes().all(|c| matches!(c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
 }
 
 /// Trim.
@@ -66,23 +63,21 @@ pub(super) fn trim(txt: &mut StrTendril) {
 
 /// Trim Start.
 pub(super) fn trim_start(txt: &mut StrTendril) {
-	let len: u32 = u32::saturating_from(txt.as_bytes()
-		.iter()
-		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count());
+	let len = txt.bytes()
+		.take_while(|c| matches!(c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
+		.count();
 	if 0 != len {
-		txt.pop_front(len);
+		txt.pop_front(u32::saturating_from(len));
 	}
 }
 
 /// Trim End.
 pub(super) fn trim_end(txt: &mut StrTendril) {
-	let len: u32 = u32::saturating_from(txt.as_bytes()
-		.iter()
+	let len = txt.bytes()
 		.rev()
-		.take_while(|c| matches!(*c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
-		.count());
+		.take_while(|c| matches!(c, b'\t' | b'\n' | b'\x0C' | b'\r' | b' '))
+		.count();
 	if 0 != len {
-		txt.pop_back(len);
+		txt.pop_back(u32::saturating_from(len));
 	}
 }

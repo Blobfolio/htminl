@@ -4,13 +4,13 @@
 This trait exposes a few methods to the `NodeRef` struct.
 */
 
-use super::{
-	element,
-	meta::t,
-};
 use marked::{
 	LocalName,
 	NodeRef,
+};
+use super::{
+	element,
+	meta::t,
 };
 
 

@@ -31,7 +31,6 @@ use std::{
 
 
 
-#[allow(clippy::redundant_pub_crate)] // It isn't exported beyond the crate.
 /// Serialize W/ Serializer
 ///
 /// This is a convenience method for serializing a node with our particular

@@ -4,47 +4,43 @@
 This module re-exports TAG and ATTRIBUTE constants, adding a few of its own.
 */
 
-#![allow(unreachable_pub)] // No combination makes the linter happy!
-
-
-
 #[allow(missing_docs)]
 /// Attribute Constants.
 pub(super) mod a {
 	use marked::LocalName;
 	use html5ever::local_name;
-	pub use marked::html::a::*;
+	pub(crate) use marked::html::a::*;
 
-	pub const ALLOWFULLSCREEN: LocalName = local_name!("allowfullscreen");
-	pub const ASYNC: LocalName = local_name!("async");
-	pub const AUTOFOCUS: LocalName = local_name!("autofocus");
-	pub const AUTOPLAY: LocalName = local_name!("autoplay");
-	pub const CHECKED: LocalName = local_name!("checked");
-	pub const COMPACT: LocalName = local_name!("compact");
-	pub const DECLARE: LocalName = local_name!("declare");
-	pub const DEFAULT: LocalName = local_name!("default");
-	pub const DEFER: LocalName = local_name!("defer");
-	pub const DISABLED: LocalName = local_name!("disabled");
-	pub const FOR: LocalName = local_name!("for");
-	pub const FORMNOVALIDATE: LocalName = local_name!("formnovalidate");
-	pub const ISMAP: LocalName = local_name!("ismap");
-	pub const ITEMSCOPE: LocalName = local_name!("itemscope");
-	pub const LOOP: LocalName = local_name!("loop");
-	pub const MULTIPLE: LocalName = local_name!("multiple");
-	pub const MUTED: LocalName = local_name!("muted");
-	pub const NOHREF: LocalName = local_name!("nohref");
-	pub const NOMODULE: LocalName = local_name!("nomodule");
-	pub const NORESIZE: LocalName = local_name!("noresize");
-	pub const NOSHADE: LocalName = local_name!("noshade");
-	pub const NOVALIDATE: LocalName = local_name!("novalidate");
-	pub const OPEN: LocalName = local_name!("open");
-	pub const PLACEHOLDER: LocalName = local_name!("placeholder");
-	pub const READONLY: LocalName = local_name!("readonly");
-	pub const REQUIRED: LocalName = local_name!("required");
-	pub const SCOPED: LocalName = local_name!("scoped");
-	pub const SEAMLESS: LocalName = local_name!("seamless");
-	pub const SELECTED: LocalName = local_name!("selected");
-	pub const SRCSET: LocalName = local_name!("srcset");
+	pub(crate) const ALLOWFULLSCREEN: LocalName = local_name!("allowfullscreen");
+	pub(crate) const ASYNC: LocalName = local_name!("async");
+	pub(crate) const AUTOFOCUS: LocalName = local_name!("autofocus");
+	pub(crate) const AUTOPLAY: LocalName = local_name!("autoplay");
+	pub(crate) const CHECKED: LocalName = local_name!("checked");
+	pub(crate) const COMPACT: LocalName = local_name!("compact");
+	pub(crate) const DECLARE: LocalName = local_name!("declare");
+	pub(crate) const DEFAULT: LocalName = local_name!("default");
+	pub(crate) const DEFER: LocalName = local_name!("defer");
+	pub(crate) const DISABLED: LocalName = local_name!("disabled");
+	pub(crate) const FOR: LocalName = local_name!("for");
+	pub(crate) const FORMNOVALIDATE: LocalName = local_name!("formnovalidate");
+	pub(crate) const ISMAP: LocalName = local_name!("ismap");
+	pub(crate) const ITEMSCOPE: LocalName = local_name!("itemscope");
+	pub(crate) const LOOP: LocalName = local_name!("loop");
+	pub(crate) const MULTIPLE: LocalName = local_name!("multiple");
+	pub(crate) const MUTED: LocalName = local_name!("muted");
+	pub(crate) const NOHREF: LocalName = local_name!("nohref");
+	pub(crate) const NOMODULE: LocalName = local_name!("nomodule");
+	pub(crate) const NORESIZE: LocalName = local_name!("noresize");
+	pub(crate) const NOSHADE: LocalName = local_name!("noshade");
+	pub(crate) const NOVALIDATE: LocalName = local_name!("novalidate");
+	pub(crate) const OPEN: LocalName = local_name!("open");
+	pub(crate) const PLACEHOLDER: LocalName = local_name!("placeholder");
+	pub(crate) const READONLY: LocalName = local_name!("readonly");
+	pub(crate) const REQUIRED: LocalName = local_name!("required");
+	pub(crate) const SCOPED: LocalName = local_name!("scoped");
+	pub(crate) const SEAMLESS: LocalName = local_name!("seamless");
+	pub(crate) const SELECTED: LocalName = local_name!("selected");
+	pub(crate) const SRCSET: LocalName = local_name!("srcset");
 }
 
 /// Tag Constants.

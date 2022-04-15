@@ -1,106 +1,5 @@
 /*!
 # `HTMinL`
-
-`HTMinL` is a fast, in-place HTML minifier written in Rust for Linux. It
-prioritizes safety and code sanity over _ULTIMATE COMPRESSION_, so may not save
-quite as much as libraries like Node's [html-minifier](https://github.com/kangax/html-minifier) — at least with all
-the plugins enabled — but is also much less likely to break shit.
-
-And it runs about 150x faster…
-
-Speed, however, is not everything. Unlike virtually every other minification
-tool in the wild, `HTMinL` is *not* a stream processor; it builds a complete
-DOM tree from the full document code *before* getting down to the business of
-minification. This understandably adds some overhead, but allows for much more
-accurate processing and very robust error recovery.
-
-Speaking of errors, if a document cannot be parsed — due to syntax or encoding
-errors, etc. — or if for some reason the "minified" version winds up bigger
-than the original, the original document is left as-was (i.e. no changes are
-written to it).
-
-
-
-## Use
-
-For basic use, just toss one or more file or directory paths after the command,
-like:
-```bash
-# Crunch one file.
-htminl /path/to/one.html
-
-# Recursively crunch every .htm(l) file in a directory.
-htminl /path/to
-
-# Do the same thing but with a progress bar.
-htminl -p /path/to
-
-# For a full list of options, run help:
-htminl -h
-```
-
-
-
-## Minification
-
-Minification is primarily achieved through (conservative) whitespace
-manipulation — trimming, collapsing, or both — in text nodes, tags, and
-attribute values, but only when it is judged completely safe to do so.
-
-For example, whitespace is not altered in "value" attributes or inside elements
-like `<pre>` or `<textarea>`, where it generally matters.
-
-Speaking of "generally matters", `HTMinL` does *not* make any assumptions about
-the display type of elements, as *CSS is a Thing*. Just because a `<div>` is
-normally block doesn't mean someone hasn't styled one to render inline. While
-this will often mean an occasional extra (unnecessary) byte, at least styled
-layouts won't break willynilly!
-
-Additional savings are achieved by stripping:
-* HTML Comments;
-* XML processing instructions;
-* Child text nodes of `<html>` and `<head>` elements (they don't belong there!);
-* Leading and trailing whitespace directly in the `<body>`;
-* Whitespace in inline CSS is collapsed and trimmed (but otherwise unaltered);
-* Whitespace sandwhiched between non-renderable elements like `<script>` or `<style>` tags;
-* Default `type` attributes on `<script>` and `<style>` elements;
-* Pointless attributes (like an empty "id" or "alt" or a falsey boolean like `hidden="false"`);
-* Empty or implied attribute values;
-* Leading and trailing whitespace in non-value attributes;
-
-The above list is non-exhaustive, but hopefully you get the idea!
-
-With the exception of CSS — which has its whitespace fully minified — inline
-foreign content like Javascript and JSON are passed through unchanged. This is
-one of the biggest "missed opportunities" for byte savings, but also where
-minifiers tend to accidentally break things. Better a few extra bytes than a
-broken page!
-
-
-
-## Caution
-
-While care has been taken to balance savings and safety, there are a few design
-choices that could potentially break documents, worth noting before you use it:
-* Documents are expected to be encoded in UTF-8. Other encodings might be OK, but some text could get garbled.
-* Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but other XML-ish data will likely be corrupted.
-* Child text nodes of `<html>` and `<head>` elements are removed. Text doesn't belong there anyway, but HTML is awfully forgiving; who knows what kinds of markup will be found in the wild!
-* CSS whitespace is trimmed and collapsed, which could break (very unlikely!) selectors like `input[value="Spa  ced"]`.
-* Element tags are normalized, which can break fussy `camelCaseCustomElements`. (Best to write tags like `my-custom-tag` anyway...)
-
-
-
-## Roadmap:
-
-* Bloated inline scripts, styles, and other sorts of data — JSON, SVG, etc. —
-can really add to a document's size. `HTMinL` currently applies a few (very
-basic) optimizations for such content, but would benefit from crates like
-[minifier-rs](https://github.com/GuillaumeGomez/minifier-rs), should they
-become production-ready.
-
-* Minification is a quest! There are endless opportunities for savings that can
-be implemented into `HTMinL`; they just need to come to light!
-
 */
 
 #![forbid(unsafe_code)]
@@ -277,15 +176,16 @@ USAGE:
     htminl [FLAGS] [OPTIONS] <PATH(S)>...
 
 FLAGS:
-    -h, --help        Prints help information
+    -h, --help        Print help information and exit.
     -p, --progress    Show progress bar while minifying.
-    -V, --version     Prints version information
+    -V, --version     Print program version and exit.
 
 OPTIONS:
-    -l, --list <list>    Read file paths from this list.
+    -l, --list <FILE> Read (absolute) file and/or directory paths from this
+                      text file, one entry per line.
 
 ARGS:
-    <PATH(S)>...    One or more files or directories to compress.
+    <PATH(S)>...      One or more files or directories to compress.
 "
 	));
 }

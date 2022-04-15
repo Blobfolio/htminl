@@ -47,12 +47,13 @@ cargo build \
 It's easy. Just run `htminl [FLAGS] [OPTIONS] <PATH(S)>…`.
 
 The following flags and options are available:
-```bash
--h, --help           Prints help information
--l, --list <list>    Read file paths from this list.
--p, --progress       Show progress bar while minifying.
--V, --version        Prints version information
-```
+
+| Short | Long | Value | Description |
+| ----- | ---- | ----- | ----------- |
+| `-h` | `--help` | | Print help information and exit. |
+| `-l` | `--list` | `<FILE>` | Read (absolute) file and/or directory paths from this text file, one entry per line. |
+| `-p` | `--progress` | | Show progress bar while minifying. |
+| `-V` | `--version` | | Print program version and exit. |
 
 Paths can be specified as trailing command arguments, and/or loaded via text file (with one path per line) with the `-l` option. Directories are scanned recursively for `.htm`/`.html`.
 

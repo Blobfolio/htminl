@@ -33,7 +33,7 @@ credits-dir = "./"
 [[package.metadata.bashman.switches]]
 short = "-h"
 long = "--help"
-description = "Print help information."
+description = "Print help information and exit."
 
 [[package.metadata.bashman.switches]]
 short = "-p"
@@ -43,13 +43,13 @@ description = "Show progress bar while working."
 [[package.metadata.bashman.switches]]
 short = "-V"
 long = "--version"
-description = "Print program version."
+description = "Print program version and exit."
 
 [[package.metadata.bashman.options]]
 short = "-l"
 long = "--list"
 label = "<FILE>"
-description = "Read file paths from this text file."
+description = "Read (absolute) file and/or directory paths from this text file, one entry per line."
 path = true
 
 [[package.metadata.bashman.arguments]]

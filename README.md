@@ -58,6 +58,7 @@ The following flags and options are available:
 Paths can be specified as trailing command arguments, and/or loaded via text file (with one path per line) with the `-l` option. Directories are scanned recursively for `.htm`/`.html`.
 
 Some quick examples:
+
 ```bash
 # Minify one file.
 htminl /path/to/index.html

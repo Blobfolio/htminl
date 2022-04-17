@@ -110,11 +110,21 @@ fn _main() -> Result<(), HtminlError> {
 		return Err(HtminlError::NoDocuments);
 	}
 
+	// Show progress?
+	let mut progress = args.switch2(b"-p", b"--progress");
+
+	#[cfg(any(target_pointer_width = "64", target_pointer_width = "128"))]
+	if progress && 4_294_967_295 < paths.len()  {
+		Msg::warning("Progress can't be displayed when there are more than 4,294,967,295 files.")
+			.print();
+		progress = false;
+	}
+
 	// Sexy run-through.
-	if args.switch2(b"-p", b"--progress") {
+	if progress {
 		// Boot up a progress bar.
 		let progress = Progless::try_from(paths.len())
-			.map_err(|_| HtminlError::ProgressOverflow)?
+			.unwrap()
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
 		// Check file sizes before we start.

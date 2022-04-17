@@ -17,7 +17,6 @@ pub(super) enum HtminlError {
 	EmptyFile,
 	NoDocuments,
 	Parse,
-	ProgressOverflow,
 	Read,
 }
 
@@ -48,7 +47,6 @@ impl HtminlError {
 			Self::EmptyFile => "The file is empty.",
 			Self::NoDocuments => "No documents were found.",
 			Self::Parse => "Unable to parse the document.",
-			Self::ProgressOverflow => "Progress can only be displayed for up to 4,294,967,295 files. Try again with fewer files or without the -p/--progress flag.",
 			Self::Read => "Unable to read the file.",
 		}
 	}

@@ -73,7 +73,7 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 
 
 
-/// Main.
+/// # Main.
 fn main() {
 	match _main() {
 		Ok(_) => {},
@@ -90,7 +90,8 @@ fn main() {
 }
 
 #[inline]
-/// Actual Main.
+#[allow(clippy::cast_possible_truncation)] // It fits.
+/// # Actual Main.
 fn _main() -> Result<(), HtminlError> {
 	// Parse CLI arguments.
 	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
@@ -110,20 +111,21 @@ fn _main() -> Result<(), HtminlError> {
 		return Err(HtminlError::NoDocuments);
 	}
 
-	// Show progress?
-	let mut progress = args.switch2(b"-p", b"--progress");
-
-	#[cfg(any(target_pointer_width = "64", target_pointer_width = "128"))]
-	if progress && 4_294_967_295 < paths.len()  {
-		Msg::warning("Progress can't be displayed when there are more than 4,294,967,295 files.")
-			.print();
-		progress = false;
-	}
+	// Should we show progress?
+	let progress =
+		if args.switch2(b"-p", b"--progress") {
+			if paths.len() <= Progless::MAX_TOTAL { true }
+			else {
+				Msg::warning(Progless::MAX_TOTAL_ERROR).print();
+				false
+			}
+		}
+		else { false };
 
 	// Sexy run-through.
 	if progress {
 		// Boot up a progress bar.
-		let progress = Progless::try_from(paths.len())
+		let progress = Progless::try_from(paths.len() as u32)
 			.unwrap()
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
@@ -172,7 +174,7 @@ fn _main() -> Result<(), HtminlError> {
 
 #[allow(clippy::non_ascii_literal)] // Doesn't work with an r"" literal.
 #[cold]
-/// Print Help.
+/// # Print Help.
 fn helper() {
 	println!(concat!(
 		r"

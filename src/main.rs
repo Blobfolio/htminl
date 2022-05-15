@@ -90,7 +90,6 @@ fn main() {
 }
 
 #[inline]
-#[allow(clippy::cast_possible_truncation)] // It fits.
 /// # Actual Main.
 fn _main() -> Result<(), HtminlError> {
 	// Parse CLI arguments.
@@ -111,22 +110,10 @@ fn _main() -> Result<(), HtminlError> {
 		return Err(HtminlError::NoDocuments);
 	}
 
-	// Should we show progress?
-	let progress =
-		if args.switch2(b"-p", b"--progress") {
-			if paths.len() <= Progless::MAX_TOTAL { true }
-			else {
-				Msg::warning(Progless::MAX_TOTAL_ERROR).print();
-				false
-			}
-		}
-		else { false };
-
 	// Sexy run-through.
-	if progress {
+	if args.switch2(b"-p", b"--progress") {
 		// Boot up a progress bar.
-		let progress = Progless::try_from(paths.len() as u32)
-			.unwrap()
+		let progress = Progless::try_from(paths.len())?
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
 
 		// Check file sizes before we start.

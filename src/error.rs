@@ -3,6 +3,7 @@
 */
 
 use argyle::ArgyleError;
+use fyi_msg::ProglessError;
 use std::{
 	error::Error,
 	fmt,
@@ -17,6 +18,7 @@ pub(super) enum HtminlError {
 	EmptyFile,
 	NoDocuments,
 	Parse,
+	Progress(ProglessError),
 	Read,
 }
 
@@ -39,6 +41,11 @@ impl From<ArgyleError> for HtminlError {
 	fn from(src: ArgyleError) -> Self { Self::Argue(src) }
 }
 
+impl From<ProglessError> for HtminlError {
+	#[inline]
+	fn from(src: ProglessError) -> Self { Self::Progress(src) }
+}
+
 impl HtminlError {
 	/// # As Str.
 	pub(super) const fn as_str(self) -> &'static str {
@@ -47,6 +54,7 @@ impl HtminlError {
 			Self::EmptyFile => "The file is empty.",
 			Self::NoDocuments => "No documents were found.",
 			Self::Parse => "Unable to parse the document.",
+			Self::Progress(e) => e.as_str(),
 			Self::Read => "Unable to read the file.",
 		}
 	}

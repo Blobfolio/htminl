@@ -62,10 +62,7 @@ use std::{
 	path::PathBuf,
 	sync::atomic::{
 		AtomicU64,
-		Ordering::{
-			AcqRel,
-			Acquire,
-		},
+		Ordering::Relaxed,
 	},
 };
 
@@ -130,12 +127,12 @@ fn _main() -> Result<(), HtminlError> {
 				progress.add(&tmp);
 
 				if let Ok((b, a)) = enc.minify() {
-					before.fetch_add(b, AcqRel);
-					after.fetch_add(a, AcqRel);
+					before.fetch_add(b, Relaxed);
+					after.fetch_add(a, Relaxed);
 				}
 				else {
-					before.fetch_add(enc.size, AcqRel);
-					after.fetch_add(enc.size, AcqRel);
+					before.fetch_add(enc.size, Relaxed);
+					after.fetch_add(enc.size, Relaxed);
 				}
 
 				progress.remove(&tmp);
@@ -146,8 +143,8 @@ fn _main() -> Result<(), HtminlError> {
 		progress.finish();
 		progress.summary(MsgKind::Crunched, "document", "documents")
 			.with_bytes_saved(BeforeAfter::from((
-				before.load(Acquire),
-				after.load(Acquire),
+				before.into_inner(),
+				after.into_inner(),
 			)))
 			.print();
 	}

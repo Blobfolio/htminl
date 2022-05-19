@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.6.0"
+version = "0.6.1"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
@@ -33,7 +33,7 @@ credits-dir = "./"
 [[package.metadata.bashman.switches]]
 short = "-h"
 long = "--help"
-description = "Print help information."
+description = "Print help information and exit."
 
 [[package.metadata.bashman.switches]]
 short = "-p"
@@ -43,25 +43,28 @@ description = "Show progress bar while working."
 [[package.metadata.bashman.switches]]
 short = "-V"
 long = "--version"
-description = "Print program version."
+description = "Print program version and exit."
 
 [[package.metadata.bashman.options]]
 short = "-l"
 long = "--list"
 label = "<FILE>"
-description = "Read file paths from this text file."
+description = "Read (absolute) file and/or directory paths from this text file, one entry per line."
 path = true
 
 [[package.metadata.bashman.arguments]]
 label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
+[build-dependencies]
+dowser = "0.4.*, >=0.4.6"
+
 [dependencies]
 argyle = "0.5.*, >=0.5.3"
 dactyl = "0.3.*"
-dowser = "0.4.*, >=0.4.5"
+dowser = "0.4.*, >=0.4.6"
 html5ever = "=0.26.0"
-rayon = "=1.5.1"
+rayon = "=1.5.3"
 tendril = "=0.4.3"
 write_atomic = "0.2.*"
 
@@ -71,11 +74,10 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "c9c5a31"
 
 [dependencies.fyi_msg]
-version = "0.9.*"
+version = "0.9.*, >=0.9.8"
 features = [ "progress", "parking_lot_mutex" ]
 
 [profile.release]
 lto = true
 codegen-units = 1
-opt-level = 3
 strip = true

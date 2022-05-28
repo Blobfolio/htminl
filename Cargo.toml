@@ -57,12 +57,12 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
-dowser = "0.4.*, >=0.4.6"
+dowser = "0.5.*"
 
 [dependencies]
 argyle = "0.5.*, >=0.5.3"
 dactyl = "0.3.*"
-dowser = "0.4.*, >=0.4.6"
+dowser = "0.5.*"
 html5ever = "=0.26.0"
 rayon = "=1.5.3"
 tendril = "=0.4.3"

@@ -57,7 +57,7 @@ struct ElemInfo {
 
 
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 /// Quote Type
 enum QuoteKind {
 	/// No quotes.
@@ -66,14 +66,10 @@ enum QuoteKind {
 	Double,
 	/// Single (') Quotes.
 	Single,
+
+	#[default]
 	/// Nothing to quote at all!
 	Void,
-}
-
-impl Default for QuoteKind {
-	fn default() -> Self {
-		Self::Void
-	}
 }
 
 impl From<&[u8]> for QuoteKind {

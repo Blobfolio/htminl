@@ -96,7 +96,7 @@ fn _main() -> Result<(), HtminlError> {
 	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
 		.with_list();
 
-		// Put it all together!
+	// Put it all together!
 	let paths: Vec<PathBuf> = Dowser::default()
 		.with_paths(args.args_os())
 		.into_vec(|p|

@@ -71,6 +71,6 @@ pub(super) const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
 pub(super) fn can_trim_whitespace(el: &Element) -> bool {
 	match el.name.local {
 		t::NOSCRIPT | t::SCRIPT | t::STYLE | t::TITLE => true,
-		_ => (&*el.name.local).eq_ignore_ascii_case("transition"),
+		_ => (*el.name.local).eq_ignore_ascii_case("transition"),
 	}
 }

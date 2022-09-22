@@ -1,10 +1,10 @@
 [package]
 name = "htminl"
-version = "0.6.3"
+version = "0.6.4"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
-rust-version = "1.62"
+rust-version = "1.63"
 description = "In-place minification of HTML file(s)."
 repository = "https://github.com/Blobfolio/htminl"
 readme = "README.md"
@@ -57,12 +57,12 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
-dowser = "0.5.*"
+dowser = "0.6.*"
 
 [dependencies]
 argyle = "0.6.*"
 dactyl = "0.4.*"
-dowser = "0.5.*"
+dowser = "0.6.*"
 html5ever = "=0.26.0"
 rayon = "=1.5.3"
 tendril = "=0.4.3"
@@ -74,7 +74,7 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "c9c5a31"
 
 [dependencies.fyi_msg]
-version = "0.9.*, >=0.9.8"
+version = "0.10.*"
 features = [ "progress" ]
 
 [profile.release]

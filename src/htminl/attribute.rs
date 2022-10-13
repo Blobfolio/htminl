@@ -63,8 +63,14 @@ pub(super) fn can_drop(attr: &Attribute, tag: &LocalName) -> bool {
 		| a::STYLE
 		| a::TARGET
 		| a::TITLE => attr.value.is_empty(),
-		// If this is a falsey boolean attribute, we can get rid of it.
-		_ => is_boolean(attr) && attr.value.eq_ignore_ascii_case("false"),
+		_ =>
+			// XMLNS tags aren't needed for inlined SVGs.
+			(
+				(*attr.name.local).eq_ignore_ascii_case("xmlns") &&
+				*tag == t::SVG
+			) ||
+			// Falsey booleans don't need to be explicitly declared.
+			is_boolean(attr) && attr.value.eq_ignore_ascii_case("false"),
 	}
 }
 

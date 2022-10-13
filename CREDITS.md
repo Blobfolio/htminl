@@ -1,7 +1,7 @@
 # Project Dependencies
     Package:   htminl
-    Version:   0.6.4
-    Generated: 2022-09-22 19:33:50 UTC
+    Version:   0.6.5
+    Generated: 2022-10-13 18:32:34 UTC
 
 | Package | Version | Author(s) | License |
 | ---- | ---- | ---- | ---- |
@@ -11,8 +11,8 @@
 | [cfg-if](https://github.com/alexcrichton/cfg-if) | 1.0.0 | [Alex Crichton](mailto:alex@alexcrichton.com) | Apache-2.0 or MIT |
 | [crossbeam-channel](https://github.com/crossbeam-rs/crossbeam) | 0.5.6 |  | Apache-2.0 or MIT |
 | [crossbeam-deque](https://github.com/crossbeam-rs/crossbeam) | 0.8.2 |  | Apache-2.0 or MIT |
-| [crossbeam-epoch](https://github.com/crossbeam-rs/crossbeam) | 0.9.10 |  | Apache-2.0 or MIT |
-| [crossbeam-utils](https://github.com/crossbeam-rs/crossbeam) | 0.8.11 |  | Apache-2.0 or MIT |
+| [crossbeam-epoch](https://github.com/crossbeam-rs/crossbeam) | 0.9.11 |  | Apache-2.0 or MIT |
+| [crossbeam-utils](https://github.com/crossbeam-rs/crossbeam) | 0.8.12 |  | Apache-2.0 or MIT |
 | [dactyl](https://github.com/Blobfolio/dactyl) | 0.4.5 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [dowser](https://github.com/Blobfolio/dowser) | 0.6.2 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [either](https://github.com/bluss/either) | 1.8.0 | bluss | Apache-2.0 or MIT |
@@ -44,7 +44,7 @@
 | [scopeguard](https://github.com/bluss/scopeguard) | 1.1.0 | bluss | Apache-2.0 or MIT |
 | [serde](https://github.com/serde-rs/serde) | 1.0.145 | [Erick Tryzelaar](mailto:erick.tryzelaar@gmail.com) and [David Tolnay](mailto:dtolnay@gmail.com) | Apache-2.0 or MIT |
 | [siphasher](https://github.com/jedisct1/rust-siphash) | 0.3.10 | [Frank Denis](mailto:github@pureftpd.org) | Apache-2.0 or MIT |
-| [smallvec](https://github.com/servo/rust-smallvec) | 1.9.0 | The Servo Project Developers | Apache-2.0 or MIT |
+| [smallvec](https://github.com/servo/rust-smallvec) | 1.10.0 | The Servo Project Developers | Apache-2.0 or MIT |
 | [string_cache](https://github.com/servo/string-cache) | 0.8.4 | The Servo Project Developers | Apache-2.0 or MIT |
 | [tempfile](https://github.com/Stebalien/tempfile) | 3.3.0 | [Steven Allen](mailto:steven@stebalien.com), The Rust Project Developers, [Ashley Mannix](mailto:ashleymannix@live.com.au), and [Jason White](mailto:jasonaw0@gmail.com) | Apache-2.0 or MIT |
 | [tendril](https://github.com/servo/tendril) | 0.4.3 | [Keegan McAllister](mailto:mcallister.keegan@gmail.com), [Simon Sapin](mailto:simon.sapin@exyr.org), and [Chris Morgan](mailto:me@chrismorgan.info) | Apache-2.0 or MIT |

@@ -53,7 +53,7 @@ pub(super) const fn can_drop_text_nodes(el: &Element) -> bool {
 ///
 /// Whitespace-only text nodes sitting between two elements of this kind
 /// (or at the beginning and end of the parent) can be safely dropped.
-pub(super) const fn can_drop_whitespace_sandwhich(el: &Element) -> bool {
+pub(super) const fn can_drop_whitespace_sandwich(el: &Element) -> bool {
 	matches!(
 		el.name.local,
 		t::NOSCRIPT | t::SCRIPT | t::STYLE

@@ -340,10 +340,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	///
 	/// Imported from `html5ever`.
 	fn end_elem(&mut self, name: QualName) -> io::Result<()> {
-		let info = match self.stack.pop() {
-			Some(info) => info,
-			None => panic!("no ElemInfo"),
-		};
+		let info = self.stack.pop().expect("no ElemInfo");
 
 		// Childless tags don't need closures.
 		if info.ignore_children {

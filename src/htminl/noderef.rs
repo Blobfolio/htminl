@@ -26,15 +26,15 @@ pub(super) fn can_drop_if_whitespace(node: &NodeRef) -> bool {
 
 	// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
 	// we can drop it.
-	node.prev_sibling().as_ref().map_or(true, can_drop_whitespace_sandwhich) &&
-	node.next_sibling().as_ref().map_or(true, can_drop_whitespace_sandwhich) &&
+	node.prev_sibling().as_ref().map_or(true, can_drop_whitespace_sandwich) &&
+	node.next_sibling().as_ref().map_or(true, can_drop_whitespace_sandwich) &&
 	has_sibling(node)
 }
 
 #[must_use]
 /// Can Drop If Sandwhiched?
-pub(super) fn can_drop_whitespace_sandwhich(node: &NodeRef) -> bool {
-	node.as_element().map_or(false, element::can_drop_whitespace_sandwhich)
+pub(super) fn can_drop_whitespace_sandwich(node: &NodeRef) -> bool {
+	node.as_element().map_or(false, element::can_drop_whitespace_sandwich)
 }
 
 #[must_use]

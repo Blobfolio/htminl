@@ -1,6 +1,6 @@
 # HTMinL
 
-[![ci](https://img.shields.io/github/workflow/status/Blobfolio/htminl/Build.svg?style=flat-square&label=ci)](https://github.com/Blobfolio/htminl/actions)
+[![ci](https://img.shields.io/github/actions/workflow/status/Blobfolio/htminl/ci.yaml?style=flat-square&label=ci)](https://github.com/Blobfolio/htminl/actions)
 [![deps.rs](https://deps.rs/repo/github/blobfolio/htminl/status.svg?style=flat-square&label=deps.rs)](https://deps.rs/repo/github/blobfolio/htminl)<br>
 [![license](https://img.shields.io/badge/license-wtfpl-ff1493?style=flat-square)](https://en.wikipedia.org/wiki/WTFPL)
 [![contributions welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square&label=contributions)](https://github.com/Blobfolio/htminl/issues)

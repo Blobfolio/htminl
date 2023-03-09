@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.6.8"
+version = "0.6.9"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
@@ -57,16 +57,16 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
-dowser = "0.6.*"
+dowser = "0.7.*"
 
 [dependencies]
 argyle = "0.6.*"
 dactyl = "0.4.*"
-dowser = "0.6.*"
+dowser = "0.7.*"
 html5ever = "=0.26.0"
-rayon = "=1.6.1"
+rayon = "1.7.*"
 tendril = "=0.4.3"
-write_atomic = "0.2.*"
+write_atomic = "0.3.*"
 
 [dependencies.marked]
 version = "0.3.*"

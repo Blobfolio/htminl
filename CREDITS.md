@@ -1,7 +1,7 @@
 # Project Dependencies
     Package:   htminl
-    Version:   0.6.9
-    Generated: 2023-03-09 17:57:06 UTC
+    Version:   0.6.10
+    Generated: 2023-04-20 17:19:35 UTC
 
 | Package | Version | Author(s) | License |
 | ---- | ---- | ---- | ---- |
@@ -9,7 +9,7 @@
 | [argyle](https://github.com/Blobfolio/argyle) | 0.6.7 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [bytecount](https://github.com/llogiq/bytecount) | 0.6.3 | [Andre Bogus](mailto:bogusandre@gmail.de) and [Joshua Landau](mailto:joshua@landau.ws) | Apache-2.0 or MIT |
 | [cfg-if](https://github.com/alexcrichton/cfg-if) | 1.0.0 | [Alex Crichton](mailto:alex@alexcrichton.com) | Apache-2.0 or MIT |
-| [crossbeam-channel](https://github.com/crossbeam-rs/crossbeam) | 0.5.7 |  | Apache-2.0 or MIT |
+| [crossbeam-channel](https://github.com/crossbeam-rs/crossbeam) | 0.5.8 |  | Apache-2.0 or MIT |
 | [crossbeam-deque](https://github.com/crossbeam-rs/crossbeam) | 0.8.3 |  | Apache-2.0 or MIT |
 | [crossbeam-epoch](https://github.com/crossbeam-rs/crossbeam) | 0.9.14 |  | Apache-2.0 or MIT |
 | [crossbeam-utils](https://github.com/crossbeam-rs/crossbeam) | 0.8.15 |  | Apache-2.0 or MIT |
@@ -19,7 +19,7 @@
 | [encoding_rs](https://github.com/hsivonen/encoding_rs) | 0.8.32 | [Henri Sivonen](mailto:hsivonen@hsivonen.fi) | Apache-2.0 or MIT AND BSD-3-Clause |
 | [fastrand](https://github.com/smol-rs/fastrand) | 1.9.0 | [Stjepan Glavina](mailto:stjepang@gmail.com) | Apache-2.0 or MIT |
 | [futf](https://github.com/servo/futf) | 0.1.5 | [Keegan McAllister](mailto:kmcallister@mozilla.com) | Apache-2.0 or MIT |
-| [fyi_msg](https://github.com/Blobfolio/fyi) | 0.10.7 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
+| [fyi_msg](https://github.com/Blobfolio/fyi) | 0.10.8 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [html5ever](https://github.com/servo/html5ever) | 0.26.0 | The html5ever Project Developers | Apache-2.0 or MIT |
 | [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs) | 1.4.0 | [Marvin Löbel](mailto:loebel.marvin@gmail.com) | Apache-2.0 or MIT |
 | [lock_api](https://github.com/Amanieu/parking_lot) | 0.4.9 | [Amanieu d'Antras](mailto:amanieu@gmail.com) | Apache-2.0 or MIT |
@@ -28,7 +28,7 @@
 | [marked](https://github.com/dekellum/marked) | 0.3.0 | [David Kellum](mailto:dek-oss@gravitext.com) | Apache-2.0 or MIT |
 | [markup5ever](https://github.com/servo/html5ever) | 0.11.0 | The html5ever Project Developers | Apache-2.0 or MIT |
 | [memoffset](https://github.com/Gilnaa/memoffset) | 0.8.0 | [Gilad Naaman](mailto:gilad.naaman@gmail.com) | MIT |
-| [mime](https://github.com/hyperium/mime) | 0.3.16 | [Sean McArthur](mailto:sean@seanmonstar.com) | Apache-2.0 or MIT |
+| [mime](https://github.com/hyperium/mime) | 0.3.17 | [Sean McArthur](mailto:sean@seanmonstar.com) | Apache-2.0 or MIT |
 | [new_debug_unreachable](https://github.com/mbrubeck/rust-debug-unreachable) | 1.0.4 | [Matt Brubeck](mailto:mbrubeck@limpet.net) and [Jonathan Reem](mailto:jonathan.reem@gmail.com) | MIT |
 | [num-traits](https://github.com/rust-num/num-traits) | 0.2.15 | The Rust Project Developers | Apache-2.0 or MIT |
 | [num_cpus](https://github.com/seanmonstar/num_cpus) | 1.15.0 | [Sean McArthur](mailto:sean@seanmonstar.com) | Apache-2.0 or MIT |
@@ -41,13 +41,13 @@
 | [rayon](https://github.com/rayon-rs/rayon) | 1.7.0 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
 | [rayon-core](https://github.com/rayon-rs/rayon) | 1.11.0 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
 | [scopeguard](https://github.com/bluss/scopeguard) | 1.1.0 | bluss | Apache-2.0 or MIT |
-| [serde](https://github.com/serde-rs/serde) | 1.0.154 | [Erick Tryzelaar](mailto:erick.tryzelaar@gmail.com) and [David Tolnay](mailto:dtolnay@gmail.com) | Apache-2.0 or MIT |
+| [serde](https://github.com/serde-rs/serde) | 1.0.160 | [Erick Tryzelaar](mailto:erick.tryzelaar@gmail.com) and [David Tolnay](mailto:dtolnay@gmail.com) | Apache-2.0 or MIT |
 | [siphasher](https://github.com/jedisct1/rust-siphash) | 0.3.10 | [Frank Denis](mailto:github@pureftpd.org) | Apache-2.0 or MIT |
 | [smallvec](https://github.com/servo/rust-smallvec) | 1.10.0 | The Servo Project Developers | Apache-2.0 or MIT |
 | [string_cache](https://github.com/servo/string-cache) | 0.8.7 | The Servo Project Developers | Apache-2.0 or MIT |
-| [tempfile](https://github.com/Stebalien/tempfile) | 3.4.0 | [Steven Allen](mailto:steven@stebalien.com), The Rust Project Developers, [Ashley Mannix](mailto:ashleymannix@live.com.au), and [Jason White](mailto:me@jasonwhite.io) | Apache-2.0 or MIT |
+| [tempfile](https://github.com/Stebalien/tempfile) | 3.5.0 | [Steven Allen](mailto:steven@stebalien.com), The Rust Project Developers, [Ashley Mannix](mailto:ashleymannix@live.com.au), and [Jason White](mailto:me@jasonwhite.io) | Apache-2.0 or MIT |
 | [tendril](https://github.com/servo/tendril) | 0.4.3 | [Keegan McAllister](mailto:mcallister.keegan@gmail.com), [Simon Sapin](mailto:simon.sapin@exyr.org), and [Chris Morgan](mailto:me@chrismorgan.info) | Apache-2.0 or MIT |
 | [term_size](https://github.com/kbknapp/term_size-rs.git) | 0.3.2 | [Kevin K.](mailto:kbknapp@gmail.com) and [Benjamin Sago](mailto:ogham@bsago.me) | Apache-2.0 or MIT |
 | [unicode-width](https://github.com/unicode-rs/unicode-width) | 0.1.10 | [kwantam](mailto:kwantam@gmail.com) and [Manish Goregaokar](mailto:manishsmail@gmail.com) | Apache-2.0 or MIT |
 | [utf-8](https://github.com/SimonSapin/rust-utf8) | 0.7.6 | [Simon Sapin](mailto:simon.sapin@exyr.org) | Apache-2.0 or MIT |
-| [write_atomic](https://github.com/Blobfolio/write_atomic) | 0.3.0 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
+| [write_atomic](https://github.com/Blobfolio/write_atomic) | 0.3.1 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |

@@ -48,8 +48,14 @@ jobs:
 
     - name: Build
       run: |
+        cargo build --bin htminl --target ${{ matrix.target }}
         cargo build --bin htminl --release --target ${{ matrix.target }}
 
     - name: Clippy
       run: |
         cargo clippy --release --target ${{ matrix.target }}
+
+    - name: Tests
+      run: |
+        cargo test --target ${{ matrix.target }}
+        cargo test --release --target ${{ matrix.target }}

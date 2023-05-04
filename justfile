@@ -35,13 +35,11 @@ bench BENCH="":
 	if [ -z "{{ BENCH }}" ]; then
 		cargo bench \
 			--benches \
-			--all-features \
 			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
 	else
 		cargo bench \
 			--bench "{{ BENCH }}" \
-			--all-features \
 			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
 	fi
@@ -150,16 +148,6 @@ bench-bin DIR NATIVE="":
 	mv "{{ justfile_directory() }}/target" "{{ cargo_dir }}"
 
 
-# Check Release!
-@check:
-	# First let's build the Rust bit.
-	cargo check \
-		--bin "{{ pkg_id }}" \
-		--release \
-		--target x86_64-unknown-linux-gnu \
-		--target-dir "{{ cargo_dir }}"
-
-
 @clean:
 	# Most things go here.
 	[ ! -d "{{ cargo_dir }}" ] || rm -rf "{{ cargo_dir }}"
@@ -177,7 +165,6 @@ bench-bin DIR NATIVE="":
 	clear
 	cargo clippy \
 		--release \
-		--all-features \
 		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
@@ -218,9 +205,11 @@ bench-bin DIR NATIVE="":
 # Unit tests!
 @test:
 	clear
-	RUST_TEST_THREADS=1 cargo test \
+	cargo test \
+		--target x86_64-unknown-linux-gnu \
+		--target-dir "{{ cargo_dir }}"
+	cargo test \
 		--release \
-		--all-features \
 		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 

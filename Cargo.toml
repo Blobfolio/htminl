@@ -61,7 +61,7 @@ dowser = "0.8.*"
 
 [dependencies]
 argyle = "0.6.*"
-dactyl = "0.4.*"
+dactyl = "0.5.*"
 dowser = "0.8.*"
 html5ever = "=0.26.0"
 rayon = "1.7.*"

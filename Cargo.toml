@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.7.0"
+version = "0.7.1"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
@@ -66,7 +66,7 @@ dowser = "0.8.*"
 html5ever = "=0.26.0"
 rayon = "1.7.*"
 tendril = "=0.4.3"
-write_atomic = "0.3.*"
+write_atomic = "0.4.*"
 
 [dependencies.marked]
 version = "0.3.*"

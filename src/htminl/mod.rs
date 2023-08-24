@@ -2,12 +2,12 @@
 # `HTMinL` - Helpers
 */
 
-pub(self) mod attribute;
-pub(self) mod element;
+mod attribute;
+mod element;
 mod meta;
-pub(self) mod noderef;
-pub(self) mod serialize;
-pub(self) mod strtendril;
+mod noderef;
+mod serialize;
+mod strtendril;
 
 
 

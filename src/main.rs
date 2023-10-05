@@ -76,7 +76,7 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 /// # Main.
 fn main() {
 	match _main() {
-		Ok(_) => {},
+		Ok(()) => {},
 		Err(HtminlError::Argue(ArgyleError::WantsVersion)) => {
 			println!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
 		},

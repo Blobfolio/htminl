@@ -4,7 +4,7 @@ version = "0.7.1"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.73"
 description = "In-place minification of HTML file(s)."
 repository = "https://github.com/Blobfolio/htminl"
 readme = "README.md"
@@ -66,7 +66,7 @@ dowser = "0.8.*"
 html5ever = "=0.26.0"
 rayon = "1.8.*"
 tendril = "=0.4.3"
-write_atomic = "0.4.*"
+write_atomic = "0.5.*"
 
 [dependencies.marked]
 version = "0.3.*"

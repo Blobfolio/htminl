@@ -49,7 +49,7 @@ description = "Print program version and exit."
 short = "-l"
 long = "--list"
 label = "<FILE>"
-description = "Read (absolute) file and/or directory paths from this text file, one entry per line."
+description = "Read (absolute) file and/or directory paths from this text file — or STDIN if '-' — one entry per line, instead of or in addition to the trailing <PATH(S)>."
 path = true
 
 [[package.metadata.bashman.arguments]]
@@ -60,7 +60,7 @@ description = "Any number of files and directories to crawl and crunch."
 dowser = "0.8.*"
 
 [dependencies]
-argyle = "0.6.*"
+argyle = "0.7.*"
 dactyl = "0.6.*"
 dowser = "0.8.*"
 html5ever = "=0.26.0"

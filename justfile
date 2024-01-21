@@ -20,10 +20,12 @@ pkg_name    := "HTMinL"
 pkg_dir1    := justfile_directory()
 
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
-cargo_bin   := cargo_dir + "/x86_64-unknown-linux-gnu/release/" + pkg_id
+cargo_bin   := cargo_dir + "/release/" + pkg_id
 data_dir    := "/tmp/bench-data"
 doc_dir     := justfile_directory() + "/doc"
 release_dir := justfile_directory() + "/release"
+
+export RUSTFLAGS := "-C target-cpu=x86-64-v3"
 
 
 
@@ -35,12 +37,10 @@ bench BENCH="":
 	if [ -z "{{ BENCH }}" ]; then
 		cargo bench \
 			--benches \
-			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
 	else
 		cargo bench \
 			--bench "{{ BENCH }}" \
-			--target x86_64-unknown-linux-gnu \
 			--target-dir "{{ cargo_dir }}"
 	fi
 	exit 0
@@ -128,7 +128,6 @@ bench-bin DIR NATIVE="":
 	cargo build \
 		--bin "{{ pkg_id }}" \
 		--release \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
 
@@ -165,7 +164,6 @@ bench-bin DIR NATIVE="":
 	clear
 	cargo clippy \
 		--release \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
 
@@ -181,12 +179,11 @@ bench-bin DIR NATIVE="":
 	cargo doc \
 		--release \
 		--no-deps \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
 	# Move the docs and clean up ownership.
 	[ ! -d "{{ doc_dir }}" ] || rm -rf "{{ doc_dir }}"
-	mv "{{ cargo_dir }}/x86_64-unknown-linux-gnu/doc" "{{ justfile_directory() }}"
+	mv "{{ cargo_dir }}/doc" "{{ justfile_directory() }}"
 	just _fix-chown "{{ doc_dir }}"
 
 	exit 0
@@ -197,7 +194,6 @@ bench-bin DIR NATIVE="":
 	cargo run \
 		--bin "{{ pkg_id }}" \
 		--release \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}" \
 		-- {{ ARGS }}
 
@@ -206,11 +202,9 @@ bench-bin DIR NATIVE="":
 @test:
 	clear
 	cargo test \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 	cargo test \
 		--release \
-		--target x86_64-unknown-linux-gnu \
 		--target-dir "{{ cargo_dir }}"
 
 

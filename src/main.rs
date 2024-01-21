@@ -168,7 +168,7 @@ fn helper() {
      __,---.__
   ,-'         `-.__
 &/           `._\ _\
-/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r"
+/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r#"
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
@@ -182,10 +182,11 @@ FLAGS:
 
 OPTIONS:
     -l, --list <FILE> Read (absolute) file and/or directory paths from this
-                      text file, one entry per line.
+                      text file — or STDIN if "-" — one entry per line, instead
+                      of or in addition to the trailing <PATH(S)>.
 
 ARGS:
     <PATH(S)>...      One or more files or directories to compress.
-"
+"#
 	));
 }

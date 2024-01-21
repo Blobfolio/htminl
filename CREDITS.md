@@ -1,17 +1,17 @@
 # Project Dependencies
     Package:   htminl
-    Version:   0.8.1
-    Generated: 2023-12-28 19:19:51 UTC
+    Version:   0.8.2
+    Generated: 2024-01-21 06:47:13 UTC
 
 | Package | Version | Author(s) | License |
 | ---- | ---- | ---- | ---- |
-| [ahash](https://github.com/tkaitchuck/ahash) | 0.8.6 | [Tom Kaitchuck](mailto:tom.kaitchuck@gmail.com) | Apache-2.0 or MIT |
-| [argyle](https://github.com/Blobfolio/argyle) | 0.6.8 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
+| [ahash](https://github.com/tkaitchuck/ahash) | 0.8.7 | [Tom Kaitchuck](mailto:tom.kaitchuck@gmail.com) | Apache-2.0 or MIT |
+| [argyle](https://github.com/Blobfolio/argyle) | 0.7.0 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [bytecount](https://github.com/llogiq/bytecount) | 0.6.7 | [Andre Bogus](mailto:bogusandre@gmail.de) and [Joshua Landau](mailto:joshua@landau.ws) | Apache-2.0 or MIT |
 | [cfg-if](https://github.com/alexcrichton/cfg-if) | 1.0.0 | [Alex Crichton](mailto:alex@alexcrichton.com) | Apache-2.0 or MIT |
-| [crossbeam-deque](https://github.com/crossbeam-rs/crossbeam) | 0.8.4 |  | Apache-2.0 or MIT |
-| [crossbeam-epoch](https://github.com/crossbeam-rs/crossbeam) | 0.9.17 |  | Apache-2.0 or MIT |
-| [crossbeam-utils](https://github.com/crossbeam-rs/crossbeam) | 0.8.18 |  | Apache-2.0 or MIT |
+| [crossbeam-deque](https://github.com/crossbeam-rs/crossbeam) | 0.8.5 |  | Apache-2.0 or MIT |
+| [crossbeam-epoch](https://github.com/crossbeam-rs/crossbeam) | 0.9.18 |  | Apache-2.0 or MIT |
+| [crossbeam-utils](https://github.com/crossbeam-rs/crossbeam) | 0.8.19 |  | Apache-2.0 or MIT |
 | [dactyl](https://github.com/Blobfolio/dactyl) | 0.6.0 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [dowser](https://github.com/Blobfolio/dowser) | 0.8.1 | [Blobfolio, LLC.](mailto:hello@blobfolio.com) | WTFPL |
 | [either](https://github.com/bluss/either) | 1.9.0 | bluss | Apache-2.0 or MIT |
@@ -34,12 +34,12 @@
 | [phf](https://github.com/sfackler/rust-phf) | 0.10.1 | [Steven Fackler](mailto:sfackler@gmail.com) | MIT |
 | [phf_shared](https://github.com/sfackler/rust-phf) | 0.10.0 | [Steven Fackler](mailto:sfackler@gmail.com) | MIT |
 | [precomputed-hash](https://github.com/emilio/precomputed-hash) | 0.1.1 | [Emilio Cobos Álvarez](mailto:emilio@crisal.io) | MIT |
-| [rayon](https://github.com/rayon-rs/rayon) | 1.8.0 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
-| [rayon-core](https://github.com/rayon-rs/rayon) | 1.12.0 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
+| [rayon](https://github.com/rayon-rs/rayon) | 1.8.1 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
+| [rayon-core](https://github.com/rayon-rs/rayon) | 1.12.1 | [Niko Matsakis](mailto:niko@alum.mit.edu) and [Josh Stone](mailto:cuviper@gmail.com) | Apache-2.0 or MIT |
 | [scopeguard](https://github.com/bluss/scopeguard) | 1.2.0 | bluss | Apache-2.0 or MIT |
-| [serde](https://github.com/serde-rs/serde) | 1.0.193 | [Erick Tryzelaar](mailto:erick.tryzelaar@gmail.com) and [David Tolnay](mailto:dtolnay@gmail.com) | Apache-2.0 or MIT |
+| [serde](https://github.com/serde-rs/serde) | 1.0.195 | [Erick Tryzelaar](mailto:erick.tryzelaar@gmail.com) and [David Tolnay](mailto:dtolnay@gmail.com) | Apache-2.0 or MIT |
 | [siphasher](https://github.com/jedisct1/rust-siphash) | 0.3.11 | [Frank Denis](mailto:github@pureftpd.org) | Apache-2.0 or MIT |
-| [smallvec](https://github.com/servo/rust-smallvec) | 1.11.2 | The Servo Project Developers | Apache-2.0 or MIT |
+| [smallvec](https://github.com/servo/rust-smallvec) | 1.13.1 | The Servo Project Developers | Apache-2.0 or MIT |
 | [string_cache](https://github.com/servo/string-cache) | 0.8.7 | The Servo Project Developers | Apache-2.0 or MIT |
 | [tempfile](https://github.com/Stebalien/tempfile) | 3.9.0 | [Steven Allen](mailto:steven@stebalien.com), The Rust Project Developers, [Ashley Mannix](mailto:ashleymannix@live.com.au), and [Jason White](mailto:me@jasonwhite.io) | Apache-2.0 or MIT |
 | [tendril](https://github.com/servo/tendril) | 0.4.3 | [Keegan McAllister](mailto:mcallister.keegan@gmail.com), [Simon Sapin](mailto:simon.sapin@exyr.org), and [Chris Morgan](mailto:me@chrismorgan.info) | Apache-2.0 or MIT |

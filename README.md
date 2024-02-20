@@ -53,7 +53,7 @@ The following flags and options are available:
 | Short | Long | Value | Description |
 | ----- | ---- | ----- | ----------- |
 | `-h` | `--help` | | Print help information and exit. |
-| `-l` | `--list` | `<FILE>` | Read (absolute) file and/or directory paths from this text file, one entry per line. |
+| `-l` | `--list` | `<FILE>` | Read (absolute) file and/or directory paths from this text file — or STDIN if "-" — one entry per line, instead of or in addition to the trailing `<PATH(S)>`. |
 | `-p` | `--progress` | | Show progress bar while minifying. |
 | `-V` | `--version` | | Print program version and exit. |
 

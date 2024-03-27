@@ -63,7 +63,7 @@ argyle = "0.7.*"
 dactyl = "0.7.*"
 dowser = "0.9.*"
 html5ever = "=0.26.0"
-rayon = "1.9.*"
+rayon = "1.10.*"
 tendril = "=0.4.3"
 write_atomic = "0.5.*"
 

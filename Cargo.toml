@@ -59,7 +59,7 @@ description = "Any number of files and directories to crawl and crunch."
 dowser = "0.9.*"
 
 [dependencies]
-argyle = "0.7.*"
+argyle = "0.8.*"
 dactyl = "0.7.*"
 dowser = "0.9.*"
 html5ever = "=0.27.0"

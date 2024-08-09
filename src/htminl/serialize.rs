@@ -6,18 +6,18 @@ includes a few space-saving optimizations.
 */
 
 use crate::HtminlError;
-use html5ever::{
-	local_name,
-	namespace_url,
-	ns,
-	serialize::{
-		AttrRef,
-		Serialize,
-		Serializer,
-		TraversalScope,
-	},
-};
 use marked::{
+	html5ever::{
+		local_name,
+		namespace_url,
+		ns,
+		serialize::{
+			AttrRef,
+			Serialize,
+			Serializer,
+			TraversalScope,
+		},
+	},
 	LocalName,
 	QualName,
 };

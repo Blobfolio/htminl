@@ -62,7 +62,6 @@ dowser = "0.9.*"
 argyle = "0.8.*"
 dactyl = "0.7.*"
 dowser = "0.9.*"
-html5ever = "=0.27.0"
 rayon = "1.10.*"
 tendril = "=0.4.3"
 write_atomic = "0.5.*"
@@ -70,7 +69,7 @@ write_atomic = "0.5.*"
 [dependencies.marked]
 version = "0.3.*"
 git = "https://github.com/joshstoik1/marked.git"
-rev = "f7222a3"
+rev = "8acdc5c"
 
 [dependencies.fyi_msg]
 version = "0.13.*"

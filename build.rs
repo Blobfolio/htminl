@@ -19,7 +19,10 @@ pub fn main() {
 
 	let out = format!(
 		r"
+/// # Extension: HTM.
 const E_HTM: Extension = {};
+
+/// # Extension: HTML.
 const E_HTML: Extension = {};
 ",
 		Extension::codegen(b"htm"),

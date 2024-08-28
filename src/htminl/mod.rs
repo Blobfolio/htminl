@@ -33,8 +33,13 @@ use tendril::StrTendril;
 #[derive(Debug)]
 /// # `HTMinL`
 pub(super) struct Htminl<'a> {
+	/// # Source Path.
 	src: &'a PathBuf,
+
+	/// # Raw Data.
 	buf: Vec<u8>,
+
+	/// # File Size.
 	pub(super) size: u64,
 }
 
@@ -300,29 +305,29 @@ mod tests {
 			buf: b"<html><body>Hi!</body></html>".to_vec(),
 			size: 0,
 		};
-		assert_eq!(h.is_fragment(), false);
+		assert!(!h.is_fragment());
 
 		h.buf.truncate(0);
 		h.buf.extend_from_slice(b"<div>Hello world!</div></body>");
-		assert_eq!(h.is_fragment(), false);
+		assert!(!h.is_fragment());
 
 		h.buf.truncate(0);
 		h.buf.extend_from_slice(b"<div>Hello world!</div></HTML>");
-		assert_eq!(h.is_fragment(), false);
+		assert!(!h.is_fragment());
 
 		h.buf.truncate(0);
 		h.buf.extend_from_slice(b"<body class='foo'>Hello world!</div>");
-		assert_eq!(h.is_fragment(), false);
+		assert!(!h.is_fragment());
 
 		h.buf.truncate(0);
 		h.buf.extend_from_slice(b"<div>Hello world!</div>");
-		assert_eq!(h.is_fragment(), true);
+		assert!(h.is_fragment());
 		h.make_whole();
 		assert_eq!(h.buf, b"<html><head></head><body><div>Hello world!</div></body></html>");
-		assert_eq!(h.is_fragment(), false);
+		assert!(!h.is_fragment());
 
 		assert!(h.make_fragment().is_ok());
 		assert_eq!(h.buf, b"<div>Hello world!</div>");
-		assert_eq!(h.is_fragment(), true);
+		assert!(h.is_fragment());
 	}
 }

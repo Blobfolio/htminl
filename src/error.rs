@@ -11,6 +11,7 @@ use std::{
 
 
 
+#[expect(clippy::missing_docs_in_private_items, reason = "Self-explanatory.")]
 #[derive(Debug, Copy, Clone)]
 /// # Generic Error.
 pub(super) enum HtminlError {

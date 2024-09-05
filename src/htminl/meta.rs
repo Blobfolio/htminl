@@ -4,11 +4,10 @@
 This module re-exports TAG and ATTRIBUTE constants, adding a few of its own.
 */
 
-#[allow(missing_docs)]
+#[expect(clippy::missing_docs_in_private_items, reason = "Self-explanatory.")]
 /// Attribute Constants.
 pub(super) mod a {
-	use marked::LocalName;
-	use html5ever::local_name;
+	use marked::{LocalName, html5ever::local_name};
 	pub(crate) use marked::html::a::*;
 
 	pub(crate) const ALLOWFULLSCREEN: LocalName = local_name!("allowfullscreen");

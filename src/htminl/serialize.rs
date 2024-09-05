@@ -6,18 +6,18 @@ includes a few space-saving optimizations.
 */
 
 use crate::HtminlError;
-use html5ever::{
-	local_name,
-	namespace_url,
-	ns,
-	serialize::{
-		AttrRef,
-		Serialize,
-		Serializer,
-		TraversalScope,
-	},
-};
 use marked::{
+	html5ever::{
+		local_name,
+		namespace_url,
+		ns,
+		serialize::{
+			AttrRef,
+			Serialize,
+			Serializer,
+			TraversalScope,
+		},
+	},
 	LocalName,
 	QualName,
 };
@@ -51,7 +51,10 @@ where
 ///
 /// Imported from `html5ever`.
 struct ElemInfo {
+	/// # Name.
 	html_name: Option<LocalName>,
+
+	/// # Ignore Children?
 	ignore_children: bool,
 }
 
@@ -60,15 +63,17 @@ struct ElemInfo {
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 /// Quote Type
 enum QuoteKind {
-	/// No quotes.
+	/// # No quotes.
 	None,
-	/// Double (") Quotes.
+
+	/// # Double (") Quotes.
 	Double,
-	/// Single (') Quotes.
+
+	/// # Single (') Quotes.
 	Single,
 
 	#[default]
-	/// Nothing to quote at all!
+	/// # Nothing to quote at all!
 	Void,
 }
 
@@ -118,7 +123,10 @@ impl From<&[u8]> for QuoteKind {
 /// way, except some byte-saving routines are employed to reduce the output
 /// size.
 struct MinifySerializer<Wr: Write> {
+	/// # Writer.
 	pub(crate) writer: Wr,
+
+	/// # Stack.
 	stack: Vec<ElemInfo>,
 }
 
@@ -340,7 +348,7 @@ impl<Wr: Write> Serializer for MinifySerializer<Wr> {
 	///
 	/// Imported from `html5ever`.
 	fn end_elem(&mut self, name: QualName) -> io::Result<()> {
-		let info = self.stack.pop().expect("no ElemInfo");
+		let info = self.stack.pop().ok_or(io::ErrorKind::UnexpectedEof)?;
 
 		// Childless tags don't need closures.
 		if info.ignore_children {

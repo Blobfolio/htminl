@@ -1,5 +1,5 @@
 /*!
-# `HTMinL`
+# HTMinL
 */
 
 #![forbid(unsafe_code)]
@@ -52,19 +52,14 @@
 )]
 
 #![expect(clippy::redundant_pub_crate, reason = "Unresolvable.")]
+#![expect(clippy::doc_markdown, reason = "HTMinL makes this annoying.")]
 
 
 
 mod error;
 mod htminl;
 
-use argyle::{
-	Argue,
-	ArgyleError,
-	FLAG_HELP,
-	FLAG_REQUIRED,
-	FLAG_VERSION,
-};
+use argyle::Argument;
 use dowser::{
 	Dowser,
 	Extension,
@@ -99,15 +94,10 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 fn main() {
 	match _main() {
 		Ok(()) => {},
-		Err(HtminlError::Argue(ArgyleError::WantsVersion)) => {
-			println!(concat!("HTMinL v", env!("CARGO_PKG_VERSION")));
+		Err(e @ (HtminlError::PrintHelp | HtminlError::PrintVersion)) => {
+			println!("{e}");
 		},
-		Err(HtminlError::Argue(ArgyleError::WantsHelp)) => {
-			helper();
-		},
-		Err(e) => {
-			Msg::error(e).die(1);
-		},
+		Err(e) => { Msg::error(e).die(1); },
 	}
 }
 
@@ -115,25 +105,46 @@ fn main() {
 /// # Actual Main.
 fn _main() -> Result<(), HtminlError> {
 	// Parse CLI arguments.
-	let args = Argue::new(FLAG_HELP | FLAG_REQUIRED | FLAG_VERSION)?
-		.with_list();
+	let args = argyle::args()
+		.with_keywords(include!(concat!(env!("OUT_DIR"), "/argyle.rs")));
 
-	// Put it all together!
-	let paths: Vec<PathBuf> = Dowser::default()
-		.with_paths(args.args_os())
-		.into_vec_filtered(|p|
-			Extension::try_from4(p).map_or_else(
-				|| Some(E_HTM) == Extension::try_from3(p),
-				|e| e == E_HTML
-			)
-		);
+	let mut progress = false;
+	let mut paths = Dowser::default();
+	for arg in args {
+		match arg {
+			Argument::Key("-h" | "--help") => return Err(HtminlError::PrintHelp),
+			Argument::Key("-p" | "--progress") => { progress = true; },
+			Argument::Key("-V" | "--version") => return Err(HtminlError::PrintVersion),
 
-	if paths.is_empty() {
-		return Err(HtminlError::NoDocuments);
+			Argument::KeyWithValue("-l" | "--list", s) => if let Ok(s) = std::fs::read_to_string(s) {
+				paths = paths.with_paths(s.lines().filter_map(|line| {
+					let line = line.trim();
+					if line.is_empty() { None }
+					else { Some(line) }
+				}));
+			},
+
+			// Assume these are paths.
+			Argument::Other(s) => { paths = paths.with_path(s); },
+			Argument::InvalidUtf8(s) => { paths = paths.with_path(s); },
+
+			// Nothing else is relevant.
+			_ => {},
+		}
 	}
 
+	// Put it all together!
+	let paths: Vec<PathBuf> = paths.into_vec_filtered(|p|
+		Extension::try_from4(p).map_or_else(
+			|| Some(E_HTM) == Extension::try_from3(p),
+			|e| e == E_HTML
+		)
+	);
+
+	if paths.is_empty() { return Err(HtminlError::NoDocuments); }
+
 	// Sexy run-through.
-	if args.switch2(b"-p", b"--progress") {
+	if progress {
 		// Boot up a progress bar.
 		let progress = Progless::try_from(paths.len())?
 			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
@@ -179,35 +190,4 @@ fn _main() -> Result<(), HtminlError> {
 	}
 
 	Ok(())
-}
-
-#[cold]
-/// # Print Help.
-fn helper() {
-	println!(concat!(
-		r"
-     __,---.__
-  ,-'         `-.__
-&/           `._\ _\
-/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r#"
-|   ,             (∞)   Fast, safe, in-place
-|__,'`-..--|__|--''     HTML minification.
-
-USAGE:
-    htminl [FLAGS] [OPTIONS] <PATH(S)>...
-
-FLAGS:
-    -h, --help        Print help information and exit.
-    -p, --progress    Show progress bar while minifying.
-    -V, --version     Print program version and exit.
-
-OPTIONS:
-    -l, --list <FILE> Read (absolute) file and/or directory paths from this
-                      text file — or STDIN if "-" — one entry per line, instead
-                      of or in addition to the trailing <PATH(S)>.
-
-ARGS:
-    <PATH(S)>...      One or more files or directories to compress.
-"#
-	));
 }

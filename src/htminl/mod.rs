@@ -1,5 +1,5 @@
 /*!
-# `HTMinL` - Helpers
+# HTMinL: Helpers
 */
 
 mod attribute;
@@ -31,7 +31,7 @@ use tendril::StrTendril;
 
 
 #[derive(Debug)]
-/// # `HTMinL`
+/// # HTMinL
 pub(super) struct Htminl<'a> {
 	/// # Source Path.
 	src: &'a PathBuf,

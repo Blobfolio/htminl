@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.8.6"
+version = "0.8.7"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
@@ -56,10 +56,11 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
+argyle = "0.10.*"
 dowser = "0.9.*"
 
 [dependencies]
-argyle = "0.8.*"
+argyle = "0.10.*"
 dactyl = "0.7.*"
 dowser = "0.9.*"
 rayon = "1.10.*"
@@ -72,7 +73,7 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "8acdc5c"
 
 [dependencies.fyi_msg]
-version = "0.14.*"
+version = "1.1.*"
 features = [ "progress" ]
 
 [profile.release]

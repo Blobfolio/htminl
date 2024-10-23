@@ -43,6 +43,7 @@ ARGS:
 /// # Generic Error.
 pub(super) enum HtminlError {
 	EmptyFile,
+	ListFile,
 	NoDocuments,
 	Parse,
 	Progress(ProglessError),
@@ -75,6 +76,7 @@ impl HtminlError {
 	pub(super) const fn as_str(self) -> &'static str {
 		match self {
 			Self::EmptyFile => "The file is empty.",
+			Self::ListFile => "Invalid -l/--list text file.",
 			Self::NoDocuments => "No documents were found.",
 			Self::Parse => "Unable to parse the document.",
 			Self::Progress(e) => e.as_str(),

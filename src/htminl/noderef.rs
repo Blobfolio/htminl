@@ -26,15 +26,15 @@ pub(super) fn can_drop_if_whitespace(node: &NodeRef) -> bool {
 
 	// Otherwise, if we have a drop-capable sibling (and no not droppable ones)
 	// we can drop it.
-	node.prev_sibling().as_ref().map_or(true, can_drop_whitespace_sandwich) &&
-	node.next_sibling().as_ref().map_or(true, can_drop_whitespace_sandwich) &&
+	node.prev_sibling().as_ref().is_none_or(can_drop_whitespace_sandwich) &&
+	node.next_sibling().as_ref().is_none_or(can_drop_whitespace_sandwich) &&
 	has_sibling(node)
 }
 
 #[must_use]
 /// Can Drop If Sandwhiched?
 pub(super) fn can_drop_whitespace_sandwich(node: &NodeRef) -> bool {
-	node.as_element().map_or(false, element::can_drop_whitespace_sandwich)
+	node.as_element().is_some_and(element::can_drop_whitespace_sandwich)
 }
 
 #[must_use]
@@ -58,19 +58,19 @@ pub(super) fn is_last_child(node: &NodeRef) -> bool {
 #[must_use]
 /// Next Sibling Is.
 pub(super) fn next_sibling_is_elem(node: &NodeRef, kind: LocalName) -> bool {
-	node.next_sibling().map_or(false, |n| n.is_elem(kind))
+	node.next_sibling().is_some_and(|n| n.is_elem(kind))
 }
 
 #[must_use]
 /// Previous Sibling Is.
 pub(super) fn prev_sibling_is_elem(node: &NodeRef, kind: LocalName) -> bool {
-	node.prev_sibling().map_or(false, |n| n.is_elem(kind))
+	node.prev_sibling().is_some_and(|n| n.is_elem(kind))
 }
 
 #[must_use]
 /// Parent Is.
 pub(super) fn parent_is_elem(node: &NodeRef, kind: LocalName) -> bool {
-	node.parent().map_or(false, |n| n.is_elem(kind))
+	node.parent().is_some_and(|n| n.is_elem(kind))
 }
 
 #[must_use]

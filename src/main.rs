@@ -92,7 +92,7 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 
 /// # Main.
 fn main() {
-	match _main() {
+	match main__() {
 		Ok(()) => {},
 		Err(e @ (HtminlError::PrintHelp | HtminlError::PrintVersion)) => {
 			println!("{e}");
@@ -103,7 +103,7 @@ fn main() {
 
 #[inline]
 /// # Actual Main.
-fn _main() -> Result<(), HtminlError> {
+fn main__() -> Result<(), HtminlError> {
 	// Parse CLI arguments.
 	let args = argyle::args()
 		.with_keywords(include!(concat!(env!("OUT_DIR"), "/argyle.rs")));

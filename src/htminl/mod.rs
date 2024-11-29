@@ -221,7 +221,7 @@ fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
         // If the immediately following sibling is also text, then push this
         // tendril to the merge queue and detach.
         let node_r = pos.next_sibling();
-        if node_r.map_or(false, |n| n.as_text().is_some()) {
+        if node_r.is_some_and(|n| n.as_text().is_some()) {
             MERGE_Q.with_borrow_mut(|q| { q.push_tendril(t); });
             return Action::Detach;
         }

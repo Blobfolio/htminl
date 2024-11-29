@@ -92,7 +92,7 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 
 /// # Main.
 fn main() {
-	match _main() {
+	match main__() {
 		Ok(()) => {},
 		Err(e @ (HtminlError::PrintHelp | HtminlError::PrintVersion)) => {
 			println!("{e}");
@@ -103,7 +103,7 @@ fn main() {
 
 #[inline]
 /// # Actual Main.
-fn _main() -> Result<(), HtminlError> {
+fn main__() -> Result<(), HtminlError> {
 	// Parse CLI arguments.
 	let args = argyle::args()
 		.with_keywords(include!(concat!(env!("OUT_DIR"), "/argyle.rs")));
@@ -116,12 +116,8 @@ fn _main() -> Result<(), HtminlError> {
 			Argument::Key("-p" | "--progress") => { progress = true; },
 			Argument::Key("-V" | "--version") => return Err(HtminlError::PrintVersion),
 
-			Argument::KeyWithValue("-l" | "--list", s) => if let Ok(s) = std::fs::read_to_string(s) {
-				paths = paths.with_paths(s.lines().filter_map(|line| {
-					let line = line.trim();
-					if line.is_empty() { None }
-					else { Some(line) }
-				}));
+			Argument::KeyWithValue("-l" | "--list", s) => {
+				paths.read_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
 			},
 
 			// Assume these are paths.

@@ -72,7 +72,7 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "8acdc5c"
 
 [dependencies.fyi_msg]
-version = "1.3.*"
+version = "1.4.*"
 features = [ "progress" ]
 
 [profile.release]

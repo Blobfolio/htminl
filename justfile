@@ -140,6 +140,7 @@ bench-bin DIR NATIVE="":
 	# Build the deb.
 	cargo-deb \
 		--no-build \
+		--quiet \
 		-p {{ pkg_id }} \
 		-o "{{ release_dir }}"
 

@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.8.9"
+version = "0.8.10"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2021"
@@ -72,8 +72,8 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "8acdc5c"
 
 [dependencies.fyi_msg]
-version = "1.5.*"
-features = [ "progress" ]
+version = "1.6.*"
+features = [ "signals" ]
 
 [profile.release]
 lto = true

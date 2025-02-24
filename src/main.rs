@@ -100,7 +100,7 @@ fn main() -> ExitCode {
 			ExitCode::SUCCESS
 		},
 		Err(e) => {
-			Msg::error(e).eprint();
+			Msg::error(e.to_string()).eprint();
 			ExitCode::FAILURE
 		},
 	}
@@ -125,9 +125,11 @@ fn main__() -> Result<(), HtminlError> {
 				paths.read_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
 			},
 
-			// Assume these are paths.
-			Argument::Other(s) => { paths = paths.with_path(s); },
-			Argument::InvalidUtf8(s) => { paths = paths.with_path(s); },
+			Argument::Path(s) => { paths = paths.with_path(s); },
+
+			// Mistake?
+			Argument::Other(s) => return Err(HtminlError::InvalidCli(s)),
+			Argument::InvalidUtf8(s) => return Err(HtminlError::InvalidCli(s.to_string_lossy().into_owned())),
 
 			// Nothing else is relevant.
 			_ => {},

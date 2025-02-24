@@ -77,6 +77,7 @@ use rayon::iter::{
 };
 use std::{
 	path::PathBuf,
+	process::ExitCode,
 	sync::atomic::{
 		AtomicU64,
 		Ordering::Relaxed,
@@ -91,13 +92,17 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 
 
 /// # Main.
-fn main() {
+fn main() -> ExitCode {
 	match main__() {
-		Ok(()) => {},
+		Ok(()) => ExitCode::SUCCESS,
 		Err(e @ (HtminlError::PrintHelp | HtminlError::PrintVersion)) => {
 			println!("{e}");
+			ExitCode::SUCCESS
 		},
-		Err(e) => { Msg::error(e).die(1); },
+		Err(e) => {
+			Msg::error(e).eprint();
+			ExitCode::FAILURE
+		},
 	}
 }
 

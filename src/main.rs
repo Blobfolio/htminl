@@ -137,12 +137,13 @@ fn main__() -> Result<(), HtminlError> {
 	}
 
 	// Put it all together!
-	let paths: Vec<PathBuf> = paths.into_vec_filtered(|p|
+	let paths: Vec<PathBuf> = paths.filter(|p|
 		Extension::try_from4(p).map_or_else(
 			|| Some(E_HTM) == Extension::try_from3(p),
 			|e| e == E_HTML
 		)
-	);
+	)
+		.collect();
 
 	if paths.is_empty() { return Err(HtminlError::NoDocuments); }
 

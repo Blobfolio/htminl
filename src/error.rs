@@ -2,6 +2,11 @@
 # HTML Library: Errors
 */
 
+use fyi_ansi::{
+	ansi,
+	csi,
+	dim,
+};
 use fyi_msg::ProglessError;
 use std::{
 	error::Error,
@@ -15,7 +20,7 @@ const HELP: &str = concat!(r"
      __,---.__
   ,-'         `-.__
 &/           `._\ _\
-/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r#"
+/               ''._    ", csi!(199), "HTMinL", ansi!((cornflower_blue) " v", env!("CARGO_PKG_VERSION")), r#"
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
@@ -39,10 +44,11 @@ ARGS:
 
 
 #[expect(clippy::missing_docs_in_private_items, reason = "Self-explanatory.")]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 /// # Generic Error.
 pub(super) enum HtminlError {
 	EmptyFile,
+	InvalidCli(String),
 	ListFile,
 	NoDocuments,
 	Parse,
@@ -52,15 +58,19 @@ pub(super) enum HtminlError {
 	PrintVersion, // Not an error.
 }
 
-impl AsRef<str> for HtminlError {
-	#[inline]
-	fn as_ref(&self) -> &str { self.as_str() }
-}
-
 impl fmt::Display for HtminlError {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.write_str(self.as_str())
+		let prefix = self.as_str();
+		match self {
+			Self::InvalidCli(s) => write!(
+				f,
+				concat!("{} ", dim!("{}")),
+				prefix,
+				s,
+			),
+			_ => f.write_str(prefix),
+		}
 	}
 }
 
@@ -73,9 +83,10 @@ impl From<ProglessError> for HtminlError {
 
 impl HtminlError {
 	/// # As Str.
-	pub(super) const fn as_str(self) -> &'static str {
+	pub(super) const fn as_str(&self) -> &'static str {
 		match self {
 			Self::EmptyFile => "The file is empty.",
+			Self::InvalidCli(_) => "Invalid/unknown argument:",
 			Self::ListFile => "Invalid -l/--list text file.",
 			Self::NoDocuments => "No documents were found.",
 			Self::Parse => "Unable to parse the document.",

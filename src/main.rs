@@ -66,6 +66,7 @@ use dowser::{
 };
 pub(crate) use error::HtminlError;
 use fyi_msg::{
+	AnsiColor,
 	BeforeAfter,
 	Msg,
 	MsgKind,
@@ -77,6 +78,7 @@ use rayon::iter::{
 };
 use std::{
 	path::PathBuf,
+	process::ExitCode,
 	sync::atomic::{
 		AtomicU64,
 		Ordering::Relaxed,
@@ -91,13 +93,17 @@ include!(concat!(env!("OUT_DIR"), "/htminl-extensions.rs"));
 
 
 /// # Main.
-fn main() {
+fn main() -> ExitCode {
 	match main__() {
-		Ok(()) => {},
+		Ok(()) => ExitCode::SUCCESS,
 		Err(e @ (HtminlError::PrintHelp | HtminlError::PrintVersion)) => {
 			println!("{e}");
+			ExitCode::SUCCESS
 		},
-		Err(e) => { Msg::error(e).die(1); },
+		Err(e) => {
+			Msg::error(e.to_string()).eprint();
+			ExitCode::FAILURE
+		},
 	}
 }
 
@@ -120,9 +126,11 @@ fn main__() -> Result<(), HtminlError> {
 				paths.read_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
 			},
 
-			// Assume these are paths.
-			Argument::Other(s) => { paths = paths.with_path(s); },
-			Argument::InvalidUtf8(s) => { paths = paths.with_path(s); },
+			Argument::Path(s) => { paths = paths.with_path(s); },
+
+			// Mistake?
+			Argument::Other(s) => return Err(HtminlError::InvalidCli(s)),
+			Argument::InvalidUtf8(s) => return Err(HtminlError::InvalidCli(s.to_string_lossy().into_owned())),
 
 			// Nothing else is relevant.
 			_ => {},
@@ -130,12 +138,13 @@ fn main__() -> Result<(), HtminlError> {
 	}
 
 	// Put it all together!
-	let paths: Vec<PathBuf> = paths.into_vec_filtered(|p|
+	let paths: Vec<PathBuf> = paths.filter(|p|
 		Extension::try_from4(p).map_or_else(
 			|| Some(E_HTM) == Extension::try_from3(p),
 			|e| e == E_HTML
 		)
-	);
+	)
+		.collect();
 
 	if paths.is_empty() { return Err(HtminlError::NoDocuments); }
 
@@ -143,7 +152,7 @@ fn main__() -> Result<(), HtminlError> {
 	if progress {
 		// Boot up a progress bar.
 		let progress = Progless::try_from(paths.len())?
-			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
+			.with_title(Some(Msg::new(("HTMinL", AnsiColor::Misc199), "Reticulating &splines;")));
 
 		// Check file sizes before we start.
 		let before = AtomicU64::new(0);

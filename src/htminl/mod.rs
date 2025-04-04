@@ -229,7 +229,7 @@ fn filter_minify_two(pos: NodeRef<'_>, data: &mut NodeData) -> Action {
         // Otherwise add this tendril to anything in the queue, consuming it.
         MERGE_Q.with(|q| {
             let mut qt = q.borrow_mut();
-            if qt.len() > 0 {
+            if ! qt.is_empty() {
                 qt.push_tendril(t);
                 drop(qt);
                 *t = q.replace(StrTendril::new());

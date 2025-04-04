@@ -25,21 +25,23 @@ use tendril::StrTendril;
 pub(super) fn collapse_whitespace(txt: &mut StrTendril) {
 	let alter = StrTendril::from({
 		let mut in_ws: bool = false;
-		String::from_utf8_lossy(&txt.bytes()
-			.filter_map(|c| match c {
-				b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' =>
-					if in_ws { None }
-					else {
-						in_ws = true;
-						Some(b' ')
+		String::from_utf8_lossy(
+			&txt.bytes()
+				.filter_map(|c| match c {
+					b'\t' | b'\n' | b'\x0C' | b'\r' | b' ' =>
+						if in_ws { None }
+						else {
+							in_ws = true;
+							Some(b' ')
+						},
+					c => {
+						if in_ws { in_ws = false; }
+						Some(c)
 					},
-				c => {
-					if in_ws { in_ws = false; }
-					Some(c)
-				},
-			})
-			.collect::<Vec<u8>>())
-			.as_ref()
+				})
+				.collect::<Vec<u8>>()
+		)
+			.into_owned()
 	});
 
 	if (*txt).ne(&alter) {

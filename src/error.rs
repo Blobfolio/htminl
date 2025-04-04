@@ -39,10 +39,11 @@ ARGS:
 
 
 #[expect(clippy::missing_docs_in_private_items, reason = "Self-explanatory.")]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 /// # Generic Error.
 pub(super) enum HtminlError {
 	EmptyFile,
+	InvalidCli(String),
 	ListFile,
 	NoDocuments,
 	Parse,
@@ -52,15 +53,14 @@ pub(super) enum HtminlError {
 	PrintVersion, // Not an error.
 }
 
-impl AsRef<str> for HtminlError {
-	#[inline]
-	fn as_ref(&self) -> &str { self.as_str() }
-}
-
 impl fmt::Display for HtminlError {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.write_str(self.as_str())
+		let prefix = self.as_str();
+		match self {
+			Self::InvalidCli(s) => write!(f, "{prefix} \x1b[2m{s}\x1b[0m"),
+			_ => f.write_str(prefix),
+		}
 	}
 }
 
@@ -73,9 +73,10 @@ impl From<ProglessError> for HtminlError {
 
 impl HtminlError {
 	/// # As Str.
-	pub(super) const fn as_str(self) -> &'static str {
+	pub(super) const fn as_str(&self) -> &'static str {
 		match self {
 			Self::EmptyFile => "The file is empty.",
+			Self::InvalidCli(_) => "Invalid/unknown argument:",
 			Self::ListFile => "Invalid -l/--list text file.",
 			Self::NoDocuments => "No documents were found.",
 			Self::Parse => "Unable to parse the document.",

@@ -66,6 +66,7 @@ use dowser::{
 };
 pub(crate) use error::HtminlError;
 use fyi_msg::{
+	AnsiColor,
 	BeforeAfter,
 	Msg,
 	MsgKind,
@@ -151,7 +152,7 @@ fn main__() -> Result<(), HtminlError> {
 	if progress {
 		// Boot up a progress bar.
 		let progress = Progless::try_from(paths.len())?
-			.with_title(Some(Msg::custom("HTMinL", 199, "Reticulating &splines;")));
+			.with_title(Some(Msg::new(("HTMinL", AnsiColor::Misc199), "Reticulating &splines;")));
 
 		// Check file sizes before we start.
 		let before = AtomicU64::new(0);

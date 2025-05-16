@@ -2,6 +2,11 @@
 # HTML Library: Errors
 */
 
+use fyi_ansi::{
+	ansi,
+	csi,
+	dim,
+};
 use fyi_msg::ProglessError;
 use std::{
 	error::Error,
@@ -15,7 +20,7 @@ const HELP: &str = concat!(r"
      __,---.__
   ,-'         `-.__
 &/           `._\ _\
-/               ''._    ", "\x1b[38;5;199mHTMinL\x1b[0;38;5;69m v", env!("CARGO_PKG_VERSION"), "\x1b[0m", r#"
+/               ''._    ", csi!(199), "HTMinL", ansi!((cornflower_blue) " v", env!("CARGO_PKG_VERSION")), r#"
 |   ,             (∞)   Fast, safe, in-place
 |__,'`-..--|__|--''     HTML minification.
 
@@ -58,7 +63,12 @@ impl fmt::Display for HtminlError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		let prefix = self.as_str();
 		match self {
-			Self::InvalidCli(s) => write!(f, "{prefix} \x1b[2m{s}\x1b[0m"),
+			Self::InvalidCli(s) => write!(
+				f,
+				concat!("{} ", dim!("{}")),
+				prefix,
+				s,
+			),
 			_ => f.write_str(prefix),
 		}
 	}

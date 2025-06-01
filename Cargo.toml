@@ -59,7 +59,7 @@ argyle = "0.12.*"
 dowser = "0.14.*"
 
 [dependencies]
-dactyl = "0.11.*"
+dactyl = "0.12.*"
 dowser = "0.14.*"
 fyi_ansi = "2.1.*"
 rayon = "1.10.*"

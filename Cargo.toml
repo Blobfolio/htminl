@@ -61,7 +61,6 @@ dowser = "0.14.*"
 [dependencies]
 dactyl = "0.12.*"
 dowser = "0.14.*"
-fyi_ansi = "2.1.*"
 rayon = "1.10.*"
 tendril = "=0.4.3"
 write_atomic = "0.7.*"
@@ -76,7 +75,7 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "8acdc5c"
 
 [dependencies.fyi_msg]
-version = "2.1.*"
+version = "2.2.*"
 features = [ "signals" ]
 
 [profile.release]

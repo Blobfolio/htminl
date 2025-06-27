@@ -161,8 +161,7 @@ fn main__() -> Result<(), HtminlError> {
 		// Process!
 		paths.par_iter().for_each(|x|
 			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
-				let tmp = x.to_string_lossy();
-				progress.add(&tmp);
+				let task = progress.task(x.to_string_lossy());
 
 				if let Ok((b, a)) = enc.minify() {
 					before.fetch_add(b, Relaxed);
@@ -173,7 +172,7 @@ fn main__() -> Result<(), HtminlError> {
 					after.fetch_add(enc.size, Relaxed);
 				}
 
-				progress.remove(&tmp);
+				drop(task);
 			}
 		);
 

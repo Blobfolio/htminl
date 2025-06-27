@@ -18,7 +18,7 @@ use std::{
 /// # Build.
 ///
 /// We might as well pre-compile the arguments and extensions we're looking for.
-pub fn main() {
+fn main() {
 	println!("cargo:rerun-if-env-changed=CARGO_PKG_VERSION");
 
 	build_cli();

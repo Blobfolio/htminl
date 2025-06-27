@@ -59,7 +59,7 @@ argyle = "0.13.*"
 dowser = "0.15.*"
 
 [dependencies]
-dactyl = "0.12.*"
+dactyl = "0.13.*"
 dowser = "0.15.*"
 rayon = "1.10.*"
 tendril = "=0.4.3"

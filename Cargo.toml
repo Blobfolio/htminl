@@ -55,7 +55,7 @@ label = "<PATH(s)…>"
 description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
-argyle = "0.12.*"
+argyle = "0.13.*"
 dowser = "0.14.*"
 
 [dependencies]
@@ -66,7 +66,7 @@ tendril = "=0.4.3"
 write_atomic = "0.7.*"
 
 [dependencies.argyle]
-version = "0.12.*"
+version = "0.13.*"
 features = [ "try_paths" ]
 
 [dependencies.marked]

@@ -56,11 +56,10 @@ description = "Any number of files and directories to crawl and crunch."
 
 [build-dependencies]
 argyle = "0.13.*"
-dowser = "0.15.*"
 
 [dependencies]
 dactyl = "0.13.*"
-dowser = "0.15.*"
+dowser = "0.16.*"
 rayon = "1.10.*"
 tendril = "=0.4.3"
 write_atomic = "0.7.*"

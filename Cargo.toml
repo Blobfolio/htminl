@@ -60,7 +60,7 @@ argyle = "0.13.*"
 [dependencies]
 dactyl = "0.13.*"
 dowser = "0.16.*"
-rayon = "1.10.*"
+rayon = "1.11.*"
 tendril = "=0.4.3"
 write_atomic = "0.7.*"
 

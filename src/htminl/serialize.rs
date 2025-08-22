@@ -90,20 +90,22 @@ impl From<&[u8]> for QuoteKind {
 		// whitespace to be expressed without quotes, we're only going to
 		// propose nudity in cases where the whole string is made up of ASCII
 		// alphanumeric characters and/or `#,-.:?@_`.
-		txt.iter().for_each(|c| match *c {
-			b'"' => { double += 1; },
-			b'\'' => { single += 1; },
-			b'#'
-			| b','..=b'/'
-			| b':'
-			| b'?'
-			| b'@'
-			| b'_'
-			| b'0'..=b'9'
-			| b'A'..=b'Z'
-			| b'a'..=b'z' => {},
-			_ => if none_ok { none_ok = false; },
-		});
+		for c in txt.iter().copied() {
+			match c {
+				b'"' => { double += 1; },
+				b'\'' => { single += 1; },
+				b'#'
+				| b','..=b'/'
+				| b':'
+				| b'?'
+				| b'@'
+				| b'_'
+				| b'0'..=b'9'
+				| b'A'..=b'Z'
+				| b'a'..=b'z' => {},
+				_ => if none_ok { none_ok = false; },
+			}
+		}
 
 		// There's nothing requiring quotes!
 		if none_ok && double == 0 && single == 0 { Self::None }

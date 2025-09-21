@@ -133,7 +133,7 @@ fn main__() -> Result<(), HtminlError> {
 			Argument::Version =>  return Err(HtminlError::PrintVersion),
 
 			Argument::List(s) => {
-				paths.read_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
+				paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
 			},
 
 			Argument::Path(s) => { paths = paths.with_path(s); },

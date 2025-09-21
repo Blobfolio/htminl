@@ -132,9 +132,11 @@ fn main__() -> Result<(), HtminlError> {
 			Argument::Progress => { progress = true; },
 			Argument::Version =>  return Err(HtminlError::PrintVersion),
 
-			Argument::List(s) => {
-				paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
-			},
+			Argument::List(s) =>
+				if s == "-" { paths.push_paths_from_stdin(); }
+				else {
+					paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
+				},
 
 			Argument::Path(s) => { paths = paths.with_path(s); },
 

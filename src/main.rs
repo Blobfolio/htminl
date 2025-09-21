@@ -59,7 +59,6 @@
 mod error;
 mod htminl;
 
-use argyle::Argument;
 use dowser::{
 	Dowser,
 	Extension,
@@ -113,30 +112,35 @@ fn main() -> ExitCode {
 #[inline]
 /// # Actual Main.
 fn main__() -> Result<(), HtminlError> {
-	// Parse CLI arguments.
-	let args = argyle::args()
-		.with_keywords(include!(concat!(env!("OUT_DIR"), "/argyle.rs")));
+	argyle::argue! {
+		Help     "-h" "--help",
+		Progress "-p" "--progress",
+		Version  "-V" "--version",
 
+		@options
+		List     "-l" "--list",
+
+		@catchall-paths Path,
+	}
+
+	// Parse CLI arguments.
 	let mut progress = false;
 	let mut paths = Dowser::default();
-	for arg in args {
+	for arg in Argument::args_os() {
 		match arg {
-			Argument::Key("-h" | "--help") => return Err(HtminlError::PrintHelp),
-			Argument::Key("-p" | "--progress") => { progress = true; },
-			Argument::Key("-V" | "--version") => return Err(HtminlError::PrintVersion),
+			Argument::Help =>     return Err(HtminlError::PrintHelp),
+			Argument::Progress => { progress = true; },
+			Argument::Version =>  return Err(HtminlError::PrintVersion),
 
-			Argument::KeyWithValue("-l" | "--list", s) => {
-				paths.read_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
+			Argument::List(s) => {
+				paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
 			},
 
 			Argument::Path(s) => { paths = paths.with_path(s); },
 
 			// Mistake?
-			Argument::Other(s) => return Err(HtminlError::InvalidCli(s)),
-			Argument::InvalidUtf8(s) => return Err(HtminlError::InvalidCli(s.to_string_lossy().into_owned())),
-
-			// Nothing else is relevant.
-			_ => {},
+			Argument::Other(s) =>   return Err(HtminlError::InvalidCli(s)),
+			Argument::OtherOs(s) => return Err(HtminlError::InvalidCli(s.to_string_lossy().into_owned())),
 		}
 	}
 

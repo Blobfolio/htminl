@@ -68,7 +68,7 @@ git = "https://github.com/joshstoik1/marked.git"
 rev = "8acdc5c"
 
 [dependencies.fyi_msg]
-version = "2.3.*"
+version = "2.4.*"
 features = [ "signals" ]
 
 [profile.release]

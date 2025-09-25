@@ -21,7 +21,6 @@ pkg_dir1    := justfile_directory()
 
 cargo_dir   := "/tmp/" + pkg_id + "-cargo"
 cargo_bin   := cargo_dir + "/release/" + pkg_id
-data_dir    := "/tmp/bench-data"
 doc_dir     := justfile_directory() + "/doc"
 release_dir := justfile_directory() + "/release"
 
@@ -239,44 +238,10 @@ version:
 	fyi success "Set version to $_ver2."
 
 
-# Benchmark data.
-_bench-init:
-	#!/usr/bin/env bash
-
-	[ $( command -v html-minifier ) ] || npm i -g html-minifier
-
-	# Make sure the data dir is set up.
-	[ -d "{{ data_dir }}" ] || mkdir "{{ data_dir }}"
-
-	# Pull some test assets.
-	if [ ! -d "{{ data_dir }}/raw" ]; then
-		mkdir "{{ data_dir }}/raw"
-
-		# Vue JS.
-		fyi blank
-		fyi task "VueJS.org"
-		git clone --single-branch \
-			-b master \
-			https://github.com/vuejs/vuejs.org \
-			"{{ data_dir }}/raw/tmp"
-		cd "{{ data_dir }}/raw/tmp" && npm i && npm run build
-		mv "{{ data_dir }}/raw/tmp/public" "{{ data_dir }}/raw/vue"
-		cd "{{ justfile_directory() }}"
-		rm -rf "{{ data_dir }}/raw/tmp"
-
-		# Build site docs.
-		just doc
-		cp -aR "{{ doc_dir }}" "{{ data_dir }}/raw/"
-	fi
-
-	# Fix permissions.
-	just _fix-chown "{{ data_dir }}"
-
-
 # Reset benchmarks.
-@_bench-reset: _bench-init
-	[ ! -d "{{ data_dir }}/test" ] || rm -rf "{{ data_dir }}/test"
-	cp -aR "{{ data_dir }}/raw" "{{ data_dir }}/test"
+@_bench-reset:
+	[ ! -d "/tmp/bench-data" ] || rm -rf "/tmp/bench-data"
+	cp -aR "{{ justfile_directory() }}/skel/test-assets" "/tmp/bench-data"
 
 
 # Init dependencies.

@@ -57,7 +57,6 @@
 mod dom;
 mod err;
 mod minify;
-mod ser;
 mod spec;
 
 use dactyl::{

@@ -96,49 +96,6 @@ impl WhiteSpace {
 
 
 #[must_use]
-/// Collapse Whitespace.
-///
-/// HTML rendering largely ignores whitespace, and at any rate treats all
-/// types (other than the no-break space `\xA0`) the same way.
-///
-/// There is some nuance, but for most elements, we can safely convert all
-/// contiguous sequences of (ASCII) whitespace to a single horizontal space
-/// character.
-pub(crate) fn collapse(txt: &[u8]) -> Option<Vec<u8>> {
-	// Edge case: single whitespace.
-	if txt.len() == 1 && matches!(txt[0], b'\t' | b'\n' | b'\x0C') {
-		return Some(vec![b' ']);
-	}
-
-	// Find the first non-space whitespace, or pair of (any) whitespaces.
-	let pos = txt.windows(2).position(|pair|
-		matches!(pair[0], b'\t' | b'\n' | b'\x0C') ||
-		(pair[0].is_ascii_whitespace() && pair[1].is_ascii_whitespace())
-	)?;
-
-	// Split at that location and start building up a replacement.
-	let (a, rest) = txt.split_at(pos);
-	let mut new = Vec::with_capacity(txt.len());
-	new.extend_from_slice(a);
-
-	let mut in_ws = false;
-	for &b in rest {
-		match b {
-			b'\t' | b'\n' | b'\x0C' | b' ' => if ! in_ws {
-				in_ws = true;
-				new.push(b' ');
-			},
-			_ => {
-				in_ws = false;
-				new.push(b);
-			},
-		}
-	}
-
-	Some(new)
-}
-
-#[must_use]
 /// # Is Void HTML Element?
 pub(crate) const fn is_void_html_tag(tag: &QualName) -> bool {
 	matches!(tag.ns, ns!(html)) &&
@@ -370,6 +327,49 @@ pub(crate) const fn can_trim(tag: &QualName) -> bool {
 		),
 		_ => false,
 	}
+}
+
+#[must_use]
+/// Collapse Whitespace.
+///
+/// HTML rendering largely ignores whitespace, and at any rate treats all
+/// types (other than the no-break space `\xA0`) the same way.
+///
+/// There is some nuance, but for most elements, we can safely convert all
+/// contiguous sequences of (ASCII) whitespace to a single horizontal space
+/// character.
+fn collapse(txt: &[u8]) -> Option<Vec<u8>> {
+	// Edge case: single whitespace.
+	if txt.len() == 1 && matches!(txt[0], b'\t' | b'\n' | b'\x0C') {
+		return Some(vec![b' ']);
+	}
+
+	// Find the first non-space whitespace, or pair of (any) whitespaces.
+	let pos = txt.windows(2).position(|pair|
+		matches!(pair[0], b'\t' | b'\n' | b'\x0C') ||
+		(pair[0].is_ascii_whitespace() && pair[1].is_ascii_whitespace())
+	)?;
+
+	// Split at that location and start building up a replacement.
+	let (a, rest) = txt.split_at(pos);
+	let mut new = Vec::with_capacity(txt.len());
+	new.extend_from_slice(a);
+
+	let mut in_ws = false;
+	for &b in rest {
+		match b {
+			b'\t' | b'\n' | b'\x0C' | b' ' => if ! in_ws {
+				in_ws = true;
+				new.push(b' ');
+			},
+			_ => {
+				in_ws = false;
+				new.push(b);
+			},
+		}
+	}
+
+	Some(new)
 }
 
 #[must_use]

@@ -59,8 +59,7 @@ pub(super) fn minify(src: &Path) -> Result<(NonZeroU64, NonZeroU64), HtminlError
 	let dom = Tree::parse(raw.as_bytes())?;
 
 	// Try to save the results!
-	let out = crate::ser::serialize(&dom, before.get() as usize).ok_or(HtminlError::Save)?;
-	let mut out = String::from_utf8(out).map_err(|_| HtminlError::Save)?;
+	let mut out = dom.serialize(Some(before.get() as usize))?;
 
 	// If the original was a fragment, re-fragmentize it.
 	if fragment {

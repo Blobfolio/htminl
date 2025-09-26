@@ -305,6 +305,21 @@ impl Tree {
 		Ok(dom)
 	}
 
+	/// # Serialize Document.
+	///
+	/// Convert the tree back into an HTML string, returning it unless there
+	/// are any show-stopping errors.
+	pub(crate) fn serialize(&self, size_hint: Option<usize>)
+	-> Result<String, HtminlError> {
+		use std::fmt::Write;
+
+		let size_hint = size_hint.unwrap_or(256);
+		let mut out = String::with_capacity(size_hint);
+		write!(&mut out, "{}", node::NodeDisplay::new(&self.root, None))
+			.map_err(|_| HtminlError::Save)
+			.map(|()| out)
+	}
+
 	/// # Post Processing.
 	fn post_process(&self) {
 		/// # Patch Tree.

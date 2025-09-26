@@ -338,7 +338,12 @@ const fn can_drop_empty(tag: &QualName) -> bool {
 	can_drop_any(tag) ||
 	(
 		matches!(tag.ns, ns!(html)) &&
-		matches!(tag.local, local_name!("body") | local_name!("option"))
+		matches!(
+			tag.local,
+			local_name!("body") |
+			local_name!("option") |
+			local_name!("template")
+		)
 	)
 }
 
@@ -375,9 +380,7 @@ pub(crate) const fn can_trim(tag: &QualName) -> bool {
 /// Note that CR is replaced with LF prior to parsing, so there's no need
 /// to include `b'\r'` in the matchset.
 const fn is_whitespace(mut txt: &[u8]) -> bool {
-	while let [b'\t' | b'\n' | b'\x0C' | b' ', rest @ ..] = txt {
-		txt = rest;
-	}
+	while let [b'\t' | b'\n' | b'\x0C' | b' ', rest @ ..] = txt { txt = rest; }
 	txt.is_empty()
 }
 

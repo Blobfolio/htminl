@@ -386,18 +386,14 @@ impl Tree {
 					matches!(name.local, local_name!("template"))
 				{
 					let children: &mut Vec<_> = &mut handle.children.borrow_mut();
-					if let Some(first) = children.pop() {
-						children.truncate(0);
-
-						for child in first.children.borrow_mut().drain(..) {
-							// Templates can't have more than one element, so we can
-							// stop looking as soon as we have one.
-							if matches!(child.inner, NodeInner::Element { .. }) {
-								children.push(child);
-								break;
-							}
-						}
+					if
+						let Some(first) = children.pop() &&
+						matches!(first.inner, NodeInner::Document)
+					{
+						std::mem::swap(children, &mut first.children.borrow_mut());
 					}
+					// This shouldn't be reachable.
+					else { children.truncate(0); }
 				}
 			}
 

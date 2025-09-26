@@ -1,14 +1,11 @@
 /*!
-# HTML Library: Errors
+# HTMinL: Errors
 */
 
-use fyi_msg::{
-	fyi_ansi::{
-		ansi,
-		csi,
-		dim,
-	},
-	ProglessError,
+use fyi_msg::fyi_ansi::{
+	ansi,
+	csi,
+	dim,
 };
 use std::{
 	error::Error,
@@ -51,11 +48,13 @@ ARGS:
 pub(super) enum HtminlError {
 	EmptyFile,
 	InvalidCli(String),
+	JobServer,
+	Killed,
 	ListFile,
 	NoDocuments,
 	Parse,
-	Progress(ProglessError),
 	Read,
+	Save,
 	PrintHelp,    // Not an error.
 	PrintVersion, // Not an error.
 }
@@ -78,22 +77,19 @@ impl fmt::Display for HtminlError {
 
 impl Error for HtminlError {}
 
-impl From<ProglessError> for HtminlError {
-	#[inline]
-	fn from(src: ProglessError) -> Self { Self::Progress(src) }
-}
-
 impl HtminlError {
 	/// # As Str.
 	pub(super) const fn as_str(&self) -> &'static str {
 		match self {
 			Self::EmptyFile => "The file is empty.",
 			Self::InvalidCli(_) => "Invalid/unknown argument:",
+			Self::JobServer => "One or more threads terminated early; please try again.",
+			Self::Killed => "The process was aborted early.",
 			Self::ListFile => "Invalid -l/--list text file.",
 			Self::NoDocuments => "No documents were found.",
-			Self::Parse => "Unable to parse the document.",
-			Self::Progress(e) => e.as_str(),
-			Self::Read => "Unable to read the file.",
+			Self::Parse => "Unable to parse document.",
+			Self::Read => "Unable to read document.",
+			Self::Save => "Unable to save document.",
 			Self::PrintHelp => HELP,
 			Self::PrintVersion => concat!("HTMinL v", env!("CARGO_PKG_VERSION")),
 		}

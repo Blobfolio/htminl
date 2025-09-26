@@ -54,43 +54,63 @@
 #![expect(clippy::redundant_pub_crate, reason = "Unresolvable.")]
 #![expect(clippy::doc_markdown, reason = "HTMinL makes this annoying.")]
 
+mod dom;
+mod err;
+mod minify;
+mod ser;
+mod spec;
 
-
-mod error;
-mod htminl;
-
+use dactyl::{
+	NiceElapsed,
+	NiceU64,
+	traits::NiceInflection,
+};
+use dom::{
+	Handle,
+	NodeInner,
+	Tree,
+};
 use dowser::{
 	Dowser,
 	Extension,
 };
-pub(crate) use error::HtminlError;
+use err::HtminlError;
+use flume::Receiver;
 use fyi_msg::{
-	AnsiColor,
+	fyi_ansi::dim,
 	BeforeAfter,
 	Msg,
 	MsgKind,
 	Progless,
 };
-use rayon::iter::{
-	IntoParallelRefIterator,
-	ParallelIterator,
-};
 use std::{
-	path::PathBuf,
+	num::NonZeroUsize,
+	path::{
+		Path,
+		PathBuf,
+	},
 	process::ExitCode,
 	sync::atomic::{
 		AtomicU64,
-		Ordering::Relaxed,
+		Ordering::SeqCst,
 	},
+	thread,
 };
-
-
 
 /// # Extension: HTM.
 const E_HTM: Extension = Extension::new("htm").unwrap();
 
 /// # Extension: HTML.
 const E_HTML: Extension = Extension::new("html").unwrap();
+
+/// # Skip Count.
+static SKIPPED: AtomicU64 = AtomicU64::new(0);
+
+/// # Total Size Before.
+static BEFORE: AtomicU64 = AtomicU64::new(0);
+
+/// # Total Size After.
+static AFTER: AtomicU64 = AtomicU64::new(0);
 
 
 
@@ -132,9 +152,11 @@ fn main__() -> Result<(), HtminlError> {
 			Argument::Progress => { progress = true; },
 			Argument::Version =>  return Err(HtminlError::PrintVersion),
 
-			Argument::List(s) => {
-				paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
-			},
+			Argument::List(s) =>
+				if s == "-" { paths.push_paths_from_stdin(); }
+				else {
+					paths.push_paths_from_file(&s).map_err(|_| HtminlError::ListFile)?;
+				},
 
 			Argument::Path(s) => { paths = paths.with_path(s); },
 
@@ -145,57 +167,118 @@ fn main__() -> Result<(), HtminlError> {
 	}
 
 	// Put it all together!
-	let paths: Vec<PathBuf> = paths.filter(|p|
+	let mut paths: Vec<PathBuf> = paths.filter(|p|
 		matches!(Extension::from_path(p), Some(E_HTM | E_HTML))
 	)
 		.collect();
+	let total = NonZeroUsize::new(paths.len()).ok_or(HtminlError::NoDocuments)?;
+	paths.sort();
 
-	if paths.is_empty() { return Err(HtminlError::NoDocuments); }
+	// How many threads?
+	let threads = thread::available_parallelism().map_or(
+		NonZeroUsize::MIN,
+		|t| NonZeroUsize::min(t, total),
+	);
 
-	// Sexy run-through.
-	if progress {
-		// Boot up a progress bar.
-		let progress = Progless::try_from(paths.len())?
-			.with_title(Some(Msg::new(("HTMinL", AnsiColor::Misc199), "Reticulating &splines;")));
+	// Set up the killswitch.
+	let killed = Progless::sigint_two_strike();
 
-		// Check file sizes before we start.
-		let before = AtomicU64::new(0);
-		let after = AtomicU64::new(0);
+	// Boot up a progress bar, if desired.
+	let progress =
+		if progress {
+			Progless::try_from(total)
+				.ok()
+				.map(|p| p.with_reticulating_splines("HTMinL"))
+		}
+		else { None };
 
-		// Process!
-		paths.par_iter().for_each(|x|
-			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
-				let task = progress.task(x.to_string_lossy());
+	// Thread business!
+	let (tx, rx) = flume::bounded::<&Path>(threads.get());
+	thread::scope(#[inline(always)] |s| {
+		// Set up the worker threads.
+		let mut workers = Vec::with_capacity(threads.get());
+		for _ in 0..threads.get() {
+			workers.push(s.spawn(#[inline(always)] || crunch(&rx, progress.as_ref())));
+		}
 
-				if let Ok((b, a)) = enc.minify() {
-					before.fetch_add(b, Relaxed);
-					after.fetch_add(a, Relaxed);
-				}
-				else {
-					before.fetch_add(enc.size, Relaxed);
-					after.fetch_add(enc.size, Relaxed);
-				}
+		// Push all the files to it, then drop the sender to disconnect.
+		for path in &paths {
+			if killed.load(SeqCst) || tx.send(path).is_err() { break; }
+		}
+		drop(tx);
 
-				drop(task);
+		// Sum the totals as each thread finishes.
+		for worker in workers {
+			worker.join().map_err(|_| HtminlError::JobServer)?;
+		}
+
+		Ok::<(), HtminlError>(())
+	})?;
+	drop(rx);
+
+	// Summarize?
+	if let Some(progress) = progress { summarize(&progress, total.get() as u64); }
+
+	// Early abort?
+	if killed.load(SeqCst) { Err(HtminlError::Killed) }
+	else { Ok(()) }
+}
+
+#[inline(never)]
+/// # Worker Callback.
+///
+/// This is the worker callback for HTML crunching. It listens for "new" HTML
+/// paths and crunches them — and maybe updates the progress bar, etc. — then
+/// quits as soon as the work has dried up.
+fn crunch(rx: &Receiver::<&Path>, progress: Option<&Progless>) {
+	let Some(progress) = progress else {
+		// If we aren't tracking progress, the code is a lot simpler. Haha.
+		while let Ok(p) = rx.recv() { let _res = minify::minify(p); }
+		return;
+	};
+
+	// The pretty version.
+	while let Ok(p) = rx.recv() {
+		match minify::minify(p) {
+			Ok((b, a)) => {
+				BEFORE.fetch_add(b.get(), SeqCst);
+				AFTER.fetch_add(a.get(), SeqCst);
+			},
+			Err(e) => {
+				SKIPPED.fetch_add(1, SeqCst);
+				let _res = progress.push_msg(Msg::skipped(format!(
+					concat!("{} ", dim!("({})")),
+					p.display(),
+					e.as_str(),
+				)));
 			}
-		);
+		}
+	}
+}
 
-		// Finish up.
-		progress.finish();
+/// # Summarize Results.
+fn summarize(progress: &Progless, total: u64) {
+	let elapsed = progress.finish();
+	let skipped = SKIPPED.load(SeqCst);
+	if skipped == 0 {
 		progress.summary(MsgKind::Crunched, "document", "documents")
-			.with_bytes_saved(BeforeAfter::from((
-				before.into_inner(),
-				after.into_inner(),
-			)))
-			.print();
 	}
 	else {
-		paths.par_iter().for_each(|x|
-			if let Ok(mut enc) = htminl::Htminl::try_from(x) {
-				let _res = enc.minify();
-			}
-		);
+		// And summarize what we did do.
+		Msg::crunched(format!(
+			concat!(
+				"{}",
+				dim!("/"),
+				"{} in {}.",
+			),
+			NiceU64::from(total - skipped),
+			total.nice_inflect("document", "documents"),
+			NiceElapsed::from(elapsed),
+		))
 	}
-
-	Ok(())
+		.with_bytes_saved(BeforeAfter::from((
+			BEFORE.load(SeqCst),
+			AFTER.load(SeqCst),
+		)))
+		.eprint();
 }

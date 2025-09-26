@@ -11,11 +11,9 @@ HTMinL is a CLI tool for x86-64 Linux machines that simplifies the task of minif
 
 ## Features
 
-HTMinL is a fast, in-place HTML minifier. It prioritizes safety and code sanity over _ULTIMATE COMPRESSION_, so may not save quite as many bytes as Node's venerable [html-minifier](https://github.com/kangax/html-minifier), but it is also much less likely to break shit.
+HTMinL is a _fast_, in-place HTML minifier. It prioritizes safety and code sanity over _ULTIMATE COMPRESSION_, so may not save quite as many bytes as other tools, but it's also less likely to break shit. Haha.
 
-And it runs _magnitudes_ faster…
-
-Unlike virtually every other minifier in the wild, HTMinL is _not_ a stream processor; it constructs a complete DOM tree from the full source _before_ getting down to business. This allows for much more accurate processing and robust error recovery.
+Critically, HTMinL is _not_ a stream processor; it constructs a complete DOM tree from the full source _before_ getting down to business. This allows for much more accurate processing and robust error recovery.
 
 See the [minification](#minification) section for more details about the process, as well as the [cautions](#cautions) section for important assumptions, requirements, gotchas, etc.
 
@@ -68,91 +66,37 @@ htminl /path/to/html /path/to/index.html …
 
 ## Minification
 
-Minification is primarily achieved through (conservative) whitespace manipulation — trimming, collapsing, or both — in text nodes, tags, and attribute values, but only when it is judged completely safe to do so.
+Browsers aren't very picky about whitespace, so unsurprisingly, most savings are achieved by simply "collapsing" contiguous regions of mixed whitespace into single horizontal spaces.
 
-For example, whitespace is _not_ altered in "value" attributes or inside elements like `<pre>` or `<textarea>`, where it generally matters.
+HTMinL does this automatically for most text nodes — except those inside `<code>`, `<plaintext>`, `<pre>`, `<script>`, `<style>`, `<svg>`, `<textarea>` — and conservatively trims/drops text nodes from a few non-renderable regions like `<head>`, but doesn't push its luck.
 
-Speaking of "generally matters", `HTMinL` does _not_ make any assumptions about the display type of elements, as *CSS is a Thing*. Just because a `<div>` is normally block doesn't mean someone hasn't styled one to render inline. This often leaves some whitespace around tags, but helps ensure styled layouts display correctly.
+_Lots_ of people use layout elements for content, or vice versa; a few leftover bytes aren't worth quibbling over.
 
-Additional savings are achieved by stripping:
+Besides, there are all sorts of _other_ things that can be stripped, like:
 
- * HTML Comments;
- * XML processing instructions;
- * Child text nodes of `<html>` and `<head>` elements (they don't belong there!);
- * Leading and trailing whitespace directly in the `<body>`;
- * Whitespace in inline CSS is collapsed and trimmed (but otherwise unaltered);
- * Whitespace sandwhiched between non-renderable elements like `<script>` or `<style>` tags;
- * Default `type` attributes on `<script>` and `<style>` elements;
- * Pointless attributes (like an empty "id" or "alt" or a falsey boolean like `hidden="false"`);
- * Empty or implied attribute values;
- * Leading and trailing whitespace in non-value attributes;
+* Default `type` attributes on `<script>` and `<style>`;
+* HTML comments;
+* Implied values on boolean attributes like `disabled`, `readonly`, etc.;
+* Trailing slashes on void HTML elements;
+* Whitespace between element attributes;
+* XML processing instructions;
+ 
+But wait, there's more!
 
-The above list is non-exhaustive, but hopefully you get the idea!
+HTMinL also:
 
-With the exception of CSS — which has its whitespace fully minified — inline foreign content like Javascript and JSON are passed through unchanged. This is one of the biggest "missed opportunities" for byte savings, but also where minifiers tend to accidentally break things. Better a few extra bytes than a broken page!
+* Converts CRLF/CR (literals) globally to `\n`;
+* Normalizes element tag casing;
+* Quotes attribute values with `'` when shorter than `"`;
+* Rewrites the doctype as `<!DOCTYPE html>`;
+* Self-closes childless SVG tags;
 
 
 
 ## Cautions
 
-While care has been taken to balance savings and safety, there are a few design choices that could potentially break documents, worth noting before you use it on your project:
+While care has been taken to balance savings and safety, there are some (intentional) limitations to be aware of:
 
- * Documents are expected to be encoded in UTF-8. Other encodings might be OK, but some text could get garbled.
- * Documents are processed as *HTML*, not XML or XHTML. Inline SVG elements should be fine, but it may well corrupt other XML-ish data.
- * Child text nodes of `<html>` and `<head>` elements are removed. Text doesn't belong there anyway, but HTML is awfully forgiving; who knows what kinds of markup will be found in the wild!
- * CSS whitespace is trimmed and collapsed, which could break (very unlikely!) selectors like `input[value="Spa  ced"]`.
- * Element tags are normalized, which can break fussy `camelCaseCustomElements`. (Best to write tags like `my-custom-tag` anyway...)
-
-
-
-## Benchmarks
-
-These benchmarks were performed on a Intel® Core™ i7-10610U with four discrete cores, averaging 100 runs. To best approximate feature parity, [html-minifier](https://github.com/kangax/html-minifier) was run with the following flags:
-
-    --collapse-boolean-attributes
-    --collapse-whitespace
-    --decode-entities
-    --remove-attribute-quotes
-    --remove-comments
-    --remove-empty-attributes
-    --remove-optional-tags
-    --remove-optional-tags
-    --remove-redundant-attributes
-    --remove-redundant-attributes
-    --remove-script-type-attributes
-    --remove-style-link-type-attributes
-
-#### Bench: HTMinL Documentation
-
-    Files: 270/322
-    Size:  1,253,110 bytes (HTML)
-
-| Program | Time (s) | Minified (b) |
-| ---- | ---- | ---- |
-| HTMinL | **0.0262** | 1,141,615 |
-| html-minifier | 30.7296 | **1,138,712** |
-
-#### Bench: VueJS.org
-
-    Files: 146/321
-    Size:  3,999,552 bytes (HTML)
-
-| Program | Time (s) | Minified (b) |
-| ---- | ---- | ---- |
-| HTMinL | **0.0494** | 3,461,501 |
-| html-minifier | 43.9917 | **3,331,880** |
-
-**TL/DR;** With these sources, anyway, `html-minifier` eeks out 1–4% extra savings, but HTMinL is _hundreds of times faster_. 
-
-It is important to note that `html-minifier` is _not_ designed for this particular use case — recursive in-place HTML minification with random non-HTML assets sprinkled about — which goes a long way toward explaining the gross difference in runtime cost.
-
-#### Bench: Single
-
-But averaging the runtimes of processing each HTML file individually, HTMinL still runs forty times faster:
-
-| Program | Time (ms) |
-| ---- | ---- |
-| HTMinL | **3** |
-| html-minifier | 122 |
-
-Still, not too shabby!
+* Documents are expected to be encoded in UTF-8;
+* Documents are processed as **HTML**, _not_ XML or XHTML; inline SVG elements should be okay, but other XMLish data may be corrupted;
+* Whitespace collapsing _can_ change how content is rendered in cases where `whitespace: pre` is applied willynilly to elements that wouldn't normally have it;

@@ -85,9 +85,10 @@ impl TreeSink for Tree {
 
 	/// # Add Attributes if Missing.
 	///
-	/// It's unclear if this is used by the tree builder or not, but if it is,
-	/// it attaches the `new` attributes to `target`, except when previously
-	/// defined.
+	/// If `target` is an element, attach the new attributes to it, except
+	/// when they'd collide with existing entries.
+	///
+	/// Note: this isn't usually used.
 	fn add_attrs_if_missing(&self, target: &Handle, new: Vec<Attribute>) {
 		use indexmap::map::Entry;
 
@@ -127,6 +128,65 @@ impl TreeSink for Tree {
 			// interested in elements.
 			NodeOrText::AppendNode(v) => if matches!(v.inner, NodeInner::Element { .. }) {
 				parent.children.borrow_mut().push(v);
+			},
+		}
+	}
+
+	/// # Append Based on Parent Node.
+	///
+	/// Insert `child` before `sibling` if `sibling` has a parent, otherwise
+	/// append it to `last_parent`.
+	///
+	/// Note: this isn't usually used.
+	fn append_based_on_parent_node(
+		&self,
+		sibling: &Handle,
+		last_parent: &Handle,
+		child: NodeOrText<Self::Handle>,
+	) {
+		if self.find_node_parent_and_index(sibling).is_some() {
+			self.append_before_sibling(sibling, child);
+		}
+		else { self.append(last_parent, child); }
+	}
+
+	/// # Append Before Sibling.
+	///
+	/// Note: this isn't usually used.
+	fn append_before_sibling(&self, sibling: &Handle, child: NodeOrText<Handle>) {
+		let Some((parent, pos)) = self.find_node_parent_and_index(sibling) else {
+			self.error.borrow_mut().replace(HtminlError::Parse);
+			return;
+		};
+
+		// Unwrap the children.
+		let children: &mut Vec<_> = &mut parent.children.borrow_mut();
+		if children.len() <= pos {
+			self.error.borrow_mut().replace(HtminlError::Parse);
+			return;
+		}
+
+		match child {
+			// Text nodes can always be added.
+			NodeOrText::AppendText(v) =>
+				// If the previous node was text, merge them.
+				if
+					pos != 0 &&
+					let NodeInner::Text { ref contents } = children[pos - 1].inner
+				{
+					contents.borrow_mut().push_tendril(&v);
+				}
+				// Otherwise add it anew.
+				else {
+					children.insert(pos, Node::new(NodeInner::Text {
+						contents: RefCell::new(v)
+					}));
+				},
+
+			// Among the other possible node types, we're only actually
+			// interested in elements.
+			NodeOrText::AppendNode(v) => if matches!(v.inner, NodeInner::Element { .. }) {
+				children.insert(pos - 1, v);
 			},
 		}
 	}
@@ -213,31 +273,29 @@ impl TreeSink for Tree {
 		Node::new(NodeInner::Ignored)
 	}
 
-	/// # Set Parsing Error.
-	fn parse_error(&self, _msg: Cow<'static, str>) {
-		// There's no way to tell useful errors from stupid ones, so we
-		// don't track them. Haha.
+	/// # Remove From Parent.
+	///
+	/// Note: this isn't usually used.
+	fn remove_from_parent(&self, target: &Handle) {
+		if let Some((parent, pos)) = self.find_node_parent_and_index(target) {
+			let children: &mut Vec<_> = &mut parent.children.borrow_mut();
+			if pos < children.len() { children.remove(pos); }
+		}
+	}
+
+	/// # Reparent Children.
+	///
+	/// Drain and append all children from `old_parent` onto `new_parent`.
+	///
+	/// Note: this isn't usually used.
+	fn reparent_children(&self, old_parent: &Handle, new_parent: &Handle) {
+		let old_children: &mut Vec<_> = &mut old_parent.children.borrow_mut();
+		let new_children: &mut Vec<_> = &mut new_parent.children.borrow_mut();
+		new_children.append(old_children);
 	}
 
 	/// # Same Node?
 	fn same_node(&self, x: &Handle, y: &Handle) -> bool { Rc::ptr_eq(x, y) }
-
-	/// # Append Before Sibling.
-	fn append_before_sibling(&self, _sibling: &Handle, _child: NodeOrText<Handle>) {
-		debug_assert!(false, "BUG: append_before_sibling is unimplemented.");
-		self.error.borrow_mut().replace(HtminlError::Parse);
-	}
-
-	/// # Append Based on Parent Node.
-	fn append_based_on_parent_node(
-		&self,
-		_element: &Self::Handle,
-		_prev_element: &Self::Handle,
-		_child: NodeOrText<Self::Handle>,
-	) {
-		debug_assert!(false, "BUG: append_based_on_parent_node is unimplemented.");
-		self.error.borrow_mut().replace(HtminlError::Parse);
-	}
 
 	/// # Append Doctype to Document.
 	fn append_doctype_to_document(
@@ -246,31 +304,24 @@ impl TreeSink for Tree {
 		_public_id: StrTendril,
 		_system_id: StrTendril,
 	) {
-		// We don't support doctype.
-		debug_assert!(false, "BUG: append_doctype_to_document is unimplemented.");
+		// Noop.
 	}
 
 	/// # Is Mathml?
-	fn is_mathml_annotation_xml_integration_point(&self, _target: &Handle) -> bool {
-		debug_assert!(false, "BUG: is_mathml_annotation_xml_integration_point is unimplemented.");
+	///
+	/// We don't support mathml, so always return false.
+	fn is_mathml_annotation_xml_integration_point(&self, _node: &Handle) -> bool {
 		false
 	}
 
-	/// # Remove From Parent.
-	fn remove_from_parent(&self, _target: &Handle) {
-		debug_assert!(false, "BUG: remove_from_parent is unimplemented.");
-		self.error.borrow_mut().replace(HtminlError::Parse);
-	}
-
-	/// # Reparent Children.
-	fn reparent_children(&self, _node: &Handle, _new_parent: &Handle) {
-		debug_assert!(false, "BUG: reparent_children is unimplemented.");
-		self.error.borrow_mut().replace(HtminlError::Parse);
+	/// # Set Parsing Error.
+	fn parse_error(&self, _msg: Cow<'static, str>) {
+		// Noop.
 	}
 
 	/// # Set Quirks Mode.
 	fn set_quirks_mode(&self, _mode: QuirksMode) {
-		debug_assert!(false, "BUG: set_quirks_mode is unimplemented.");
+		// Noop.
 	}
 }
 
@@ -320,11 +371,45 @@ impl Tree {
 			.map(|()| out)
 	}
 
+	#[must_use]
+	/// # Find Node.
+	///
+	/// Search the tree for `target`, returning its parent and position in
+	/// `parent.children` if found.
+	///
+	/// Note the struct is _not_ optimized for this sort of operation, but
+	/// it doesn't usually — or ever? — come up during parsing, and we don't
+	/// use it ourselves.
+	fn find_node_parent_and_index(&self, target: &Handle) -> Option<(Handle, usize)> {
+		/// # Find and Delete.
+		///
+		/// Note that our `Tree` structure is not optimized for this, but it
+		/// isn't normally called.
+		fn walk(handle: &Handle, target: &Handle) -> Option<(Handle, usize)> {
+			let children: &mut Vec<_> = &mut handle.children.borrow_mut();
+			if let Some(pos) = children.iter().position(|v| Rc::ptr_eq(v, target)) {
+				return Some((Rc::clone(handle), pos));
+			}
+
+			// Recurse.
+			for child in children {
+				if let Some(out) = walk(child, target) { return Some(out); }
+			}
+
+			None
+		}
+
+		walk(&self.root, target)
+	}
+
 	/// # Post Processing.
+	///
+	/// (Lightly) clean the tree before returning it.
+	///
+	/// Specifically, this ensures that void HTML elements really have no
+	/// children, and fixes `<template>` child element associations.
 	fn post_process(&self) {
 		/// # Patch Tree.
-		///
-		/// (Lightly) clean the tree before returning it.
 		fn walk(handle: &Handle) {
 			if let NodeInner::Element { ref name, .. } = handle.inner {
 				// Ensure void HTML elements are actually childless.
@@ -444,3 +529,78 @@ impl Tree {
 
 
 
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// # Predictable Test Tree.
+	const HTML: &[u8] = b"\
+	<html>\
+		<head></head>\
+		<body>\
+			<div>\
+				<span></span>\
+			</div>\
+		</body>\
+	</html>";
+
+	#[test]
+	fn t_remove_from_parent() {
+		// Parse a simple document.
+		let tree = Tree::parse(HTML).expect("Tree parse failed.");
+
+		// Find the span.
+		let target = Rc::clone(
+			&tree.root.children.borrow()[0]
+				.children.borrow()[1]
+				.children.borrow()[0]
+				.children.borrow()[0]
+		);
+		let NodeInner::Element { ref name, .. } = target.inner else {
+			panic!("Wrong element.");
+		};
+		assert_eq!(name.local, local_name!("span"));
+
+		// Remove the span from the tree.
+		tree.remove_from_parent(&target);
+
+		// The div should have no children now.
+		assert!(
+			tree.root.children.borrow()[0]
+				.children.borrow()[1]
+				.children.borrow()[0]
+				.children.borrow().is_empty()
+		);
+	}
+
+	#[test]
+	fn t_append_before_sibling() {
+		// Parse a simple document.
+		let tree = Tree::parse(HTML).expect("Tree parse failed.");
+
+		// Find the span.
+		let target = Rc::clone(
+			&tree.root.children.borrow()[0]
+				.children.borrow()[1]
+				.children.borrow()[0]
+				.children.borrow()[0]
+		);
+		let NodeInner::Element { ref name, .. } = target.inner else {
+			panic!("Wrong element.");
+		};
+		assert_eq!(name.local, local_name!("span"));
+
+		// Let's add a text element before it.
+		let new = NodeOrText::AppendText(StrTendril::from("Hello World"));
+		tree.append_before_sibling(&target, new);
+
+		// The div should have no children now.
+		assert!(matches!(
+			tree.root.children.borrow()[0]
+				.children.borrow()[1]
+				.children.borrow()[0]
+				.children.borrow()[0].inner,
+			NodeInner::Text { .. },
+		));
+	}
+}

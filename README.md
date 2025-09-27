@@ -97,4 +97,5 @@ While care has been taken to balance savings and safety, there are some (intenti
 
 * Documents are expected to be encoded in UTF-8;
 * Documents are processed as **HTML**, _not_ XML, XHTML, liquid, markdown, PHP, etc.;
+* HTMinL's parsing is pretty forgiving, but doesn't officially recognize "quirks mode";
 * Whitespace collapsing _can_ adversely affect layouts when CSS properties like `white-space: pre` are applied to elements that don't normally have them;

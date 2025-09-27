@@ -57,8 +57,6 @@
 mod dom;
 mod err;
 mod minify;
-mod ser;
-mod spec;
 
 use dactyl::{
 	NiceElapsed,
@@ -66,8 +64,11 @@ use dactyl::{
 	traits::NiceInflection,
 };
 use dom::{
-	Handle,
-	NodeInner,
+	node::{
+		Handle,
+		Node,
+		NodeInner,
+	},
 	Tree,
 };
 use dowser::{

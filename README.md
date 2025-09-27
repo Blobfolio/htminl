@@ -66,30 +66,28 @@ htminl /path/to/html /path/to/index.html …
 
 ## Minification
 
-Browsers aren't very picky about whitespace, so unsurprisingly, most savings are achieved by simply "collapsing" contiguous regions of mixed whitespace into single horizontal spaces.
+HTMinL performs a lot of little optimizations to shrink the size of documents without affecting how they're rendered by web browsers, like:
 
-HTMinL does this automatically for most text nodes — except those inside `<code>`, `<plaintext>`, `<pre>`, `<script>`, `<style>`, `<svg>`, `<textarea>` — and conservatively trims/drops text nodes from a few non-renderable regions like `<head>`, but doesn't push its luck.
+* Normalizing tag/attribute casing;
+* Removing (default) `type` attributes on `<script>` and `<style>` tags;
+* Removing HTML comments;
+* Removing implied values on boolean HTML attributes;
+* Removing trailing slashes from void HTML element tags;
+* Removing XML processing instructions;
+* Replacing CRLF/CR literals with LF;
+* Rewriting the doctype as `<!DOCTYPE html>`;
+* Using self-closing sytnax on childless SVG elements;
+* Using the shorter of `'` and `"` to quote value attributes;
 
-_Lots_ of people use layout elements for content, or vice versa; a few leftover bytes aren't worth quibbling over.
+But at the end of the day, most savings come down to basic whitespace manipulation.
 
-Besides, there are all sorts of _other_ things that can be stripped, like:
+HTMinL parses HTML documents the same way web browsers do, and employs a ~~naive~~ conservative version of the same inline whitespace-collapsing strategies [they themselves use](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_text/Whitespace).
 
-* Default `type` attributes on `<script>` and `<style>`;
-* HTML comments;
-* Implied values on boolean attributes like `disabled`, `readonly`, etc.;
-* Trailing slashes on void HTML elements;
-* Whitespace between element attributes;
-* XML processing instructions;
- 
-But wait, there's more!
+Unlike some of the more aggressive minifiers, HTMinL does not assume strict adherence to layout/content and inline/block distinctions. This may leave a few extra bytes on the table, but it greatly decreases the risk of accidental render fuckery.
 
-HTMinL also:
+And besides, any difference will be _negligible_ after proper [content encoding](https://github.com/Blobfolio/channelz/) anyway!
 
-* Converts CRLF/CR (literals) globally to `\n`;
-* Normalizes element tag casing;
-* Quotes attribute values with `'` when shorter than `"`;
-* Rewrites the doctype as `<!DOCTYPE html>`;
-* Self-closes childless SVG tags;
+No sense going overboard. ;)
 
 
 
@@ -98,5 +96,6 @@ HTMinL also:
 While care has been taken to balance savings and safety, there are some (intentional) limitations to be aware of:
 
 * Documents are expected to be encoded in UTF-8;
-* Documents are processed as **HTML**, _not_ XML or XHTML; inline SVG elements should be okay, but other XMLish data may be corrupted;
-* Whitespace collapsing _can_ change how content is rendered in cases where `whitespace: pre` is applied willynilly to elements that wouldn't normally have it;
+* Documents are processed as **HTML**, _not_ XML, XHTML, liquid, markdown, PHP, etc.;
+* HTMinL's parsing is pretty forgiving, but doesn't officially recognize "quirks mode";
+* Whitespace collapsing _can_ adversely affect layouts when CSS properties like `white-space: pre` are applied to elements that don't normally have them;

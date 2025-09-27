@@ -1,8 +1,8 @@
 # Project Dependencies
     Package:   htminl
-    Version:   0.11.0
+    Version:   0.11.1
     Target:    x86_64-unknown-linux-gnu
-    Generated: 2025-09-26 02:37:13 UTC
+    Generated: 2025-09-27 04:26:09 UTC
 
 | Package | Version | Author(s) | License |
 | ---- | ---- | ---- | ---- |

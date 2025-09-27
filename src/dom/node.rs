@@ -520,27 +520,34 @@ impl WhitespaceNormalization {
 					local_name!("alt") |
 					local_name!("class") |
 					local_name!("height") |
-					local_name!("href") |
 					local_name!("id") |
 					local_name!("sizes") |
-					local_name!("src") |
 					local_name!("srcset") |
 					local_name!("title") |
 					local_name!("width") => Self::Collapse,
+
+					local_name!("href") |
+					local_name!("src") |
 					local_name!("style") => Self::Trim,
+
 					_ =>                    Self::None,
 				},
 				ns!(svg) => match key.local {
 					local_name!("class") |
+					local_name!("cx") |
+					local_name!("cy") |
+					local_name!("d") |
 					local_name!("fill") |
+					local_name!("fill-rule") |
 					local_name!("height") |
-					local_name!("href") |
 					local_name!("id") |
 					local_name!("title") |
 					local_name!("viewBox") |
-					local_name!("width") |
-					local_name!("xlink") => Self::Collapse,
+					local_name!("width") => Self::Collapse,
+
+					local_name!("href") |
 					local_name!("style") => Self::Trim,
+
 					_ =>                    Self::None,
 				},
 				_ => Self::None,

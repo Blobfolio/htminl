@@ -57,7 +57,6 @@
 mod dom;
 mod err;
 mod minify;
-mod spec;
 
 use dactyl::{
 	NiceElapsed,

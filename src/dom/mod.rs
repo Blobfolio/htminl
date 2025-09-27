@@ -9,10 +9,6 @@ use crate::{
 	HtminlError,
 	Node,
 	NodeInner,
-	spec::{
-		WhiteSpace,
-		self,
-	},
 };
 use html5ever::{
 	Attribute,
@@ -377,9 +373,9 @@ impl Tree {
 	/// Search the tree for `target`, returning its parent and position in
 	/// `parent.children` if found.
 	///
-	/// Note the struct is _not_ optimized for this sort of operation, but
-	/// it doesn't usually — or ever? — come up during parsing, and we don't
-	/// use it ourselves.
+	/// Note: `Tree` is not optimized for this sort of thing, but the trait
+	/// methods referencing this don't seem to be called often — or ever?! —
+	/// so it's no big deal.
 	fn find_node_parent_and_index(&self, target: &Handle) -> Option<(Handle, usize)> {
 		/// # Find and Delete.
 		///
@@ -413,7 +409,7 @@ impl Tree {
 		fn walk(handle: &Handle) {
 			if let NodeInner::Element { ref name, .. } = handle.inner {
 				// Ensure void HTML elements are actually childless.
-				if spec::is_void_html_tag(name) {
+				if is_void_html_tag(name) {
 					handle.children.borrow_mut().truncate(0);
 					return; // No children, no recursion. Bail early!
 				}
@@ -448,11 +444,11 @@ impl Tree {
 	/// # Minify Text Nodes.
 	fn minify(&self) {
 		/// # Minify Node by Node.
-		fn walk(handle: &Handle, ws: WhiteSpace) {
+		fn walk(handle: &Handle, ws: TextNormalization) {
 			// Maybe trim first/last text child.
 			let try_trim = match handle.inner {
 				NodeInner::Document => true,
-				NodeInner::Element { ref name, .. } => spec::can_trim(name),
+				NodeInner::Element { ref name, .. } => can_trim_first_last_text(name),
 				_ => false,
 			};
 			if try_trim {
@@ -483,7 +479,7 @@ impl Tree {
 				// Keep and/or replace the text if non-empty, otherwise drop it.
 				NodeInner::Text { ref contents } => {
 					let mut contents = contents.borrow_mut();
-					! contents.is_empty() && ws.process(contents.as_bytes()).is_none_or(|new|
+					! contents.is_empty() && ws.normalize(contents.as_bytes()).is_none_or(|new|
 						if new.is_empty() { false }
 						else {
 							*contents = new;
@@ -507,14 +503,14 @@ impl Tree {
 					}
 
 					// Recurse to strip their children.
-					walk(v, WhiteSpace::from_element(name));
+					walk(v, TextNormalization::new(name));
 					true
 				},
 
 				// This shouldn't be reachable, but if for some reason it hits, recurse
 				// same as if it were an element.
 				NodeInner::Document => {
-					walk(v, WhiteSpace::ROOT);
+					walk(v, TextNormalization::Both);
 					true
 				},
 
@@ -523,8 +519,359 @@ impl Tree {
 			});
 		}
 
-		walk(&self.root, WhiteSpace::ROOT);
+		walk(&self.root, TextNormalization::Both);
 	}
+}
+
+
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+/// # Whitespace Normalization.
+enum TextNormalization {
+	/// # Collapse Whitespace.
+	Collapse,
+
+	/// # Drop Whitespace-Only Text.
+	Drop,
+
+	/// # Collapse and Drop.
+	Both,
+
+	/// # Neither.
+	None,
+}
+
+impl TextNormalization {
+	#[must_use]
+	/// # New.
+	const fn new(tag: &QualName) -> Self {
+		match tag.ns {
+			// HTML is the main game, obviously.
+			ns!(html) => {
+				let collapse = can_collapse_whitespace(tag);
+				let drop = can_drop_whitespace_text(tag);
+				if collapse && drop { Self::Both }
+				else if collapse { Self::Collapse }
+				else if drop { Self::Drop }
+				else { Self::None }
+			},
+			// We can do a _little_ bit of cleanup for SVGs.
+			ns!(svg) => match tag.local {
+				local_name!("defs") |
+				local_name!("g") |
+				local_name!("svg") |
+				local_name!("symbol") => Self::Drop,
+				_ => Self::None,
+			},
+			_ => Self::None,
+		}
+	}
+
+	#[must_use]
+	/// # Normalize Text.
+	///
+	/// Crunch the text according to the enabled options, returning a new
+	/// value if different.
+	fn normalize(self, raw: &[u8]) -> Option<StrTendril> {
+		// Drop it if droppable!
+		if self.drop() && is_whitespace(raw) {
+			Some(StrTendril::new())
+		}
+
+		// Collapse if collapseable!
+		else if
+			self.collapse() &&
+			let Some(new) = collapse(raw) &&
+			new != raw &&
+			let Ok(new) = String::from_utf8(new)
+		{
+			Some(StrTendril::from(new))
+		}
+
+		// Leave it be.
+		else { None }
+	}
+
+	#[must_use]
+	/// # Drop?
+	const fn drop(self) -> bool { matches!(self, Self::Drop | Self::Both) }
+
+	#[must_use]
+	/// # Collapse?
+	const fn collapse(self) -> bool { matches!(self, Self::Collapse | Self::Both) }
+}
+
+
+
+#[expect(clippy::too_many_lines, reason = "There are a lot of tags.")]
+#[must_use]
+/// # Can Collapse Child Text Whitespace?
+///
+/// Contiguous whitespace in these elements has no effect, so we can collapse
+/// long strings to a single whitespace.
+///
+/// Note: this includes the union of the [MDN element list](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements)
+/// and `html5ever`'s [named "atoms"](https://github.com/servo/html5ever/blob/main/web_atoms/local_names.txt),
+/// minus void elements, `code`, `plaintext`, `pre`, `script`, `style`,
+/// and `textarea`.
+///
+/// Testing the negative would be a lot easier, but we specifically want to
+/// exclude unrecognized/custom elements, since there's no telling how they're
+/// meant to work.
+const fn can_collapse_whitespace(tag: &QualName) -> bool {
+	matches!(tag.ns, ns!(html)) &&
+	matches!(
+		tag.local,
+		local_name!("a") |
+		local_name!("abbr") |
+		local_name!("acronym") |
+		local_name!("address") |
+		local_name!("applet") |
+		local_name!("article") |
+		local_name!("aside") |
+		local_name!("audio") |
+		local_name!("b") |
+		local_name!("bdi") |
+		local_name!("bdo") |
+		local_name!("big") |
+		local_name!("blink") |
+		local_name!("blockquote") |
+		local_name!("body") |
+		local_name!("button") |
+		local_name!("canvas") |
+		local_name!("caption") |
+		local_name!("center") |
+		local_name!("cite") |
+		local_name!("colgroup") |
+		local_name!("content") |
+		local_name!("data") |
+		local_name!("datalist") |
+		local_name!("dd") |
+		local_name!("del") |
+		local_name!("details") |
+		local_name!("dfn") |
+		local_name!("dialog") |
+		local_name!("dir") |
+		local_name!("div") |
+		local_name!("dl") |
+		local_name!("dt") |
+		local_name!("em") |
+		local_name!("fieldset") |
+		local_name!("figcaption") |
+		local_name!("figure") |
+		local_name!("font") |
+		local_name!("footer") |
+		local_name!("form") |
+		local_name!("frameset") |
+		local_name!("h1") |
+		local_name!("h2") |
+		local_name!("h3") |
+		local_name!("h4") |
+		local_name!("h5") |
+		local_name!("h6") |
+		local_name!("head") |
+		local_name!("header") |
+		local_name!("hgroup") |
+		local_name!("html") |
+		local_name!("i") |
+		local_name!("ins") |
+		local_name!("isindex") |
+		local_name!("kbd") |
+		local_name!("label") |
+		local_name!("legend") |
+		local_name!("li") |
+		local_name!("listing") |
+		local_name!("main") |
+		local_name!("map") |
+		local_name!("mark") |
+		local_name!("marquee") |
+		local_name!("menu") |
+		local_name!("menuitem") |
+		local_name!("meter") |
+		local_name!("nav") |
+		local_name!("nobr") |
+		local_name!("noembed") |
+		local_name!("noframes") |
+		local_name!("noscript") |
+		local_name!("object") |
+		local_name!("ol") |
+		local_name!("optgroup") |
+		local_name!("option") |
+		local_name!("output") |
+		local_name!("p") |
+		local_name!("picture") |
+		local_name!("progress") |
+		local_name!("q") |
+		local_name!("rb") |
+		local_name!("rp") |
+		local_name!("rt") |
+		local_name!("rtc") |
+		local_name!("ruby") |
+		local_name!("s") |
+		local_name!("samp") |
+		local_name!("search") |
+		local_name!("section") |
+		local_name!("select") |
+		local_name!("slot") |
+		local_name!("small") |
+		local_name!("span") |
+		local_name!("strike") |
+		local_name!("strong") |
+		local_name!("sub") |
+		local_name!("summary") |
+		local_name!("sup") |
+		local_name!("table") |
+		local_name!("tbody") |
+		local_name!("td") |
+		local_name!("template") |
+		local_name!("tfoot") |
+		local_name!("th") |
+		local_name!("thead") |
+		local_name!("time") |
+		local_name!("title") |
+		local_name!("tr") |
+		local_name!("tt") |
+		local_name!("u") |
+		local_name!("ul") |
+		local_name!("var") |
+		local_name!("video") |
+		local_name!("xmp")
+	)
+}
+
+#[must_use]
+/// # Can Drop Text Nodes?
+///
+/// Whitespace-only text nodes in these elements serve no purpose and
+/// can be safely removed.
+const fn can_drop_whitespace_text(tag: &QualName) -> bool {
+	matches!(tag.ns, ns!(html)) &&
+	matches!(
+		tag.local,
+		local_name!("audio") |
+		local_name!("body") |
+		local_name!("head") |
+		local_name!("html") |
+		local_name!("optgroup") |
+		local_name!("option") |
+		local_name!("picture") |
+		local_name!("select") |
+		local_name!("table") |
+		local_name!("tbody") |
+		local_name!("template") |
+		local_name!("tfoot") |
+		local_name!("tr") |
+		local_name!("video")
+	)
+}
+
+#[must_use]
+/// # Can Trim Child Text?
+///
+/// Returns `true` if it is safe to trim leading whitespace from the first
+/// child, and trailing whitespace from the last, assuming either or both are
+/// text nodes.
+const fn can_trim_first_last_text(tag: &QualName) -> bool {
+	can_drop_whitespace_text(tag) ||
+	match tag.ns {
+		ns!(html) => matches!(
+			tag.local,
+			local_name!("script") |
+			local_name!("style") |
+			local_name!("title")
+		),
+		ns!(svg) => matches!(
+			tag.local,
+			local_name!("desc") |
+			local_name!("script") |
+			local_name!("style") |
+			local_name!("title")
+		),
+		_ => false,
+	}
+}
+
+#[must_use]
+/// Collapse Whitespace.
+///
+/// HTML rendering largely ignores whitespace, and at any rate treats all
+/// types (other than the no-break space `\xA0`) the same way.
+///
+/// There is some nuance, but for most elements, we can safely convert all
+/// contiguous sequences of (ASCII) whitespace to a single horizontal space
+/// character.
+fn collapse(txt: &[u8]) -> Option<Vec<u8>> {
+	// Edge case: single whitespace.
+	if txt.len() == 1 && matches!(txt[0], b'\t' | b'\n' | b'\x0C') {
+		return Some(vec![b' ']);
+	}
+
+	// Find the first non-space whitespace, or pair of (any) whitespaces.
+	let pos = txt.windows(2).position(|pair|
+		matches!(pair[0], b'\t' | b'\n' | b'\x0C') ||
+		(pair[0].is_ascii_whitespace() && pair[1].is_ascii_whitespace())
+	)?;
+
+	// Split at that location and start building up a replacement.
+	let (a, rest) = txt.split_at(pos);
+	let mut new = Vec::with_capacity(txt.len());
+	new.extend_from_slice(a);
+
+	let mut in_ws = false;
+	for &b in rest {
+		match b {
+			b'\t' | b'\n' | b'\x0C' | b' ' => if ! in_ws {
+				in_ws = true;
+				new.push(b' ');
+			},
+			_ => {
+				in_ws = false;
+				new.push(b);
+			},
+		}
+	}
+
+	Some(new)
+}
+
+#[must_use]
+/// # Is Void HTML Element?
+const fn is_void_html_tag(tag: &QualName) -> bool {
+	matches!(tag.ns, ns!(html)) &&
+	matches!(
+		tag.local,
+		local_name!("area") |
+		local_name!("base") |
+		local_name!("basefont") |
+		local_name!("bgsound") |
+		local_name!("br") |
+		local_name!("col") |
+		local_name!("embed") |
+		local_name!("frame") |
+		local_name!("hr") |
+		local_name!("iframe") |
+		local_name!("img") |
+		local_name!("input") |
+		local_name!("keygen") |
+		local_name!("link") |
+		local_name!("meta") |
+		local_name!("param") |
+		local_name!("source") |
+		local_name!("track") |
+		local_name!("wbr")
+	)
+}
+
+#[must_use]
+/// Is (Only) Whitespace?
+///
+/// Returns `true` if the node is empty or contains only whitespace.
+///
+/// Note that CR is replaced with LF prior to parsing, so there's no need
+/// to include `b'\r'` in the matchset.
+const fn is_whitespace(mut txt: &[u8]) -> bool {
+	while let [b'\t' | b'\n' | b'\x0C' | b' ', rest @ ..] = txt { txt = rest; }
+	txt.is_empty()
 }
 
 
@@ -602,5 +949,47 @@ mod tests {
 				.children.borrow()[0].inner,
 			NodeInner::Text { .. },
 		));
+	}
+
+	#[test]
+	fn t_can_collapse_whitespace() {
+		// The collapseable list is really big, but should _not_ include
+		// these things.
+		for i in [
+			local_name!("code"),
+			local_name!("plaintext"),
+			local_name!("pre"),
+			local_name!("script"),
+			local_name!("style"),
+			local_name!("svg"),
+			local_name!("textarea"),
+		] {
+			let name = QualName::new(None, ns!(html), i);
+			assert!(! can_collapse_whitespace(&name));
+		}
+	}
+
+	#[test]
+	fn t_collapse() {
+		for (lhs, rhs) in [
+			(&b"raw"[..], None),
+			(b" ", None),
+			(b"  ", Some(vec![b' '])),
+			(b"   ", Some(vec![b' '])),
+			(b"\n", Some(vec![b' '])),
+			(b"hello world", None),
+			(b"hello\nworld", Some(b"hello world".to_vec())),
+			(b"hello \x0C \t\nworld", Some(b"hello world".to_vec())),
+			(b"hello\x0C \t\nworld, hello  moon", Some(b"hello world, hello moon".to_vec())),
+		] {
+			assert_eq!(collapse(lhs), rhs);
+		}
+	}
+
+	#[test]
+	fn t_is_whitespace() {
+		assert!(is_whitespace(b""));
+		assert!(is_whitespace(b"  \t\n  \x0C"));
+		assert!(! is_whitespace(b"  a "));
 	}
 }

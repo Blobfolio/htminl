@@ -5,7 +5,6 @@ This module includes the node-related business, but most of it is dedicated
 to serialization/formatting.
 */
 
-use crate::spec;
 use html5ever::{
 	local_name,
 	ns,
@@ -152,7 +151,7 @@ impl fmt::Display for NodeDisplay {
 				f.write_char('>')?;
 
 				// If this is a void HTML tag, we're done.
-				if spec::is_void_html_tag(name) { return Ok(()); }
+				if super::is_void_html_tag(name) { return Ok(()); }
 
 				// Recurse children.
 				for child in self.node.children.borrow().iter() {

@@ -59,7 +59,7 @@ argyle = "0.14.*"
 dactyl = "0.13.*"
 dowser = "0.17.*"
 html5ever = "0.35.*"
-indexmap = "2.11.*"
+indexmap = "2.12.*"
 write_atomic = "0.7.*"
 
 [dependencies.flume]

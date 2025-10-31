@@ -199,8 +199,10 @@ fn main__() -> Result<(), HtminlError> {
 		// Set up the worker threads.
 		let mut workers = Vec::with_capacity(threads.get());
 		for _ in 0..threads.get() {
-			workers.push(s.spawn(#[inline(always)] || crunch(&rx, progress.as_ref())));
+			let rx2 = rx.clone();
+			workers.push(s.spawn(#[inline(always)] || crunch(rx2, progress.as_ref())));
 		}
+		drop(rx);
 
 		// Push all the files to it, then drop the sender to disconnect.
 		for path in &paths {
@@ -215,7 +217,6 @@ fn main__() -> Result<(), HtminlError> {
 
 		Ok::<(), HtminlError>(())
 	})?;
-	drop(rx);
 
 	// Summarize?
 	if let Some(progress) = progress { summarize(&progress, total.get() as u64); }
@@ -225,13 +226,14 @@ fn main__() -> Result<(), HtminlError> {
 	else { Ok(()) }
 }
 
+#[expect(clippy::needless_pass_by_value, reason = "For drop.")]
 #[inline(never)]
 /// # Worker Callback.
 ///
 /// This is the worker callback for HTML crunching. It listens for "new" HTML
 /// paths and crunches them — and maybe updates the progress bar, etc. — then
 /// quits as soon as the work has dried up.
-fn crunch(rx: &Receiver::<&Path>, progress: Option<&Progless>) {
+fn crunch(rx: Receiver::<&Path>, progress: Option<&Progless>) {
 	let Some(progress) = progress else {
 		// If we aren't tracking progress, the code is a lot simpler. Haha.
 		while let Ok(p) = rx.recv() { let _res = minify::minify(p); }

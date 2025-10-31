@@ -57,7 +57,7 @@ description = "Any number of files and directories to crawl and crunch."
 [dependencies]
 argyle = "0.14.*"
 dactyl = "0.13.*"
-dowser = "0.17.*"
+dowser = "0.18.*"
 html5ever = "0.35.*"
 indexmap = "2.12.*"
 write_atomic = "0.7.*"

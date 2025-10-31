@@ -1,6 +1,6 @@
 [package]
 name = "htminl"
-version = "0.11.1"
+version = "0.11.2"
 license = "WTFPL"
 authors = ["Josh Stoik <josh@blobfolio.com>"]
 edition = "2024"
@@ -57,9 +57,9 @@ description = "Any number of files and directories to crawl and crunch."
 [dependencies]
 argyle = "0.14.*"
 dactyl = "0.13.*"
-dowser = "0.17.*"
+dowser = "0.18.*"
 html5ever = "0.35.*"
-indexmap = "2.11.*"
+indexmap = "2.12.*"
 write_atomic = "0.7.*"
 
 [dependencies.flume]

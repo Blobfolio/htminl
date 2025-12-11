@@ -21,7 +21,7 @@ See the [minification](#minification) section for more details about the process
 
 ## Installation
 
-Debian and Ubuntu users can just grab the pre-built `.deb` package from the [latest release](https://github.com/Blobfolio/htminl/releases/latest).
+Debian and Ubuntu users can just grab the pre-built `.deb` package from the [latest release](https://github.com/Blobfolio/htminl/releases/latest), and Arch users can grab it from [AUR](https://aur.archlinux.org/packages/htminl-bin) (thanks @Dominiquini!).
 
 This application is written in [Rust](https://www.rust-lang.org/) and can alternatively be built/installed from source using [Cargo](https://github.com/rust-lang/cargo):
 

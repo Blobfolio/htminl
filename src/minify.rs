@@ -88,7 +88,7 @@ pub(super) fn minify(src: &Path) -> Result<(NonZeroU64, NonZeroU64), HtminlError
 /// This returns `false` if the document contains (case-insensitively)
 /// `<html`, `<body`, `</body>`, or `</html>`.
 fn is_fragment(src: &[u8]) -> bool {
-	for w in src.windows(7) {
+	for w in src.array_windows::<7>() {
 		if w[0] == b'<' {
 			match w[1] {
 				b'/' => if w[6] == b'>' {

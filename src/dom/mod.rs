@@ -807,7 +807,7 @@ fn collapse(txt: &[u8]) -> Option<Vec<u8>> {
 	}
 
 	// Find the first non-space whitespace, or pair of (any) whitespaces.
-	let pos = txt.windows(2).position(|pair|
+	let pos = txt.array_windows::<2>().position(|pair|
 		matches!(pair[0], b'\t' | b'\n' | b'\x0C') ||
 		(pair[0].is_ascii_whitespace() && pair[1].is_ascii_whitespace())
 	)?;

@@ -91,14 +91,14 @@ fn is_fragment(src: &[u8]) -> bool {
 	for w in src.array_windows::<7>() {
 		if w[0] == b'<' {
 			match w[1] {
-				b'/' => if w[6] == b'>' {
+				b'/' if w[6] == b'>' => {
 					let mid = &w[2..6];
 					if mid.eq_ignore_ascii_case(b"body") || mid.eq_ignore_ascii_case(b"html") {
 						return false;
 					}
 				},
-				b'b' | b'B' => if w[2..5].eq_ignore_ascii_case(b"ody") { return false; },
-				b'h' | b'H' => if w[2..5].eq_ignore_ascii_case(b"tml") { return false; },
+				b'b' | b'B' if w[2..5].eq_ignore_ascii_case(b"ody") => { return false; },
+				b'h' | b'H' if w[2..5].eq_ignore_ascii_case(b"tml") => { return false; },
 				_ => {},
 			}
 		}

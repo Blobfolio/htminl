@@ -942,13 +942,13 @@ mod tests {
 		tree.append_before_sibling(&target, new);
 
 		// The div should have no children now.
-		assert!(matches!(
+		std::assert_matches!(
 			tree.root.children.borrow()[0]
 				.children.borrow()[1]
 				.children.borrow()[0]
 				.children.borrow()[0].inner,
 			NodeInner::Text { .. },
-		));
+		);
 	}
 
 	#[test]

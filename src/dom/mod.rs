@@ -410,7 +410,7 @@ impl Tree {
 			if let NodeInner::Element { ref name, .. } = handle.inner {
 				// Ensure void HTML elements are actually childless.
 				if is_void_html_tag(name) {
-					handle.children.borrow_mut().truncate(0);
+					handle.children.borrow_mut().clear();
 					return; // No children, no recursion. Bail early!
 				}
 
@@ -430,7 +430,7 @@ impl Tree {
 						std::mem::swap(children, &mut first.children.borrow_mut());
 					}
 					// This shouldn't be reachable.
-					else { children.truncate(0); }
+					else { children.clear(); }
 				}
 			}
 

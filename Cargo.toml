@@ -60,7 +60,7 @@ dactyl = "0.13.*"
 dowser = "0.18.*"
 html5ever = "0.39.*"
 indexmap = "2.14.*"
-write_atomic = "0.7.*"
+write_atomic = "0.9.*"
 
 [dependencies.flume]
 version = "0.12.*"

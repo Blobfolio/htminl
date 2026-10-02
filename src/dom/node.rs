@@ -123,7 +123,7 @@ impl fmt::Display for NodeDisplay {
 				if self.line_before_open() { f.write_char('\n')? }
 
 				// Opening tag.
-				write!(f, "<{}", name.local.as_ref())?;
+				write!(f, "<{}", name.local)?;
 
 				// Attribute(s).
 				for (key, value) in attrs.borrow().iter() {
@@ -168,7 +168,7 @@ impl fmt::Display for NodeDisplay {
 				}
 
 				// Write the closing tag.
-				write!(f, "</{}>", name.local.as_ref())
+				write!(f, "</{}>", name.local)
 			},
 
 			// Text node.
